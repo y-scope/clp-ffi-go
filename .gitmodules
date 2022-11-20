@@ -1,0 +1,3 @@
+[submodule "clp"]
+	path = cpp/clp
+	url = git@github.com:y-scope/clp.git

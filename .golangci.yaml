@@ -1,0 +1,13 @@
+linters:
+  enable:
+    - gofumpt
+    - goimports
+    - revive
+
+linters-settings:
+  revive:
+    rules:
+      - name: line-length-limit
+        severity: warning
+        disabled: false
+        arguments: [100]
