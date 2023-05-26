@@ -1,7 +1,7 @@
 package ir
 
 /*
-#include "../cpp/src/ir/encoding.h"
+#include <ir/encoding.h>
 */
 import "C"
 
@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/y-scope/clp-ffi-go" // ffi::types + necessary for linkage
+	"github.com/y-scope/clp-ffi-go/ffi"
 )
 
 type IrEncoder interface {

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/y-scope/clp-ffi-go" // ffi::types + necessary for linkage
+	"github.com/y-scope/clp-ffi-go/ffi"
 )
 
 // IrReader abstracts maintenance of a buffer containing an IR stream. It keeps
@@ -53,9 +53,8 @@ func (self *IrReader) read(r io.Reader) error {
 // preamble or next log event.
 // Return values:
 //   - nil == error: success
-//   - nil != error:
-//     - type [IRError] or [encoding/json]: error propagated from [DecodePreamble]
-//     - type from io.Reader: io.Reader.Read failed
+//   - [IRError] or [encoding/json]: error propagated from [DecodePreamble]
+//   - [io] error type or underlying reader type: io.Reader.Read failed
 func ReadPreamble(r io.Reader, bufSize int) (IrReader, error) {
 	irr := IrReader{nil, make([]byte, bufSize), 0, 0}
 

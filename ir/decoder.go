@@ -1,8 +1,8 @@
 package ir
 
 /*
-#include "../cpp/src/log_event.h"
-#include "../cpp/src/ir/decoding.h"
+#include <log_event.h>
+#include <ir/decoding.h>
 */
 import "C"
 
@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"unsafe"
 
-	"github.com/y-scope/clp-ffi-go" // ffi::types + necessary for linkage
+	"github.com/y-scope/clp-ffi-go/ffi"
 )
 
 // TODO once we reach go >= 1.20
@@ -100,8 +100,8 @@ func DecodePreamble(buf []byte) (IrDecoder, int, error) {
 // Return values:
 //   - nil == error: successful decode
 //   - nil != error: ffi.LogEvent will be nil, offset may be non-zero for debugging purposes
-//     - io.EOF: CLP found the IR stream EOF tag
-//     - type IRError: CLP failed to successfully decode
+//   - [Eof]: CLP found the IR stream EOF tag
+//   - [IRError]: CLP failed to successfully decode
 func (self *EightByteIrStream) DecodeNextLogEvent(buf []byte) (ffi.LogEvent, int, error) {
 	return decodeNextLogEvent(self, buf)
 }
@@ -112,8 +112,8 @@ func (self *EightByteIrStream) DecodeNextLogEvent(buf []byte) (ffi.LogEvent, int
 // Return values:
 //   - nil == error: successful decode
 //   - nil != error: ffi.LogEvent will be nil, offset may be non-zero for debugging purposes
-//     - [IRError.Eof] -> CLP found the IR stream EOF tag
-//     - type IRError -> CLP failed to successfully decode
+//   - [Eof]: CLP found the IR stream EOF tag
+//   - [IRError]: CLP failed to successfully decode
 func (self *FourByteIrStream) DecodeNextLogEvent(buf []byte) (ffi.LogEvent, int, error) {
 	return decodeNextLogEvent(self, buf)
 }

@@ -14,7 +14,7 @@ package ir
 import (
 	"unsafe"
 
-	"github.com/y-scope/clp-ffi-go"
+	"github.com/y-scope/clp-ffi-go/ffi"
 )
 
 // TimestampInfo contains information relevant to all timestamps in the IR

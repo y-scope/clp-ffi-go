@@ -1,7 +1,7 @@
 package ffi
 
 /*
-#include "cpp/src/log_event.h"
+#include <log_event.h>
 */
 import "C"
 

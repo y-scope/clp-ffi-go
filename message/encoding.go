@@ -1,8 +1,8 @@
 package message
 
 /*
-#include "../cpp/src/log_event.h"
-#include "../cpp/src/message/encoding.h"
+#include <log_event.h>
+#include <message/encoding.h>
 */
 import "C"
 
@@ -10,9 +10,7 @@ import (
 	"runtime"
 	"unsafe"
 
-	// Include the root package for cgo linkage.
-	_ "github.com/y-scope/clp-ffi-go"
-	ffi "github.com/y-scope/clp-ffi-go"
+	"github.com/y-scope/clp-ffi-go/ffi"
 )
 
 /* TODO outdated

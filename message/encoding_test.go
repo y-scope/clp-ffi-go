@@ -1,5 +1,3 @@
-//go:build test
-
 package message
 
 import (
@@ -53,12 +51,14 @@ func testDecodeMessage(t *testing.T, testlog testLog) {
 
 	log, err := em.unsafeRef.DecodeMessage()
 	runtime.GC()
-	assertDecodedMessage(t, testlog, err, string(log.Msg))
 
 	// calling ReleaseRef allows uem to be collected despite em and msg being
 	// still reachable
 	em.ReleaseRef()
 	test.AssertFinalizers(t, test.NewFinalizer(&uem))
+	runtime.GC()
+
+	assertDecodedMessage(t, testlog, err, string(log.Msg))
 	test.AssertFinalizers(t, test.NewFinalizer(&em), test.NewFinalizer(&log))
 }
 

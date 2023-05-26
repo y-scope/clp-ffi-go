@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/y-scope/clp-ffi-go"
+	"github.com/y-scope/clp-ffi-go/ffi"
 )
 
 type WriteCloser interface {

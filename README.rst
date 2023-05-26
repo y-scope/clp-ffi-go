@@ -64,9 +64,8 @@ as well as stringify ``Enum`` style types.
 
 Testing
 -------
-To run all unit tests run: ``go test -tags test ./... -args $(readlink -f clp-ir-stream.clp.zst)``
+To run all unit tests run: ``go test ./... -args $(readlink -f clp-ir-stream.clp.zst)``
 
-- The ``test`` tag builds in shared testing specific code.
 - The ``ir`` package's tests currently requries an existing CLP IR file
   compressed with zstd. This file's path is taken as the only argument to the
   test and is supplied after ``-args``. It can be an absolute path or a path
@@ -84,7 +83,8 @@ Using an external C++ library
 Use the ``external`` build tag to link with different CLP FFI library instead
 of the pre-built ones found in `lib`__. This tag only prevents the linking of
 the pre-built libraries and does nothing else. It is up to the user to use
-``CGO_LDFLAGS`` to point to their library.
+``CGO_LDFLAGS`` to point to their library. You may also need to update
+``CGO_CFLAGS`` to update the header include path.
 
 __ https://github.com/y-scope/clp-ffi-go/lib
 
