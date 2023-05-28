@@ -35,7 +35,7 @@ a CLP IR stream.
     // To read every log event replace ReadToContains with
     // ReadNextLogEvent(zstdReader)
     log, err := irReader.ReadToContains(zstdReader, []byte("ERROR"))
-    if io.EOF == err {
+    if ir.Eof == err || io.EOF == err {
       break
     }
     fmt.Printf("%v %v", time.UnixMilli(int64(log.Timestamp)), string(log.Msg))
