@@ -62,6 +62,14 @@ as well as stringify ``Enum`` style types.
 
    - Run all generate directives (note the 3 dots after '/')
 
+Bazel support
+'''''''''''''
+We provide Bazel build files for each Go package in the repository, enabling
+you to add any package to your `build dependency list`__ with no extra
+arguments or modifications.
+
+__ https://github.com/bazelbuild/rules_go/blob/master/docs/go/core/rules.md#go_library-deps
+
 Testing
 -------
 To run all unit tests run: ``go test ./... -args $(readlink -f clp-ir-stream.clp.zst)``
