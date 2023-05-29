@@ -1,0 +1,67 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "ir",
+    srcs = [
+        "cgo_amd64.go",
+        "cgo_arm64.go",
+        "decoder.go",
+        "encoder.go",
+        "ir.go",
+        "irerror.go",
+        "irerror_string.go",
+        "reader.go",
+    ],
+    cgo = True,
+    cdeps = ["//:libclp_ffi"],
+    clinkopts = select({
+        "@io_bazel_rules_go//go/platform:android_amd64": [
+            "-lstdc++",
+        ],
+        "@io_bazel_rules_go//go/platform:android_arm64": [
+            "-lstdc++",
+        ],
+        "@io_bazel_rules_go//go/platform:darwin_amd64": [
+            "-lstdc++",
+        ],
+        "@io_bazel_rules_go//go/platform:darwin_arm64": [
+            "-lstdc++",
+        ],
+        "@io_bazel_rules_go//go/platform:ios_amd64": [
+            "-lstdc++",
+        ],
+        "@io_bazel_rules_go//go/platform:ios_arm64": [
+            "-lstdc++",
+        ],
+        "@io_bazel_rules_go//go/platform:linux_amd64": [
+            "-lstdc++",
+        ],
+        "@io_bazel_rules_go//go/platform:linux_arm64": [
+            "-lstdc++",
+        ],
+        "//conditions:default": [],
+    }),
+    importpath = "github.com/y-scope/clp-ffi-go/ir",
+    visibility = ["//visibility:public"],
+    deps = ["//ffi"],
+)
+
+alias(
+    name = "go_default_library",
+    actual = ":ir",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "ir_test",
+    srcs = [
+        "encoder_test.go",
+        "reader_test.go",
+    ],
+    embed = [":ir"],
+    deps = [
+        "//ffi",
+        "//test",
+        "@com_github_klauspost_compress//zstd",
+    ],
+)

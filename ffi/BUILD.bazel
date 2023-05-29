@@ -1,0 +1,47 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ffi",
+    srcs = [
+        "cgo_amd64.go",
+        "cgo_arm64.go",
+        "ffi.go",
+    ],
+    cgo = True,
+    cdeps = ["//:libclp_ffi"],
+    clinkopts = select({
+        "@io_bazel_rules_go//go/platform:android_amd64": [
+            "-lstdc++",
+        ],
+        "@io_bazel_rules_go//go/platform:android_arm64": [
+            "-lstdc++",
+        ],
+        "@io_bazel_rules_go//go/platform:darwin_amd64": [
+            "-lstdc++",
+        ],
+        "@io_bazel_rules_go//go/platform:darwin_arm64": [
+            "-lstdc++",
+        ],
+        "@io_bazel_rules_go//go/platform:ios_amd64": [
+            "-lstdc++",
+        ],
+        "@io_bazel_rules_go//go/platform:ios_arm64": [
+            "-lstdc++",
+        ],
+        "@io_bazel_rules_go//go/platform:linux_amd64": [
+            "-lstdc++",
+        ],
+        "@io_bazel_rules_go//go/platform:linux_arm64": [
+            "-lstdc++",
+        ],
+        "//conditions:default": [],
+    }),
+    importpath = "github.com/y-scope/clp-ffi-go/ffi",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "go_default_library",
+    actual = ":ffi",
+    visibility = ["//visibility:public"],
+)
