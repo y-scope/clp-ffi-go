@@ -4,7 +4,7 @@
 package message
 
 /*
-#cgo CFLAGS: -I${SRCDIR}/../cpp/src
+#cgo CFLAGS: -I${SRCDIR}/../cpp/src/
 #cgo external LDFLAGS:
 */
 import "C"

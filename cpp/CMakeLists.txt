@@ -14,11 +14,9 @@ endif()
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 set(LIB_NAME "clp_ffi" CACHE STRING "Library name containing os and arch.")
-
 if (DEFINED ENV{GOOS})
     string(APPEND LIB_NAME "_$ENV{GOOS}")
 endif()
-
 if (DEFINED ENV{GOARCH})
     string(APPEND LIB_NAME "_$ENV{GOARCH}")
 endif()
@@ -44,7 +42,8 @@ add_library(${LIB_NAME}
 )
 
 target_compile_features(${LIB_NAME}
-    PRIVATE cxx_std_17
+    PRIVATE
+    cxx_std_17
 )
 
 target_include_directories(${LIB_NAME}
@@ -53,7 +52,8 @@ target_include_directories(${LIB_NAME}
     ${CMAKE_SOURCE_DIR}/src
 )
 
-# target_compile_options(${LIB_NAME} PRIVATE
+# target_compile_options(${LIB_NAME}
+#     PRIVATE
 #     $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
 #     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
 #     )
