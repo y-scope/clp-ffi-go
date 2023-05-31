@@ -33,7 +33,6 @@ go_test(
     ],
     embed = [":ir"],
     deps = [
-        "//ffi",
         "//test",
         "@com_github_klauspost_compress//zstd",
     ],
