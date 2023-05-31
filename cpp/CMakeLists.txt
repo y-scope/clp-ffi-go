@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.5.1)
 
 project(clp_ffi
-    VERSION 0.0.1
     LANGUAGES CXX C
 )
 
@@ -14,29 +13,14 @@ endif()
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
-if (NOT DEFINED GOOS)
-    if (DEFINED ENV{GOOS})
-        set(GOOS "$ENV{GOOS}" CACHE STRING "GOOS name (see `go env`)" FORCE)
-    else()
-        message(WARNING "GOOS not specified. Setting to empty string.")
-        set(GOOS "")
-    endif()
+set(LIB_NAME "clp_ffi" CACHE STRING "Library name containing os and arch.")
+
+if (DEFINED ENV{GOOS})
+    string(APPEND LIB_NAME "_$ENV{GOOS}")
 endif()
 
-if (NOT DEFINED GOARCH)
-    if (DEFINED ENV{GOARCH})
-        set(GOARCH "$ENV{GOARCH}" CACHE STRING "GOARCH name (see `go env`)" FORCE)
-    else()
-        message(WARNING "GOARCH not specified. Setting to empty string.")
-        set(GOARCH "")
-    endif()
-endif()
-
-set(LIB_NAME "clp_ffi_${GOOS}_${GOARCH}" CACHE STRING "Full library name containing os and arch.")
-if (BUILD_SHARED_LIBS)
-    set(LIB_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${LIB_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}" CACHE STRING "Full library file name containing os, arch, and file prefix and suffix.")
-else()
-    set(LIB_FILE "${CMAKE_STATIC_LIBRARY_PREFIX}${LIB_NAME}${CMAKE_STATIC_LIBRARY_SUFFIX}" CACHE STRING "Full library file name containing os, arch, and file prefix and suffix.")
+if (DEFINED ENV{GOARCH})
+    string(APPEND LIB_NAME "_$ENV{GOARCH}")
 endif()
 
 add_library(${LIB_NAME}
@@ -69,7 +53,6 @@ target_include_directories(${LIB_NAME}
     ${CMAKE_SOURCE_DIR}/src
 )
 
-# cries in clpain
 # target_compile_options(${LIB_NAME} PRIVATE
 #     $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
 #     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
@@ -83,9 +66,4 @@ target_compile_definitions(${LIB_NAME}
     SOURCE_PATH_SIZE=${SOURCE_PATH_SIZE}
 )
 
-install(
-    FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/${LIB_FILE}
-    DESTINATION
-    .
-)
+install(TARGETS ${LIB_NAME})
