@@ -1,1 +1,4 @@
 build/
+cpp/.cache/
+cpp/clp/
+**/compile_commands.json

@@ -1,0 +1,61 @@
+name: Build
+
+on:
+  pull_request:
+  push:
+  workflow_call:
+
+jobs:
+  prebuilt-test:
+    strategy:
+      matrix:
+        # os: [macos-latest, ubuntu-latest]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-go@v4
+
+      - run: go build ./...
+
+      - run: go test ./...
+
+  build-lint-test:
+    strategy:
+      matrix:
+        # os: [macos-latest, ubuntu-latest]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-go@v4
+
+      - if: ${{ 'macos-latest' == matrix.os }}
+        run: |
+          brew update
+          brew install llvm
+
+      - name: Remove repo's generated c++ libraries and go code
+        run: |
+          rm ./lib/* ./**/*_string.go
+
+      - run: |
+          go install mvdan.cc/gofumpt@latest
+          go install github.com/segmentio/golines@latest
+          go install golang.org/x/tools/cmd/stringer@latest
+
+      - run: go generate ./...
+
+      - run: |
+          diff="$(golines -m 100 -t 4 --base-formatter='gofumpt' --dry-run .)"
+          if [[ -n "$diff"  ]]; then echo "$diff"; exit 1; fi
+
+      # - run: cmake -S ./cpp -B ./cpp/build -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+
+      - run: go test ./...

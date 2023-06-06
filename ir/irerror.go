@@ -1,20 +1,22 @@
 package ir
 
-// IRError mirrors cpp type IRErrorCode defined in:
+// IrError mirrors cpp type IRErrorCode defined in:
 // clp/components/core/src/ffi/ir_stream/decoding_methods.hpp
-//go:generate stringer -type=IRError
-type IRError int
+//
+//go:generate stringer -type=IrError
+type IrError int
 
 const (
-	Success IRError = iota
+	Success IrError = iota
 	DecodeError
-	Eof
-	CorruptedIR
-	CorruptedMetadata
-	IncompleteIR
-	UnsupportedVersion
+	EndOfIr
+	CorruptedIr
+	IncompleteIr
+	QueryNotFound      // must be IncompleteIr + 1
+	EncodeError        // not from clp
+	UnsupportedVersion // not from clp
 )
 
-func (self IRError) Error() string {
+func (self IrError) Error() string {
 	return self.String()
 }

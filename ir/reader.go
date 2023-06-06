@@ -1,118 +1,128 @@
 package ir
 
 import (
-	"bytes"
 	"io"
+	"strings"
 
 	"github.com/y-scope/clp-ffi-go/ffi"
+	"github.com/y-scope/clp-ffi-go/search"
 )
 
-// IrReader abstracts maintenance of a buffer containing an IR stream. It keeps
-// track of the range in the buffer containing valid, unconsumed IR. It does
-// not store a Reader to allow callers to mutate the Reader as necessary.
-type IrReader struct {
-	IrDecoder
-	buf   []byte
-	start int
-	end   int
+// Reader abstracts maintenance of a buffer containing a [Deserializer]. It
+// keeps track of the range [start, end) in the buffer containing valid,
+// unconsumed CLP IR. [NewReader] will construct a Reader with the appropriate
+// Deserializer based on the consumed CLP IR preamble. The buffer will grow if
+// it is not large enough to service a read call (e.g. it cannot hold the next
+// log event in the IR). Close must be called to free the underlying memory and
+// failure to do so will result in a memory leak.
+type Reader struct {
+	Deserializer
+	ioReader io.Reader
+	buf      []byte
+	start    int
+	end      int
 }
 
-// adjust_buf mutates the IrReader.buf so that the next read call has space to
-// fill. If the start of IrReader.buf is not 0 the contents of buf will be
-// shifted back, so that end -= start and start = 0. If start is already 0 the
-// buffer is grown.
-func (self *IrReader) adjust_buf() int {
-	if 0 == self.start {
-		buf := make([]byte, len(self.buf)*2)
-		copy(buf, self.buf[self.start:self.end])
-		self.buf = buf
-	} else {
-		copy(self.buf, self.buf[self.start:self.end])
+// NewReaderSize creates a new [Reader] and uses [DeserializePreamble] to read a
+// CLP IR preamble from the [io.Reader], r. size denotes the initial size to use
+// for the Reader's buffer that the io.Reader is read into. This buffer will
+// grow if it is too small to contain the preamble or next log event. Returns:
+//   - success: valid [*Reader], nil
+//   - error: nil [*Reader], error propagated from [DeserializePreamble] or
+//     [ioReader.Read]
+func NewReaderSize(r io.Reader, size int) (*Reader, error) {
+	irr := &Reader{nil, r, make([]byte, size), 0, 0}
+	var err error
+	if _, err = irr.read(); nil != err {
+		return nil, err
 	}
-	self.end -= self.start
-	self.start = 0
-	return len(self.buf)
-}
-
-// read is a wrapper around the Read call to the io.Reader. It uses the correct
-// range in buf and adjusts the range accordingly. On success nil is returned.
-// On failure an error whose type depends on the io.Reader is returned.
-// Note we do not return io.EOF if n > 0 as we have not yet consumed the IR.
-func (self *IrReader) read(r io.Reader) error {
-	n, err := r.Read(self.buf[self.end:])
-	if nil != err && io.EOF != err {
-		return err
-	}
-	self.end += n
-	return nil
-}
-
-// ReadPreamble uses [DecodePreamble] to read an IR stream preamble from r.
-// bufSize denotes the initial size to use for the underlying buffer io.Reader
-// is read into. This buffer will grow if it is too small to contain the
-// preamble or next log event.
-// Return values:
-//   - nil == error: success
-//   - [IRError] or [encoding/json]: error propagated from [DecodePreamble]
-//   - [io] error type or underlying reader type: io.Reader.Read failed
-func ReadPreamble(r io.Reader, bufSize int) (IrReader, error) {
-	irr := IrReader{nil, make([]byte, bufSize), 0, 0}
-
-	if err := irr.read(r); nil != err {
-		return irr, err
-	}
-
 	for {
-		var err error
-		irr.IrDecoder, irr.start, err = DecodePreamble(irr.buf[irr.start:irr.end])
-		if nil == err {
-			return irr, nil
-		} else if IncompleteIR == err {
-			irr.adjust_buf()
-			if err := irr.read(r); nil != err {
-				return irr, err
-			}
-		} else {
-			return irr, err
+		irr.Deserializer, irr.start, err = DeserializePreamble(irr.buf[irr.start:irr.end])
+		if IncompleteIr != err {
+			break
+		}
+		if _, err = irr.fillBuf(); nil != err {
+			break
 		}
 	}
+	if nil != err {
+		return nil, err
+	}
+	return irr, nil
 }
 
+// Returns [NewReaderSize] with a default buffer size of 1MB.
+func NewReader(r io.Reader) (*Reader, error) {
+	return NewReaderSize(r, 1024*1024)
+}
 
-// ReadNextLogEvent uses [DecodeNextLogEvent] to read from the IR stream in r.
-// bufSize denotes the initial size to use for the underlying buffer io.Reader
-// is read into. This buffer will grow if it is too small to contain the
-// preamble or next log event.
-// Return values:
-//   - nil == error: success
-//   - IRError.Eof: CLP found the IR stream EOF tag
-//   - io.EOF: io.Reader.Read got EOF
-//   - else:
-//     - type [IRError]: error propagated from [DecodeNextLogEvent]
-//     - type from io.Reader: io.Reader.Read failed
-func (self *IrReader) ReadNextLogEvent(r io.Reader) (ffi.LogEvent, error) {
+// Close will delete the underlying C++ allocated memory used by the
+// deserializer. Failure to call Close will result in a memory leak.
+func (self *Reader) Close() error {
+	return self.Deserializer.Close()
+}
+
+// Read uses [DeserializeLogEvent] to read from the CLP IR byte stream. The
+// underlying buffer will grow if it is too small to contain the next log event.
+// On error returns:
+//   - nil *ffi.LogEventView
+//   - error propagated from [DeserializeLogEvent] or [ioReader.Read]
+func (self *Reader) Read() (*ffi.LogEventView, error) {
+	var event *ffi.LogEventView
+	var pos int
+	var err error
 	for {
-		event, offset, err := self.DecodeNextLogEvent(self.buf[self.start:self.end])
-		if nil == err {
-			self.start += offset
-			return event, nil
-		} else if IncompleteIR == err {
-			self.adjust_buf()
-			if err := self.read(r); nil != err {
-				return event, err
-			}
-		} else {
-			return event, err
+		event, pos, err = self.DeserializeLogEvent(self.buf[self.start:self.end])
+		if IncompleteIr != err {
+			break
+		}
+		if _, err = self.fillBuf(); nil != err {
+			break
 		}
 	}
+	if nil != err {
+		return nil, err
+	}
+	self.start += pos
+	return event, nil
 }
 
-// Read the IR stream using the io.Reader until f returns true for a
-// [ffi.LogEvent]. The succeeding LogEvent is returned. Errors are propagated
-// from ReadNextLogEvent.
-func (self *IrReader) ReadToFunc(r io.Reader, f func(ffi.LogEvent) bool) (ffi.LogEvent, error) {
+func (self *Reader) ReadToWildcardMatch(
+	timeInterval search.TimestampInterval,
+	queries []search.WildcardQuery,
+) (*ffi.LogEventView, int, error) {
+	var event *ffi.LogEventView
+	var pos int
+	var matchingQuery int
+	var err error
+	mergedQuery := search.MergeWildcardQueries(queries)
 	for {
-		event, err := self.ReadNextLogEvent(r)
+		event, pos, matchingQuery, err = self.DeserializeWildcardMatch(
+			self.buf[self.start:self.end],
+			timeInterval,
+			mergedQuery,
+		)
+		if IncompleteIr != err {
+			break
+		}
+		if _, err = self.fillBuf(); nil != err {
+			break
+		}
+	}
+	if nil != err {
+		return nil, -1, err
+	}
+	self.start += pos
+	return event, matchingQuery, nil
+}
+
+// Read the CLP IR byte stream until f returns true for a [ffi.LogEventView].
+// The successful LogEvent is returned. Errors are propagated from [Read].
+func (self *Reader) ReadToFunc(
+	f func(*ffi.LogEventView) bool,
+) (*ffi.LogEventView, error) {
+	for {
+		event, err := self.Read()
 		if nil != err {
 			return event, err
 		}
@@ -122,26 +132,72 @@ func (self *IrReader) ReadToFunc(r io.Reader, f func(ffi.LogEvent) bool) (ffi.Lo
 	}
 }
 
-// Read the IR stream using the io.Reader until [ffi.LogEvent.Timestamp] >=
-// time. Errors are propagated from ReadNextLogEvent.
-func (self *IrReader) ReadToEpochTime(r io.Reader, time ffi.EpochTimeMs) (ffi.LogEvent, error) {
-	return self.ReadToFunc(r, func(e ffi.LogEvent) bool { return e.Timestamp >= time })
+// Read the CLP IR stream until a [ffi.LogEventView] is greater than or equal to
+// the given timestamp. Errors are propagated from [ReadToFunc].
+func (self *Reader) ReadToEpochTime(
+	time ffi.EpochTimeMs,
+) (*ffi.LogEventView, error) {
+	return self.ReadToFunc(func(event *ffi.LogEventView) bool { return event.Timestamp >= time })
 }
 
-// Read the IR stream using the io.Reader until [bytes/Contains] returns true
-// for [ffi.LogEvent.Msg] and subslice. Errors are propagated from ReadNextLogEvent.
-func (self *IrReader) ReadToContains(r io.Reader, subslice []byte) (ffi.LogEvent, error) {
-	return self.ReadToFunc(r, func(e ffi.LogEvent) bool { return bytes.Contains(e.Msg, subslice) })
+// Read the CLP IR stream until [strings/Contains] returns true for a
+// [ffi.LogEventView] and the given sub string. Errors are propagated from
+// [ReadToFunc].
+func (self *Reader) ReadToContains(substr string) (*ffi.LogEventView, error) {
+	fn := func(event *ffi.LogEventView) bool {
+		return strings.Contains(event.LogMessageView, substr)
+	}
+	return self.ReadToFunc(fn)
 }
 
-// Read the IR stream using the io.Reader until [bytes/HasPrefix] returns true
-// for [ffi.LogEvent.Msg] and prefix. Errors are propagated from ReadNextLogEvent.
-func (self *IrReader) ReadToPrefix(r io.Reader, prefix []byte) (ffi.LogEvent, error) {
-	return self.ReadToFunc(r, func(e ffi.LogEvent) bool { return bytes.HasPrefix(e.Msg, prefix) })
+// Read the CLP IR stream until [strings/HasPrefix] returns true for a
+// [ffi.LogEventView] and the given prefix. Errors are propagated from
+// [ReadToFunc].
+func (self *Reader) ReadToPrefix(prefix string) (*ffi.LogEventView, error) {
+	fn := func(event *ffi.LogEventView) bool {
+		return strings.HasPrefix(event.LogMessageView, prefix)
+	}
+	return self.ReadToFunc(fn)
 }
 
-// Read the IR stream using the io.Reader until [bytes/HasSuffix] returns true
-// for [ffi.LogEvent.Msg] field and suffix. Errors are propagated from ReadNextLogEvent.
-func (self *IrReader) ReadToSuffix(r io.Reader, suffix []byte) (ffi.LogEvent, error) {
-	return self.ReadToFunc(r, func(e ffi.LogEvent) bool { return bytes.HasSuffix(e.Msg, suffix) })
+// Read the CLP IR stream until [strings/HasSuffix] returns true for a
+// [ffi.LogEventView] and the given suffix. Errors are propagated from
+// [ReadToFunc].
+func (self *Reader) ReadToSuffix(suffix string) (*ffi.LogEventView, error) {
+	fn := func(event *ffi.LogEventView) bool {
+		return strings.HasSuffix(event.LogMessageView, suffix)
+	}
+	return self.ReadToFunc(fn)
+}
+
+// fillBuf shifts the remaining valid IR in [Reader.buf] to the front and then
+// calls [ioReader.Read] to fill the remainder with more IR. Before reading into
+// the buffer, it is grown by 1.5x if more than 1/4th of it is unconsumed IR.
+// Forwards the return of [ioReader.Read].
+func (self *Reader) fillBuf() (int, error) {
+	if (self.end - self.start) > len(self.buf)>>2 {
+		buf := make([]byte, len(self.buf)+len(self.buf)/2)
+		copy(buf, self.buf[self.start:self.end])
+		self.buf = buf
+	} else {
+		copy(self.buf, self.buf[self.start:self.end])
+	}
+	self.end -= self.start
+	self.start = 0
+	n, err := self.read()
+	return n, err
+}
+
+// read is a wrapper around a io.Reader.Read call. It uses the correct range in
+// buf and adjusts the range accordingly. Always returns the number of bytes
+// read. On success nil is returned. On failure an error is forwarded from
+// [io.Reader], unless n > 0 and io.EOF == err as we have not yet consumed the
+// CLP IR.
+func (self *Reader) read() (int, error) {
+	n, err := self.ioReader.Read(self.buf[self.end:])
+	self.end += n
+	if nil != err && io.EOF != err {
+		return n, err
+	}
+	return n, nil
 }

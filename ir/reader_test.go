@@ -1,24 +1,24 @@
 package ir
 
 import (
-	"fmt"
-	"io"
+	"math"
 	"os"
 	"testing"
 	"time"
-	"runtime"
 
 	"github.com/klauspost/compress/zstd"
-	"github.com/y-scope/clp-ffi-go/test"
+	"github.com/y-scope/clp-ffi-go/ffi"
+	"github.com/y-scope/clp-ffi-go/search"
 )
 
-func TestFourByteIrReader(t *testing.T) {
-	if 0 == len(os.Args) {
-		t.Fatalf("This test requires an input ir stream from -args: %v", os.Args)
+func TestIrReader(t *testing.T) {
+	var fpath string = os.Getenv("go_test_ir")
+	if "" == fpath {
+		t.Skip("Set an input ir stream using the env variable: go_test_ir")
 	}
 	var err error
 	var file *os.File
-	if file, err = os.Open(os.Args[len(os.Args)-1]); nil != err {
+	if file, err = os.Open(fpath); nil != err {
 		t.Fatalf("os.Open failed: %v", err)
 	}
 	defer file.Close()
@@ -26,25 +26,32 @@ func TestFourByteIrReader(t *testing.T) {
 	reader, _ := zstd.NewReader(file)
 	defer reader.Close()
 
-	var irr IrReader
-	if irr, err = ReadPreamble(reader, 4096); nil != err {
-		t.Fatalf("ReadPreamble failed: %v", err)
+	var irr *Reader
+	if irr, err = NewReaderSize(reader, 512*1024*1024); nil != err {
+		t.Fatalf("NewReader failed: %v", err)
 	}
+	defer irr.Close()
 
-	fins := []test.Finalizer{}
-	for {
-		// log, err := irr.ReadNextLogEvent(reader)
-		log, err := irr.ReadToContains(reader, []byte("ERROR"))
-		// run GC to try and test that log.Msg isn't freed by finalizer
-		runtime.GC()
-		if nil == err {
-			fmt.Printf("msg: %v | %v", time.UnixMilli(int64(log.Timestamp)), string(log.Msg))
-		} else if Eof == err || io.EOF == err {
-			break
-		} else {
-			t.Fatalf("ReadNextLogEvent failed: %v", err)
-		}
-		fins = append(fins, test.NewFinalizer(&log))
+	interval := search.TimestampInterval{Lower: 0, Upper: math.MaxInt64}
+	queries := []search.WildcardQuery{
+		search.NewWildcardQuery("*ERROR*", true),
+		search.NewWildcardQuery("*WARN*", true),
 	}
-	test.AssertFinalizers(t, fins...)
+	for {
+		var log *ffi.LogEventView
+		// log, err = irr.Read()
+		// log, err = irr.ReadToContains("ERROR")
+		// var _ search.WildcardQuery
+		log, _, err = irr.ReadToWildcardMatch(
+			interval,
+			queries,
+		)
+		if nil != err {
+			break
+		}
+		t.Logf("msg: %v | %v", time.UnixMilli(int64(log.Timestamp)), log.LogMessageView)
+	}
+	if EndOfIr != err {
+		t.Fatalf("Reader.Read failed: %v", err)
+	}
 }

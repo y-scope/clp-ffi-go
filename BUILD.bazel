@@ -1,53 +1,18 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
     name = "libclp_ffi",
-    srcs = select({
-        "@io_bazel_rules_go//go/platform:android_amd64": [
-            "lib/libclp_ffi_linux_amd64.so",
-        ],
-        "@io_bazel_rules_go//go/platform:android_arm64": [
-            "lib/libclp_ffi_linux_arm64.so",
-        ],
-        "@io_bazel_rules_go//go/platform:darwin_amd64": [
-            "lib/libclp_ffi_darwin_amd64.so",
-        ],
-        "@io_bazel_rules_go//go/platform:darwin_arm64": [
-            "lib/libclp_ffi_darwin_arm64.so",
-        ],
-        "@io_bazel_rules_go//go/platform:ios_amd64": [
-            "lib/libclp_ffi_darwin_amd64.so",
-        ],
-        "@io_bazel_rules_go//go/platform:ios_arm64": [
-            "lib/libclp_ffi_darwin_arm64.so",
-        ],
-        "@io_bazel_rules_go//go/platform:linux_amd64": [
-            "lib/libclp_ffi_linux_amd64.so",
-        ],
-        "@io_bazel_rules_go//go/platform:linux_arm64": [
-            "lib/libclp_ffi_linux_arm64.so",
-        ],
-        "//conditions:default": [],
-    }),
-    hdrs = glob([
-        "cpp/src/**/*.h",
-    ]),
+    srcs = glob(["cpp/src/ffi_go/**"]) + [
+    ],
+    hdrs = glob(["cpp/src/ffi_go/**/*.h"]),
     includes = [
         "cpp/src",
     ],
-    visibility = ["//visibility:public"],
-)
-
-go_library(
-    name = "clp-ffi-go",
-    srcs = ["generate.go"],
-    importpath = "github.com/y-scope/clp-ffi-go",
-    visibility = ["//visibility:public"],
-)
-
-alias(
-    name = "go_default_library",
-    actual = ":clp-ffi-go",
+    deps = [
+        "@com_github_y_scope_clp//:libclp_core",
+    ],
+    copts = [
+        "-std=c++20",
+    ],
     visibility = ["//visibility:public"],
 )
