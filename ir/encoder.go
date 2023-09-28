@@ -1,169 +1,102 @@
 package ir
 
 /*
-#include <ir/encoding.h>
+#include <ffi_go/ir/encoder.h>
 */
 import "C"
 
 import (
-	"runtime"
 	"unsafe"
 
 	"github.com/y-scope/clp-ffi-go/ffi"
 )
 
-type IrEncoder interface {
-	EncodeMessage(ts ffi.EpochTimeMs, msg string) ([]byte, int)
-	EncodeMessageUnsafe(ts ffi.EpochTimeMs, msg string) ([]byte, int)
-	TimestampInfo() TimestampInfo
+// An Encoder takes logging objects (commonly used/created by logging libraries)
+// and encodes them as CLP IR. Close must be called to free the underlying
+// memory and failure to do so will result in a memory leak.
+type Encoder[T EightByteEncoding | FourByteEncoding] interface {
+	EncodeLogMessage(logMessage ffi.LogMessage) (*LogMessageView[T], error)
+	Close() error
 }
 
-func EightByteEncodePreamble(
-	ts_pattern string,
-	ts_pattern_syntax string,
-	time_zone_id string,
-) (EightByteIrStream, []byte, int) {
-	irs, preamble, ret := EightByteEncodePreambleUnsafe(ts_pattern, ts_pattern_syntax,
-		time_zone_id)
-	if 0 != ret {
-		return irs, nil, ret
-	}
-	safePreamble := make([]byte, len(preamble))
-	copy(safePreamble, preamble)
-	return irs, safePreamble, 0
+// Return a new Encoder that produces IR using [EightByteEncoding].
+func EightByteEncoder() (Encoder[EightByteEncoding], error) {
+	return &eightByteEncoder{C.ir_encoder_eight_byte_new()}, nil
 }
 
-func EightByteEncodePreambleUnsafe(
-	ts_pattern string,
-	ts_pattern_syntax string,
-	time_zone_id string,
-) (EightByteIrStream, []byte, int) {
-	var bufPtr unsafe.Pointer
-	var bufSize uint64
-	irs := EightByteIrStream{
-		irStream[EightByteEncodedVariable]{
-			TimestampInfo{ts_pattern, ts_pattern_syntax, time_zone_id}, nil,
-		},
-	}
-	irs.cPtr = C.eight_byte_encode_preamble(
-		unsafe.Pointer(&[]byte(ts_pattern)[0]), C.size_t(len(ts_pattern)),
-		unsafe.Pointer(&[]byte(ts_pattern_syntax)[0]), C.size_t(len(ts_pattern_syntax)),
-		unsafe.Pointer(&[]byte(time_zone_id)[0]), C.size_t(len(time_zone_id)),
-		&bufPtr, unsafe.Pointer(&bufSize))
-	buf := unsafe.Slice((*byte)(bufPtr), bufSize)
-	if nil == buf {
-		return irs, nil, -2
-	}
-	runtime.SetFinalizer(&irs,
-		func(irs *EightByteIrStream) { C.delete_ir_stream_state(irs.cPtr) })
-	return irs, buf, 0
+// Return a new Encoder that produces IR using [FourByteEncoding].
+func FourByteEncoder() (Encoder[FourByteEncoding], error) {
+	return &fourByteEncoder{C.ir_encoder_four_byte_new()}, nil
 }
 
-func FourByteEncodePreamble(
-	ts_pattern string,
-	ts_pattern_syntax string,
-	time_zone_id string,
-	reference_ts ffi.EpochTimeMs,
-) (FourByteIrStream, []byte, int) {
-	irs, preamble, ret := FourByteEncodePreambleUnsafe(ts_pattern, ts_pattern_syntax,
-		time_zone_id, reference_ts)
-	if 0 != ret {
-		return irs, nil, ret
-	}
-	safePreamble := make([]byte, len(preamble))
-	copy(safePreamble, preamble)
-	return irs, safePreamble, 0
+type eightByteEncoder struct {
+	cptr unsafe.Pointer
 }
 
-func FourByteEncodePreambleUnsafe(
-	ts_pattern string,
-	ts_pattern_syntax string,
-	time_zone_id string,
-	reference_ts ffi.EpochTimeMs,
-) (FourByteIrStream, []byte, int) {
-	var bufPtr unsafe.Pointer
-	var bufSize uint64
-	irs := FourByteIrStream{
-		irStream[FourByteEncodedVariable]{
-			TimestampInfo{ts_pattern, ts_pattern_syntax, time_zone_id}, nil,
-		},
-		reference_ts,
+// Close will delete the underlying C++ allocated memory used by the
+// deserializer. Failure to call Close will result in a memory leak.
+func (self *eightByteEncoder) Close() error {
+	if nil != self.cptr {
+		C.ir_encoder_eight_byte_close(self.cptr)
+		self.cptr = nil
 	}
-	irs.cPtr = C.four_byte_encode_preamble(
-		unsafe.Pointer(&[]byte(ts_pattern)[0]), C.size_t(len(ts_pattern)),
-		unsafe.Pointer(&[]byte(ts_pattern_syntax)[0]), C.size_t(len(ts_pattern_syntax)),
-		unsafe.Pointer(&[]byte(time_zone_id)[0]), C.size_t(len(time_zone_id)),
-		C.int64_t(reference_ts), &bufPtr, unsafe.Pointer(&bufSize))
-	buf := unsafe.Slice((*byte)(bufPtr), bufSize)
-	if nil == buf {
-		return irs, nil, -2
-	}
-	runtime.SetFinalizer(&irs,
-		func(irs *FourByteIrStream) { C.delete_ir_stream_state(irs.cPtr) })
-	return irs, buf, 0
+	return nil
 }
 
-func (self *EightByteIrStream) EncodeMessage(ts ffi.EpochTimeMs, msg string) ([]byte, int) {
-	return encodeMessage(self, ts, msg)
+// Encode a log message into CLP IR, returning a view of the encoded message.
+func (self *eightByteEncoder) EncodeLogMessage(
+	logMessage ffi.LogMessage,
+) (*LogMessageView[EightByteEncoding], error) {
+	var logtype C.StringView
+	var vars C.Int64tSpan
+	var dictVars C.StringView
+	var dictVarEndOffsets C.Int32tSpan
+	err := IrError(C.ir_encoder_encode_eight_byte_log_message(
+		newCStringView(logMessage),
+		self.cptr,
+		&logtype,
+		&vars,
+		&dictVars,
+		&dictVarEndOffsets,
+	))
+	if Success != err {
+		return nil, EncodeError
+	}
+	return newLogMessageView[EightByteEncoding](logtype, vars, dictVars, dictVarEndOffsets), nil
 }
 
-func (self *FourByteIrStream) EncodeMessage(ts ffi.EpochTimeMs, msg string) ([]byte, int) {
-	return encodeMessage(self, ts, msg)
+type fourByteEncoder struct {
+	cptr unsafe.Pointer
 }
 
-func encodeMessage(irEncoder IrEncoder, ts ffi.EpochTimeMs, msg string) ([]byte, int) {
-	buf, ret := irEncoder.EncodeMessageUnsafe(ts, msg)
-	if 0 != ret {
-		return nil, ret
+// Close will delete the underlying C++ allocated memory used by the
+// deserializer. Failure to call Close will result in a memory leak.
+func (self *fourByteEncoder) Close() error {
+	if nil != self.cptr {
+		C.ir_encoder_four_byte_close(self.cptr)
+		self.cptr = nil
 	}
-	safeBuf := make([]byte, len(buf))
-	copy(safeBuf, buf)
-	return safeBuf, 0
+	return nil
 }
 
-func (self *EightByteIrStream) EncodeMessageUnsafe(ts ffi.EpochTimeMs, msg string) ([]byte, int) {
-	return encodeMessageUnsafe(self, ts, msg)
-}
-
-func (self *FourByteIrStream) EncodeMessageUnsafe(ts ffi.EpochTimeMs, msg string) ([]byte, int) {
-	buf, ret := encodeMessageUnsafe(self, self.prevTimestamp-ts, msg)
-	if 0 != ret {
-		return nil, ret
+// Encode a log message into CLP IR, returning a view of the encoded message.
+func (self *fourByteEncoder) EncodeLogMessage(
+	logMessage ffi.LogMessage,
+) (*LogMessageView[FourByteEncoding], error) {
+	var logtype C.StringView
+	var vars C.Int32tSpan
+	var dictVars C.StringView
+	var dictVarEndOffsets C.Int32tSpan
+	err := IrError(C.ir_encoder_encode_four_byte_log_message(
+		newCStringView(logMessage),
+		self.cptr,
+		&logtype,
+		&vars,
+		&dictVars,
+		&dictVarEndOffsets,
+	))
+	if Success != err {
+		return nil, EncodeError
 	}
-	self.prevTimestamp = ts
-	return buf, ret
-}
-
-// returns 0 on success, >0 on error, <0 on c error
-// returned byte slice points to c memory and is only valid until the next call
-// to encodeMessage (from either EncodeMessage or EncodeMessageUnsafe)
-func encodeMessageUnsafe[T EightByteIrStream | FourByteIrStream](
-	irstream *T,
-	timestampOrDelta ffi.EpochTimeMs,
-	msg string,
-) ([]byte, int) {
-	var ret C.int
-	var bufPtr unsafe.Pointer
-	var bufSize uint64
-
-	switch irs := any(irstream).(type) {
-	case *EightByteIrStream:
-		ret = C.eight_byte_encode_message(irs.cPtr, C.int64_t(timestampOrDelta),
-			unsafe.Pointer(&[]byte(msg)[0]), C.size_t(len(msg)),
-			&bufPtr, unsafe.Pointer(&bufSize))
-	case *FourByteIrStream:
-		ret = C.four_byte_encode_message(irs.cPtr, C.int64_t(timestampOrDelta),
-			unsafe.Pointer(&[]byte(msg)[0]), C.size_t(len(msg)),
-			&bufPtr, unsafe.Pointer(&bufSize))
-	default:
-		return nil, 2
-	}
-	if 0 > ret {
-		return nil, int(ret)
-	}
-	buf := unsafe.Slice((*byte)(bufPtr), bufSize)
-	if nil == buf {
-		return nil, 3
-	}
-	return buf, 0
+	return newLogMessageView[FourByteEncoding](logtype, vars, dictVars, dictVarEndOffsets), nil
 }

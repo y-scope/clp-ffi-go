@@ -4,7 +4,7 @@
 package ir
 
 /*
-#cgo CFLAGS: -I${SRCDIR}/../cpp/src/
+#cgo CPPFLAGS: -I${SRCDIR}/../include/
 #cgo external LDFLAGS:
 */
 import "C"

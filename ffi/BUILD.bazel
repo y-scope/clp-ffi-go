@@ -3,12 +3,8 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "ffi",
     srcs = [
-        "cgo_amd64.go",
-        "cgo_arm64.go",
         "ffi.go",
     ],
-    cgo = True,
-    cdeps = ["//:libclp_ffi"],
     importpath = "github.com/y-scope/clp-ffi-go/ffi",
     visibility = ["//visibility:public"],
 )

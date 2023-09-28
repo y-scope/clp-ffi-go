@@ -2,4 +2,4 @@
 //go:generate cmake --build cpp/build -j
 //go:generate cmake --install cpp/build --prefix .
 
-package ffi
+package clp_ffi_go

@@ -15,7 +15,7 @@ Getting started
 To add the module to your project run: ``go get github.com/y-scope/clp-ffi-go``
 
 Here's an example showing how to decode each log event containing "ERROR" from
-a CLP IR stream.
+a CLP IR byte stream.
 
 .. code:: golang
 
@@ -24,21 +24,29 @@ a CLP IR stream.
     "time"
 
     "github.com/klauspost/compress/zstd"
+    "github.com/y-scope/clp-ffi-go/ffi"
     "github.com/y-scope/clp-ffi-go/ir"
   )
 
   file, _ := os.Open("log-file.clp.zst")
+  defer file.Close()
   zstdReader, _ := zstd.NewReader(file)
+  defer zstdReader.Close()
+  irReader, _ := ir.NewReader(zstdReader)
+  defer irReader.Close()
 
-  irReader, _ := ir.ReadPreamble(zstdReader, 4096)
+  var err error
   for {
-    // To read every log event replace ReadToContains with
-    // ReadNextLogEvent(zstdReader)
-    log, err := irReader.ReadToContains(zstdReader, []byte("ERROR"))
-    if ir.Eof == err || io.EOF == err {
+    var log *ffi.LogEventView
+    // To read every log event replace ReadToContains with Read()
+    log, err = irReader.ReadToContains("ERROR")
+    if nil != err {
       break
     }
-    fmt.Printf("%v %v", time.UnixMilli(int64(log.Timestamp)), string(log.Msg))
+    fmt.Printf("%v %v", time.UnixMilli(int64(log.Timestamp)), log.LogMessageView)
+  }
+  if ir.EndOfIr != err {
+    fmt.Printf("Reader.Read failed: %v", err)
   }
 
 Building
@@ -49,14 +57,10 @@ as well as stringify ``Enum`` style types.
 1. Install requirements:
 
    a. A C++ compiler that supports C++17
-   #. CMake 3.5.1 or higher
+   #. CMake 3.11 or higher
    #. The Stringer tool: https://pkg.go.dev/golang.org/x/tools/cmd/stringer
 
       - ``go install golang.org/x/tools/cmd/stringer@latest``
-
-#. ``git submodule update --init --recursive``
-
-   - Pull all submodules in preparation for building
 
 #. ``go generate ./...``
 
@@ -72,12 +76,12 @@ __ https://github.com/bazelbuild/rules_go/blob/master/docs/go/core/rules.md#go_l
 
 Testing
 -------
-To run all unit tests run: ``go test ./... -args $(readlink -f clp-ir-stream.clp.zst)``
+To run all unit tests run: ``go_test_ir="/path/to/my-ir.clp.zst" go test ./...``
 
-- The ``ir`` package's tests currently requries an existing CLP IR file
-  compressed with zstd. This file's path is taken as the only argument to the
-  test and is supplied after ``-args``. It can be an absolute path or a path
-  relative to the ``ir`` directory.
+- Some of the ``ir`` package's tests currently requries an existing CLP IR file
+  compressed with zstd. This file's path is taken as an environment variable
+  named ``go_test_ir``. It can be an absolute path or a path relative to the
+  ``ir`` directory.
 
 Why not build with cgo?
 '''''''''''''''''''''''
@@ -100,5 +104,6 @@ For example, to run the tests using the ``external`` you can run:
 
 .. code:: bash
 
-  CGO_LDFLAGS="-L./lib -lclp_ffi_linux_amd64 -lstdc++" \
-  go test -tags external,test ./... -args $(readlink -f clp-ir-stream.clp.zst)
+  CGO_LDFLAGS="-L/path/to/external_libs -lclp_ffi_linux_amd64 -Wl,-rpath=/path/to/external_libs" \
+  go_test_ir="/path/to/my-ir.clp.zst" \
+  go test -tags external ./...
