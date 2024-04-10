@@ -84,7 +84,7 @@ IndentCaseBlocks: false
 IndentCaseLabels: true
 IndentExternBlock: Indent
 IndentGotoLabels: false
-IndentPPDirectives: BeforeHash
+IndentPPDirectives: None
 IndentRequiresClause: false
 IndentWrappedFunctionNames: false
 InsertBraces: true

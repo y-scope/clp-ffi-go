@@ -4,68 +4,76 @@
 // NOLINTBEGIN(modernize-deprecated-headers)
 // NOLINTBEGIN(modernize-use-using)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 
-// TODO: replace with clp c-compatible header once it exists
-typedef int64_t epoch_time_ms_t;
+    // TODO: replace with clp c-compatible header once it exists
+    typedef int64_t epoch_time_ms_t;
 
-/**
- * A span of a bool array passed down through Cgo.
- */
-typedef struct {
-    bool* m_data;
-    size_t m_size;
-} BoolSpan;
+    /**
+     * A span of a bool array passed down through Cgo.
+     */
+    typedef struct {
+        bool* m_data;
+        size_t m_size;
+    } BoolSpan;
 
-/**
- * A span of a byte array passed down through Cgo.
- */
-typedef struct {
-    void* m_data;
-    size_t m_size;
-} ByteSpan;
+    /**
+     * A span of a byte array passed down through Cgo.
+     */
+    typedef struct {
+        void* m_data;
+        size_t m_size;
+    } ByteSpan;
 
-/**
- * A span of a Go int32 array passed down through Cgo.
- */
-typedef struct {
-    int32_t* m_data;
-    size_t m_size;
-} Int32tSpan;
+    /**
+     * A span of a Go int32 array passed down through Cgo.
+     */
+    typedef struct {
+        int32_t* m_data;
+        size_t m_size;
+    } Int32tSpan;
 
-/**
- * A span of a Go int64 array passed down through Cgo.
- */
-typedef struct {
-    int64_t* m_data;
-    size_t m_size;
-} Int64tSpan;
+    /**
+     * A span of a Go int64 array passed down through Cgo.
+     */
+    typedef struct {
+        int64_t* m_data;
+        size_t m_size;
+    } Int64tSpan;
 
-/**
- * A span of a Go int/C.size_t array passed down through Cgo.
- */
-typedef struct {
-    size_t* m_data;
-    size_t m_size;
-} SizetSpan;
+    /**
+     * A span of a Go int/C.size_t array passed down through Cgo.
+     */
+    typedef struct {
+        size_t* m_data;
+        size_t m_size;
+    } SizetSpan;
 
-/**
- * A view of a Go string passed down through Cgo.
- */
-typedef struct {
-    char const* m_data;
-    size_t m_size;
-} StringView;
+    /**
+     * A view of a Go string passed down through Cgo.
+     */
+    typedef struct {
+        char const* m_data;
+        size_t m_size;
+    } StringView;
 
-/**
- * A view of a Go ffi.LogEvent passed down through Cgo.
- */
-typedef struct {
-    StringView m_log_message;
-    epoch_time_ms_t m_timestamp;
-} LogEventView;
+    /**
+     * A view of a Go ffi.LogEvent passed down through Cgo.
+     */
+    typedef struct {
+        StringView m_log_message;
+        epoch_time_ms_t m_timestamp;
+    } LogEventView;
+
+#ifdef __cplusplus
+}
+#endif
 
 // NOLINTEND(modernize-use-using)
 // NOLINTEND(modernize-deprecated-headers)
