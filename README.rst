@@ -74,6 +74,13 @@ arguments or modifications.
 
 __ https://github.com/bazelbuild/rules_go/blob/master/docs/go/core/rules.md#go_library-deps
 
+Why not build with cgo?
+'''''''''''''''''''''''
+The primary reason we choose to build with CMake rather than directly with cgo,
+is to ease code maintenance by maximizing the reuse of CLP's code with no
+modifications. If a platform you use is not supported by the pre-built
+libraries, please open an issue and we can integrate it into our build process.
+
 Testing
 -------
 To run all unit tests run: ``go_test_ir="/path/to/my-ir.clp.zst" go test ./...``
@@ -82,13 +89,6 @@ To run all unit tests run: ``go_test_ir="/path/to/my-ir.clp.zst" go test ./...``
   compressed with zstd. This file's path is taken as an environment variable
   named ``go_test_ir``. It can be an absolute path or a path relative to the
   ``ir`` directory.
-
-Why not build with cgo?
-'''''''''''''''''''''''
-The primary reason we choose to build with CMake rather than directly with cgo,
-is to ease code maintenance by maximizing the reuse of CLP's code with no
-modifications. If a platform you use is not supported by the pre-built
-libraries, please open an issue and we can integrate it into our build process.
 
 Using an external C++ library
 -----------------------------
