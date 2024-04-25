@@ -5,14 +5,14 @@
 // NOLINTBEGIN(modernize-use-trailing-return-type)
 // NOLINTBEGIN(modernize-use-using)
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdint.h>
 #include <stdlib.h>
 
 #include <ffi_go/defs.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
     /**
      * Create a ir::Decoder used as the underlying data storage for a Go ir.Decoder.

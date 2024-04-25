@@ -5,13 +5,13 @@
 // NOLINTBEGIN(modernize-use-trailing-return-type)
 // NOLINTBEGIN(modernize-use-using)
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdbool.h>
 
 #include <ffi_go/defs.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
     /**
      * A timestamp interval of [m_lower, m_upper).

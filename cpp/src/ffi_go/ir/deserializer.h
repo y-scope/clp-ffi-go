@@ -4,15 +4,15 @@
 // NOLINTBEGIN(modernize-deprecated-headers)
 // NOLINTBEGIN(modernize-use-trailing-return-type)
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdint.h>
 #include <stdlib.h>
 
 #include <ffi_go/defs.h>
 #include <ffi_go/search/wildcard_query.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
     /**
      * Clean up the underlying ir::Deserializer of a Go ir.Deserializer.

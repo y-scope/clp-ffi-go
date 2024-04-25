@@ -9,6 +9,10 @@
 
 #include <ffi_go/defs.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Clean up the underlying ir::Serializer of a Go ir.Serializer.
  * @param[in] ir_serializer Address of a ir::Serializer created and returned by
@@ -103,6 +107,10 @@ int ir_serializer_serialize_four_byte_log_event(
         void* ir_serializer,
         ByteSpan* ir_view
 );
+
+#ifdef __cplusplus
+}
+#endif
 
 // NOLINTEND(modernize-use-trailing-return-type)
 // NOLINTEND(modernize-deprecated-headers)
