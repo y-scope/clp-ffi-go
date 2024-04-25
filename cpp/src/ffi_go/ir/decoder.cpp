@@ -29,7 +29,7 @@ namespace {
             void* ir_decoder,
             StringView* log_msg_view
     ) -> int {
-        using encoded_var_t = std::conditional<
+        using encoded_var_t = typename std::conditional<
                 std::is_same_v<Int64tSpan, encoded_var_view_t>,
                 ffi::eight_byte_encoded_variable_t,
                 ffi::four_byte_encoded_variable_t>::type;
