@@ -17,7 +17,7 @@
 void ir_serializer_close(void* ir_serializer);
 
 /**
- * Given the fields of a CLP IR premable, serialize them into an IR byte stream
+ * Given the fields of a CLP IR preamble, serialize them into an IR byte stream
  * with eight byte encoding. An ir::Serializer will be allocated to use as the
  * backing storage for a Go ir.Serializer (i.e. subsequent calls to
  * ir_serializer_serialize_*_log_event). All pointer parameters must be non-null
@@ -29,7 +29,7 @@ void ir_serializer_close(void* ir_serializer);
  * @param[in] time_zone_id TZID timezone of the timestamps in the IR
  * @param[out] ir_serializer_ptr Address of a new ir::Serializer
  * @param[out] ir_view View of a IR buffer containing the serialized preamble
- * @return ffi::ir_stream::IRErrorCode forwared from
+ * @return ffi::ir_stream::IRErrorCode forwarded from
  *     ffi::ir_stream::eight_byte_encoding::encode_preamble
  */
 int ir_serializer_serialize_eight_byte_preamble(
@@ -41,7 +41,7 @@ int ir_serializer_serialize_eight_byte_preamble(
 );
 
 /**
- * Given the fields of a CLP IR premable, serialize them into an IR byte stream
+ * Given the fields of a CLP IR preamble, serialize them into an IR byte stream
  * with four byte encoding. An ir::Serializer will be allocated to use as the
  * backing storage for a Go ir.Serializer (i.e. subsequent calls to
  * ir_serializer_serialize_*_log_event). All pointer parameters must be non-null
@@ -53,7 +53,7 @@ int ir_serializer_serialize_eight_byte_preamble(
  * @param[in] time_zone_id TZID timezone of the timestamps in the IR
  * @param[out] ir_serializer_ptr Address of a new ir::Serializer
  * @param[out] ir_view View of a IR buffer containing the serialized preamble
- * @return ffi::ir_stream::IRErrorCode forwared from
+ * @return ffi::ir_stream::IRErrorCode forwarded from
  *     ffi::ir_stream::four_byte_encoding::encode_preamble
  */
 int ir_serializer_serialize_four_byte_preamble(
@@ -74,7 +74,7 @@ int ir_serializer_serialize_four_byte_preamble(
  * @param[in] timestamp Timestamp of the log event to serialize
  * @param[in] ir_serializer ir::Serializer object to be used as storage
  * @param[out] ir_view View of a IR buffer containing the serialized log event
- * @return ffi::ir_stream::IRErrorCode forwared from
+ * @return ffi::ir_stream::IRErrorCode forwarded from
  *   ffi::ir_stream::eight_byte_encoding::encode_message
  */
 int ir_serializer_serialize_eight_byte_log_event(
@@ -94,7 +94,7 @@ int ir_serializer_serialize_eight_byte_log_event(
  *     IR stream
  * @param[in] ir_serializer ir::Serializer object to be used as storage
  * @param[out] ir_view View of a IR buffer containing the serialized log event
- * @return ffi::ir_stream::IRErrorCode forwared from
+ * @return ffi::ir_stream::IRErrorCode forwarded from
  *     ffi::ir_stream::four_byte_encoding::encode_message
  */
 int ir_serializer_serialize_four_byte_log_event(

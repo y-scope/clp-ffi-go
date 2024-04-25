@@ -21,7 +21,7 @@ namespace {
      * Generic helper for ir_decoder_decode_*_log_message
      */
     template <class encoded_var_view_t>
-    auto decode_log_message(
+    [[nodiscard]] auto decode_log_message(
             StringView logtype,
             encoded_var_view_t vars,
             StringView dict_vars,
@@ -29,10 +29,10 @@ namespace {
             void* ir_decoder,
             StringView* log_msg_view
     ) -> int {
-        typedef typename std::conditional<
+        using encoded_var_t = std::conditional<
                 std::is_same_v<Int64tSpan, encoded_var_view_t>,
                 ffi::eight_byte_encoded_variable_t,
-                ffi::four_byte_encoded_variable_t>::type encoded_var_t;
+                ffi::four_byte_encoded_variable_t>::type;
         Decoder* decoder{static_cast<Decoder*>(ir_decoder)};
         ffi_go::LogMessage& log_msg = decoder->m_log_message;
         log_msg.reserve(logtype.m_size + dict_vars.m_size);
@@ -47,7 +47,7 @@ namespace {
                     dict_var_end_offsets.m_data,
                     dict_var_end_offsets.m_size
             );
-        } catch (ffi::EncodingException& e) {
+        } catch (ffi::EncodingException const& e) {
             err = IRErrorCode_Decode_Error;
         }
 

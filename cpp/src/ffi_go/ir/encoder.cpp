@@ -30,12 +30,12 @@ namespace {
             StringView* dict_vars,
             Int32tSpan* dict_var_end_offsets
     ) -> int {
-        typedef typename std::conditional<
+        using encoded_var_t std::conditional<
                 std::is_same_v<Int64tSpan, encoded_var_view_t>,
                 ffi::eight_byte_encoded_variable_t,
-                ffi::four_byte_encoded_variable_t>::type encoded_var_t;
+                ffi::four_byte_encoded_variable_t>::type;
         Encoder<encoded_var_t>* encoder{static_cast<Encoder<encoded_var_t>*>(ir_encoder)};
-        LogMessage<encoded_var_t>& ir_log_msg = encoder->m_log_message;
+        auto& ir_log_msg{encoder->m_log_message};
         ir_log_msg.reserve(log_message.m_size);
 
         std::string_view const log_msg_view{log_message.m_data, log_message.m_size};
@@ -53,14 +53,14 @@ namespace {
 
         // dict_var_offsets contains begin_pos followed by end_pos of each
         // dictionary variable in the message
-        int32_t prev_end_off = 0;
+        int32_t prev_end_off{0};
         for (size_t i = 0; i < dict_var_offsets.size(); i += 2) {
-            int32_t const begin_pos = dict_var_offsets[i];
-            int32_t const end_pos = dict_var_offsets[i + 1];
+            int32_t const begin_pos{dict_var_offsets[i]};
+            int32_t const end_pos{dict_var_offsets[i + 1]};
             ir_log_msg.m_dict_vars.insert(
-                    ir_log_msg.m_dict_vars.begin() + prev_end_off,
-                    log_msg_view.begin() + begin_pos,
-                    log_msg_view.begin() + end_pos
+                    ir_log_msg.m_dict_vars.cbegin() + prev_end_off,
+                    log_msg_view.cbegin() + begin_pos,
+                    log_msg_view.cbegin() + end_pos
             );
             prev_end_off = prev_end_off + (end_pos - begin_pos);
             ir_log_msg.m_dict_var_end_offsets.push_back(prev_end_off);

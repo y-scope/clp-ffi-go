@@ -14,8 +14,9 @@ extern "C" auto wildcard_query_delete(void* str) -> void {
 }
 
 extern "C" auto wildcard_query_clean(StringView query, void** ptr) -> StringView {
-    auto* clean = new std::string{
-            clean_up_wildcard_search_string(std::string_view{query.m_data, query.m_size})};
+    auto* clean{new std::string{
+            clean_up_wildcard_search_string(std::string_view{query.m_data, query.m_size})
+    }};
     *ptr = clean;
     return {clean->data(), clean->size()};
 }

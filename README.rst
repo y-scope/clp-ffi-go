@@ -78,7 +78,7 @@ Testing
 -------
 To run all unit tests run: ``go_test_ir="/path/to/my-ir.clp.zst" go test ./...``
 
-- Some of the ``ir`` package's tests currently requries an existing CLP IR file
+- Some of the ``ir`` package's tests currently require an existing CLP IR file
   compressed with zstd. This file's path is taken as an environment variable
   named ``go_test_ir``. It can be an absolute path or a path relative to the
   ``ir`` directory.

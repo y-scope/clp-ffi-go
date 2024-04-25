@@ -22,7 +22,7 @@ extern "C" {
     void ir_deserializer_close(void* ir_deserializer);
 
     /**
-     * Given a CLP IR buffer (any encoding), attempt to deserialize a premable and
+     * Given a CLP IR buffer (any encoding), attempt to deserialize a preamble and
      * extract its information. An ir::Deserializer will be allocated to use as the
      * backing storage for a Go ir.Deserializer (i.e. subsequent calls to
      * ir_deserializer_deserialize_*_log_event). It is left to the Go layer to read

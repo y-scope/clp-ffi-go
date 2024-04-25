@@ -38,7 +38,7 @@ extern "C" {
      * @param[in] vars Array of encoded variables
      * @param[in] dict_vars String containing all dictionary variables concatenated
      *     together
-     * @param[in] dict_var_end_offsets Array of offsets into dict_vars makring the
+     * @param[in] dict_var_end_offsets Array of offsets into dict_vars marking the
      *     end of a dictionary variable
      * @param[in] ir_decoder ir::Decoder to be used as storage for the decoded log
      *     message

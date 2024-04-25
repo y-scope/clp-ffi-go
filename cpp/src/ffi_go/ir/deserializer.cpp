@@ -30,7 +30,7 @@ namespace {
      * Generic helper for ir_deserializer_deserialize_*_log_event
      */
     template <class encoded_variable_t>
-    auto deserialize_log_event(
+    [[nodiscard]] auto deserialize_log_event(
             ByteSpan ir_view,
             void* ir_deserializer,
             size_t* ir_pos,
@@ -41,7 +41,7 @@ namespace {
      * Generic helper for ir_deserializer_deserialize_*_wildcard_match
      */
     template <class encoded_variable_t>
-    auto deserialize_wildcard_match(
+    [[nodiscard]] auto deserialize_wildcard_match(
             ByteSpan ir_view,
             void* ir_deserializer,
             TimestampInterval time_interval,
@@ -121,8 +121,9 @@ namespace {
         std::vector<std::pair<std::string_view, bool>> queries(merged_query.m_end_offsets.m_size);
         size_t pos{0};
         for (size_t i{0}; i < merged_query.m_end_offsets.m_size; i++) {
-            queries[i].first = query_view.substr(pos, end_offsets[i]);
-            queries[i].second = case_sensitivity[i];
+            auto& [query_str_view, is_case_sensitive]{queries[i]};
+            query_str_view = query_view.substr(pos, end_offsets[i]);
+            is_case_sensitive = case_sensitivity[i];
             pos += end_offsets[i];
         }
 
@@ -178,19 +179,22 @@ namespace {
             if (time_interval.m_lower > deserializer->m_timestamp) {
                 continue;
             }
-            std::pair<bool, size_t> const match{query_fn(deserializer->m_log_event.m_log_message)};
-            if (match.first) {
-                size_t pos{0};
-                if (ErrorCode_Success != ir_buf.try_get_pos(pos)) {
-                    return static_cast<int>(IRErrorCode_Decode_Error);
-                }
-                *ir_pos = pos;
-                log_event->m_log_message.m_data = deserializer->m_log_event.m_log_message.data();
-                log_event->m_log_message.m_size = deserializer->m_log_event.m_log_message.size();
-                log_event->m_timestamp = deserializer->m_timestamp;
-                *matching_query = match.second;
-                return static_cast<int>(IRErrorCode_Success);
+            auto const [has_matching_query, matching_query_idx]{
+                    query_fn(deserializer->m_log_event.m_log_message)
+            };
+            if (false == has_matching_query) {
+                continue;
             }
+            size_t pos{0};
+            if (ErrorCode_Success != ir_buf.try_get_pos(pos)) {
+                return static_cast<int>(IRErrorCode_Decode_Error);
+            }
+            *ir_pos = pos;
+            log_event->m_log_message.m_data = deserializer->m_log_event.m_log_message.data();
+            log_event->m_log_message.m_size = deserializer->m_log_event.m_log_message.size();
+            log_event->m_timestamp = deserializer->m_timestamp;
+            *matching_query = matching_query_idx;
+            return static_cast<int>(IRErrorCode_Success);
         }
     }
 }  // namespace
