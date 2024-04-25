@@ -34,7 +34,7 @@ namespace {
                 ffi::eight_byte_encoded_variable_t,
                 ffi::four_byte_encoded_variable_t>::type;
         Decoder* decoder{static_cast<Decoder*>(ir_decoder)};
-        ffi_go::LogMessage& log_msg = decoder->m_log_message;
+        auto& log_msg{decoder->m_log_message};
         log_msg.reserve(logtype.m_size + dict_vars.m_size);
 
         IRErrorCode err{IRErrorCode_Success};
