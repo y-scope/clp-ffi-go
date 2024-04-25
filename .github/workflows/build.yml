@@ -5,12 +5,14 @@ on:
   push:
   workflow_call:
 
+# TODO: add separate jobs for:
+#   1. building, linting, testing c++
+#   2. building and testing go using a fresh built c++ library
 jobs:
   prebuilt-test:
     strategy:
       matrix:
-        # os: [macos-latest, ubuntu-latest]
-        os: [ubuntu-latest]
+        os: [macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -26,8 +28,7 @@ jobs:
   build-lint-test:
     strategy:
       matrix:
-        # os: [macos-latest, ubuntu-latest]
-        os: [ubuntu-latest]
+        os: [macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
