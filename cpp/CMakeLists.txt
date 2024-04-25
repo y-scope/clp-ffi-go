@@ -110,11 +110,11 @@ target_sources(${LIB_NAME} PUBLIC
     ${CLP_SRC_DIR}/components/core/src/ffi/ir_stream/decoding_methods.hpp
     ${CLP_SRC_DIR}/components/core/src/ffi/ir_stream/decoding_methods.inc
     ${CLP_SRC_DIR}/components/core/src/ffi/ir_stream/protocol_constants.hpp
-    src/ffi_go/LogTypes.hpp
+    src/ffi_go/types.hpp
     src/ffi_go/ir/decoder.cpp
     src/ffi_go/ir/deserializer.cpp
     src/ffi_go/ir/encoder.cpp
-    src/ffi_go/ir/LogTypes.hpp
+    src/ffi_go/ir/types.hpp
     src/ffi_go/ir/serializer.cpp
     src/ffi_go/search/wildcard_query.cpp
 )

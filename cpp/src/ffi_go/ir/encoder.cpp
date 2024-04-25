@@ -11,8 +11,8 @@
 #include <clp/components/core/src/ffi/ir_stream/decoding_methods.hpp>
 
 #include <ffi_go/defs.h>
-#include <ffi_go/ir/LogTypes.hpp>
-#include <ffi_go/LogTypes.hpp>
+#include <ffi_go/ir/types.hpp>
+#include <ffi_go/types.hpp>
 
 namespace ffi_go::ir {
 using namespace ffi::ir_stream;

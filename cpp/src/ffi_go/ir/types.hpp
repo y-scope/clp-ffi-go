@@ -7,7 +7,7 @@
 #include <clp/components/core/src/Defs.h>
 #include <clp/components/core/src/ffi/encoding_methods.hpp>
 
-#include <ffi_go/LogTypes.hpp>
+#include <ffi_go/types.hpp>
 
 namespace ffi_go::ir {
 

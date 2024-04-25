@@ -17,8 +17,8 @@
 #include <clp/components/core/src/ffi/ir_stream/encoding_methods.hpp>
 
 #include <ffi_go/defs.h>
-#include <ffi_go/ir/LogTypes.hpp>
-#include <ffi_go/LogTypes.hpp>
+#include <ffi_go/ir/types.hpp>
+#include <ffi_go/types.hpp>
 #include <ffi_go/search/wildcard_query.h>
 
 namespace ffi_go::ir {
