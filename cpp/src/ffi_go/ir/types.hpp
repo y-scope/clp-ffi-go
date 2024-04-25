@@ -49,7 +49,7 @@ struct Encoder {
  * ir.Deserializer (without any warning or way to guard in Go).
  */
 struct Deserializer {
-    ffi_go::LogEvent m_log_event;
+    ffi_go::LogEventStorage m_log_event;
     ffi::epoch_time_ms_t m_timestamp{};
 };
 

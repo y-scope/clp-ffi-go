@@ -16,7 +16,7 @@ using LogMessage = std::string;
  * Mutating a field will invalidate the corresponding View (slice) stored in the
  * ffi.LogEventView (without any warning or way to guard in Go).
  */
-struct LogEvent {
+struct LogEventStorage {
     auto reserve(size_t cap) -> void { m_log_message.reserve(cap); }
 
     LogMessage m_log_message;
