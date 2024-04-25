@@ -5,14 +5,14 @@
 // NOLINTBEGIN(modernize-use-trailing-return-type)
 // NOLINTBEGIN(modernize-use-using)
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdint.h>
 #include <stdlib.h>
 
 #include <ffi_go/defs.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
     /**
      * Create a ir::Encoder used as the underlying data storage for a Go ir.Encoder.
@@ -52,7 +52,7 @@ extern "C" {
      * @param[out] vars Array of encoded variables
      * @param[out] dict_vars String containing all dictionary variables concatenated
      *     together
-     * @param[out] dict_var_end_offsets Array of offsets into dict_vars makring the
+     * @param[out] dict_var_end_offsets Array of offsets into dict_vars marking the
      *     end of a dictionary variable
      * @return ffi::ir_stream::IRErrorCode_Corrupted_IR if ffi::encode_message
      *   returns false
@@ -80,7 +80,7 @@ extern "C" {
      * @param[out] vars Array of encoded variables
      * @param[out] dict_vars String containing all dictionary variables concatenated
      *     together
-     * @param[out] dict_var_end_offsets Array of offsets into dict_vars makring the
+     * @param[out] dict_var_end_offsets Array of offsets into dict_vars marking the
      *     end of a dictionary variable
      * @return ffi::ir_stream::IRErrorCode_Corrupted_IR if ffi::encode_message
      *   returns false

@@ -40,7 +40,7 @@ func EightByteSerializer(
 	irs := eightByteSerializer{
 		commonSerializer{TimestampInfo{tsPattern, tsPatternSyntax, timeZoneId}, nil},
 	}
-	if err := IrError(C.ir_serializer_serialize_eight_byte_preamble(
+	if err := IrError(C.ir_serializer_new_eight_byte_serializer_with_preamble(
 		newCStringView(tsPattern),
 		newCStringView(tsPatternSyntax),
 		newCStringView(timeZoneId),
@@ -69,7 +69,7 @@ func FourByteSerializer(
 		commonSerializer{TimestampInfo{tsPattern, tsPatternSyntax, timeZoneId}, nil},
 		referenceTs,
 	}
-	if err := IrError(C.ir_serializer_serialize_four_byte_preamble(
+	if err := IrError(C.ir_serializer_new_four_byte_serializer_with_preamble(
 		newCStringView(tsPattern),
 		newCStringView(tsPatternSyntax),
 		newCStringView(timeZoneId),

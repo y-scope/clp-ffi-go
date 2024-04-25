@@ -56,7 +56,7 @@ func DeserializePreamble(irBuf []byte) (Deserializer, int, error) {
 	var metadataSize C.uint16_t
 	var deserializerCptr unsafe.Pointer
 	var timestampCptr unsafe.Pointer
-	if err := IrError(C.ir_deserializer_deserialize_preamble(
+	if err := IrError(C.ir_deserializer_new_deserializer_with_preamble(
 		newCByteSpan(irBuf),
 		&pos,
 		&irEncoding,

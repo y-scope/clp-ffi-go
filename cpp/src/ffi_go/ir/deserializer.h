@@ -17,7 +17,7 @@ extern "C" {
     /**
      * Clean up the underlying ir::Deserializer of a Go ir.Deserializer.
      * @param[in] ir_deserializer The address of a ir::Deserializer created and
-     *     returned by ir_deserializer_deserialize_preamble
+     *     returned by ir_deserializer_new_deserializer_with_preamble
      */
     void ir_deserializer_close(void* ir_deserializer);
 
@@ -40,7 +40,7 @@ extern "C" {
      * @return ffi::ir_stream::IRErrorCode forwarded from either
      *     ffi::ir_stream::get_encoding_type or ffi::ir_stream::decode_preamble
      */
-    int ir_deserializer_deserialize_preamble(
+    int ir_deserializer_new_deserializer_with_preamble(
             ByteSpan ir_view,
             size_t* ir_pos,
             int8_t* ir_encoding,

@@ -5,14 +5,14 @@
 // NOLINTBEGIN(modernize-use-trailing-return-type)
 // NOLINTBEGIN(modernize-use-using)
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdint.h>
 #include <stdlib.h>
 
 #include <ffi_go/defs.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
     /**
      * Create a ir::Decoder used as the underlying data storage for a Go ir.Decoder.
@@ -38,7 +38,7 @@ extern "C" {
      * @param[in] vars Array of encoded variables
      * @param[in] dict_vars String containing all dictionary variables concatenated
      *     together
-     * @param[in] dict_var_end_offsets Array of offsets into dict_vars makring the
+     * @param[in] dict_var_end_offsets Array of offsets into dict_vars marking the
      *     end of a dictionary variable
      * @param[in] ir_decoder ir::Decoder to be used as storage for the decoded log
      *     message

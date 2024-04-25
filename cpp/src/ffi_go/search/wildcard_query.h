@@ -44,20 +44,20 @@ extern "C" {
     } MergedWildcardQueryView;
 
     /**
+     * Given a query string, allocate and return a clean string that is safe for
+     * matching. See `clean_up_wildcard_search_string` in CLP for more details.
+     * @param[in] query Query string to clean
+     * @param[in] ptr Address of a new std::string
+     * @return New string holding cleaned query
+     */
+    StringView wildcard_query_new(StringView query, void** ptr);
+
+    /**
      * Delete a std::string holding a wildcard query.
      * @param[in] str Address of a std::string created and returned by
      *   clean_wildcard_query
      */
     void wildcard_query_delete(void* str);
-
-    /**
-     * Given a query string, clean it to be safe for matching. See
-     * `clean_up_wildcard_search_string` in CLP src/string_utils.hpp.
-     * @param[in] query Query string to clean
-     * @param[in] ptr Address of a new std::string
-     * @return New string holding cleaned query
-     */
-    StringView wildcard_query_clean(StringView query, void** ptr);
 
     /**
      * Given a target string perform CLP wildcard matching using query. See

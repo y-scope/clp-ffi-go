@@ -4,25 +4,25 @@
 // NOLINTBEGIN(modernize-deprecated-headers)
 // NOLINTBEGIN(modernize-use-trailing-return-type)
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdint.h>
 #include <stdlib.h>
 
 #include <ffi_go/defs.h>
 #include <ffi_go/search/wildcard_query.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
     /**
      * Clean up the underlying ir::Deserializer of a Go ir.Deserializer.
      * @param[in] ir_deserializer The address of a ir::Deserializer created and
-     *     returned by ir_deserializer_deserialize_preamble
+     *     returned by ir_deserializer_new_deserializer_with_preamble
      */
     void ir_deserializer_close(void* ir_deserializer);
 
     /**
-     * Given a CLP IR buffer (any encoding), attempt to deserialize a premable and
+     * Given a CLP IR buffer (any encoding), attempt to deserialize a preamble and
      * extract its information. An ir::Deserializer will be allocated to use as the
      * backing storage for a Go ir.Deserializer (i.e. subsequent calls to
      * ir_deserializer_deserialize_*_log_event). It is left to the Go layer to read
@@ -40,7 +40,7 @@ extern "C" {
      * @return ffi::ir_stream::IRErrorCode forwarded from either
      *     ffi::ir_stream::get_encoding_type or ffi::ir_stream::decode_preamble
      */
-    int ir_deserializer_deserialize_preamble(
+    int ir_deserializer_new_deserializer_with_preamble(
             ByteSpan ir_view,
             size_t* ir_pos,
             int8_t* ir_encoding,

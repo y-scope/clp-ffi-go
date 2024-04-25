@@ -35,7 +35,7 @@ type WildcardQuery struct {
 // NewWildcardQuery will sanitize the provided query and store the safe version.
 func NewWildcardQuery(query string, caseSensitive bool) WildcardQuery {
 	var cptr unsafe.Pointer
-	cleanQuery := C.wildcard_query_clean(
+	cleanQuery := C.wildcard_query_new(
 		C.StringView{
 			(*C.char)(unsafe.Pointer(unsafe.StringData(query))),
 			C.size_t(len(query)),
