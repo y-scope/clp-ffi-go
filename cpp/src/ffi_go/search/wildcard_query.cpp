@@ -23,9 +23,9 @@ extern "C" auto wildcard_query_clean(StringView query, void** ptr) -> StringView
 
 extern "C" auto wildcard_query_match(StringView target, WildcardQueryView query) -> int {
     return static_cast<int>(wildcard_match_unsafe(
-            std::string_view{target.m_data, target.m_size},
-            std::string_view{query.m_query.m_data, query.m_query.m_size},
-            static_cast<bool>(query.m_case_sensitive)
+            {target.m_data, target.m_size},
+            {query.m_query.m_data, query.m_query.m_size},
+            query.m_case_sensitive
     ));
 }
 }  // namespace ffi_go::search
