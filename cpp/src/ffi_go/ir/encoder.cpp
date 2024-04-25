@@ -30,7 +30,7 @@ namespace {
             StringView* dict_vars,
             Int32tSpan* dict_var_end_offsets
     ) -> int {
-        using encoded_var_t std::conditional<
+        using encoded_var_t = std::conditional<
                 std::is_same_v<Int64tSpan, encoded_var_view_t>,
                 ffi::eight_byte_encoded_variable_t,
                 ffi::four_byte_encoded_variable_t>::type;
