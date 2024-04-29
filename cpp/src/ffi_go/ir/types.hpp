@@ -1,10 +1,11 @@
 #ifndef FFI_GO_IR_LOG_TYPES_HPP
 #define FFI_GO_IR_LOG_TYPES_HPP
 
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <vector>
 
-#include <clp/components/core/src/Defs.h>
 #include <clp/components/core/src/ffi/encoding_methods.hpp>
 
 #include <ffi_go/types.hpp>

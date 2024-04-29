@@ -1,8 +1,5 @@
 #include "serializer.h"
 
-#include <cstdint>
-#include <memory>
-#include <string>
 #include <string_view>
 #include <vector>
 
@@ -13,7 +10,6 @@
 #include <ffi_go/api_decoration.h>
 #include <ffi_go/defs.h>
 #include <ffi_go/ir/types.hpp>
-#include <ffi_go/types.hpp>
 
 namespace ffi_go::ir {
 using namespace ffi;

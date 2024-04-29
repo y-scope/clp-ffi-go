@@ -1,10 +1,8 @@
 #include "decoder.h"
 
-#include <algorithm>
-#include <memory>
 #include <string>
 #include <string_view>
-#include <vector>
+#include <type_traits>
 
 #include <clp/components/core/src/ffi/encoding_methods.hpp>
 #include <clp/components/core/src/ffi/ir_stream/decoding_methods.hpp>
@@ -12,7 +10,6 @@
 #include <ffi_go/api_decoration.h>
 #include <ffi_go/defs.h>
 #include <ffi_go/ir/types.hpp>
-#include <ffi_go/types.hpp>
 
 namespace ffi_go::ir {
 using namespace ffi::ir_stream;
@@ -30,10 +27,10 @@ template <class encoded_var_view_t>
         void* ir_decoder,
         StringView* log_msg_view
 ) -> int {
-    using encoded_var_t = typename std::conditional<
+    using encoded_var_t = std::conditional_t<
             std::is_same_v<Int64tSpan, encoded_var_view_t>,
             ffi::eight_byte_encoded_variable_t,
-            ffi::four_byte_encoded_variable_t>::type;
+            ffi::four_byte_encoded_variable_t>;
     if (nullptr == ir_decoder || nullptr == log_msg_view) {
         return static_cast<int>(IRErrorCode_Corrupted_IR);
     }
@@ -62,6 +59,7 @@ template <class encoded_var_view_t>
 }  // namespace
 
 CLP_FFI_GO_METHOD auto ir_decoder_new() -> void* {
+    // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
     return new Decoder{};
 }
 

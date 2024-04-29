@@ -1,8 +1,7 @@
 #include "encoder.h"
 
-#include <algorithm>
-#include <memory>
-#include <string>
+#include <cstddef>
+#include <cstdint>
 #include <string_view>
 #include <type_traits>
 #include <vector>
@@ -13,7 +12,6 @@
 #include <ffi_go/api_decoration.h>
 #include <ffi_go/defs.h>
 #include <ffi_go/ir/types.hpp>
-#include <ffi_go/types.hpp>
 
 namespace ffi_go::ir {
 using namespace ffi::ir_stream;
@@ -31,10 +29,10 @@ auto encode_log_message(
         StringView* dict_vars,
         Int32tSpan* dict_var_end_offsets
 ) -> int {
-    using encoded_var_t = typename std::conditional<
+    using encoded_var_t = std::conditional_t<
             std::is_same_v<Int64tSpan, encoded_var_view_t>,
             ffi::eight_byte_encoded_variable_t,
-            ffi::four_byte_encoded_variable_t>::type;
+            ffi::four_byte_encoded_variable_t>;
     if (nullptr == ir_encoder || nullptr == logtype || nullptr == vars || nullptr == dict_vars
         || nullptr == dict_var_end_offsets)
     {
@@ -85,10 +83,12 @@ auto encode_log_message(
 }  // namespace
 
 CLP_FFI_GO_METHOD auto ir_encoder_eight_byte_new() -> void* {
+    // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
     return new Encoder<ffi::eight_byte_encoded_variable_t>{};
 }
 
 CLP_FFI_GO_METHOD auto ir_encoder_four_byte_new() -> void* {
+    // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
     return new Encoder<ffi::four_byte_encoded_variable_t>{};
 }
 

@@ -4,17 +4,17 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <memory>
 #include <span>
-#include <string>
 #include <string_view>
 #include <type_traits>
+#include <utility>
+#include <vector>
 
 #include <clp/components/core/src/BufferReader.hpp>
 #include <clp/components/core/src/ErrorCode.hpp>
 #include <clp/components/core/src/ffi/encoding_methods.hpp>
 #include <clp/components/core/src/ffi/ir_stream/decoding_methods.hpp>
-#include <clp/components/core/src/ffi/ir_stream/encoding_methods.hpp>
+#include <clp/components/core/src/string_utils.hpp>
 
 #include <ffi_go/api_decoration.h>
 #include <ffi_go/defs.h>
