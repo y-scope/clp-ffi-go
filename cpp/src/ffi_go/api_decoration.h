@@ -6,9 +6,9 @@
  * ensure C linkage.
  */
 #ifdef __cplusplus
-#define _CLP_FFI_GO_EXTERN_C extern "C"
+#define CLP_FFI_GO_EXTERN_C extern "C"
 #else
-#define _CLP_FFI_GO_EXTERN_C
+#define CLP_FFI_GO_EXTERN_C
 #endif
 
 /**
@@ -16,6 +16,6 @@
  * declaration/implementation to decorate any APIs that are exposed to the
  * Golang layer.
  */
-#define CLP_FFI_GO_METHOD _CLP_FFI_GO_EXTERN_C
+#define CLP_FFI_GO_METHOD CLP_FFI_GO_EXTERN_C
 
 #endif

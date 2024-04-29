@@ -1,6 +1,7 @@
 #ifndef FFI_GO_LOG_TYPES_HPP
 #define FFI_GO_LOG_TYPES_HPP
 
+#include <cstddef>
 #include <string>
 
 namespace ffi_go {
