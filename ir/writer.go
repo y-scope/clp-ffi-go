@@ -125,7 +125,8 @@ func (self *Writer) Write(event ffi.LogEvent) (int, error) {
 // [self.Bytes] and [self.Reset] to manually handle the buffer's contents before
 // continuing. Returns:
 //   - success: number of bytes written, nil
-//   - error: number of bytes written, error propagated from [bytes.Buffer.WriteTo]
+//   - error: number of bytes written, error propagated from
+//     [bytes.Buffer.WriteTo]
 func (self *Writer) WriteTo(w io.Writer) (int64, error) {
 	n, err := self.buf.WriteTo(w)
 	if nil == err {

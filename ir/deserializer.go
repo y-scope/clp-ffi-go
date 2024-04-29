@@ -17,7 +17,7 @@ import (
 )
 
 // A Deserializer exports functions to deserialize log events from a CLP IR byte
-// stream. Deserializatoin functions take an IR buffer as input, but how that
+// stream. Deserialization functions take an IR buffer as input, but how that
 // buffer is materialized is left to the user. These functions return views
 // (slices) of the log events extracted from the IR. Each Deserializer owns its
 // own unique underlying memory for the views it produces/returns. This memory
@@ -173,6 +173,16 @@ func (self *fourByteDeserializer) DeserializeLogEvent(
 	return deserializeLogEvent(self, irBuf)
 }
 
+// DeserializeWildcardMatch attempts to read the next log event from the IR
+// stream in irBuf that matches mergedQuery within timeInterval. It returns the
+// deserialized [ffi.LogEventView], the position read to in irBuf (the end of
+// the log event in irBuf), the index of the matched query in mergedQuery,
+// and an error. On error returns:
+//   - nil *ffi.LogEventView
+//   - 0 position
+//   - -1 index
+//   - [IrError] error: CLP failed to successfully deserialize
+//   - [EndOfIr] error: CLP found the IR stream EOF tag
 func (self *eightByteDeserializer) DeserializeWildcardMatch(
 	irBuf []byte,
 	timeInterval search.TimestampInterval,
@@ -181,6 +191,16 @@ func (self *eightByteDeserializer) DeserializeWildcardMatch(
 	return deserializeWildcardMatch(self, irBuf, timeInterval, mergedQuery)
 }
 
+// DeserializeWildcardMatch attempts to read the next log event from the IR
+// stream in irBuf that matches mergedQuery within timeInterval. It returns the
+// deserialized [ffi.LogEventView], the position read to in irBuf (the end of
+// the log event in irBuf), the index of the matched query in mergedQuery,
+// and an error. On error returns:
+//   - nil *ffi.LogEventView
+//   - 0 position
+//   - -1 index
+//   - [IrError] error: CLP failed to successfully deserialize
+//   - [EndOfIr] error: CLP found the IR stream EOF tag
 func (self *fourByteDeserializer) DeserializeWildcardMatch(
 	irBuf []byte,
 	timeInterval search.TimestampInterval,

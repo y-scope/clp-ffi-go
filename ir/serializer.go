@@ -92,8 +92,8 @@ type commonSerializer struct {
 	cptr   unsafe.Pointer
 }
 
-// Close will delete the underlying C++ allocated memory used by the
-// deserializer. Failure to call Close will result in a memory leak.
+// Closes the serializer by releasing the underlying C++ allocated memory.
+// Failure to call Close will result in a memory leak.
 func (self *commonSerializer) Close() error {
 	if nil != self.cptr {
 		C.ir_serializer_close(self.cptr)
@@ -111,7 +111,7 @@ type eightByteSerializer struct {
 	commonSerializer
 }
 
-// SerializeLogEvent attempts to serialize the log event, event, into a eight
+// SerializeLogEvent attempts to serialize the log event, event, into an eight
 // byte encoded CLP IR byte stream. On error returns:
 //   - a nil BufView
 //   - [IrError] based on the failure of the Cgo call

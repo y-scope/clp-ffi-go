@@ -29,10 +29,10 @@ type TimestampInfo struct {
 	TimeZoneId    string
 }
 
-// ir.BufView is a slice of CLP IR backed by C++ allocated memory rather than
-// the Go heap. A BufView, x, is valid when returned and will remain valid until
-// a new BufView is returned by the same object (e.g. an [ir.Serializer]) that
-// retuend x.
+// ir.BufView represents a slice of CLP IR, utilizing memory allocated by C++
+// instead of the Go heap. A BufView, denoted as x, is valid upon being returned
+// and maintains its validity until the same object (e.g., an [ir.Serializer])
+// that issued x returns a new BufView.
 type BufView = []byte
 
 // A ir.LogMessage contains all the different components of a log message
@@ -44,10 +44,10 @@ type LogMessage[T EightByteEncoding | FourByteEncoding] struct {
 	DictVarEndOffsets []int32
 }
 
-// A ir.LogMessageView is a [ir.LogMessage] that is backed by C++ allocated
-// memory rather than the Go heap. A LogMessageView, x, is valid when returned
-// and will remain valid until a new LogMessageView is returned by the same
-// object (e.g.  an [ir.Encoder]) that retuend x.
+// ir.LogMessageView is a [ir.LogMessage] using memory allocated by C++ instead
+// of the Go heap. A LogMessageView, denoted as x, is valid upon being returned
+// and maintains its validity until the same object (e.g., an [ir.Encoder])
+// that issued x returns a new LogMessageView.
 type LogMessageView[T EightByteEncoding | FourByteEncoding] struct {
 	LogMessage[T]
 }
