@@ -9,6 +9,7 @@
 #include <clp/components/core/src/ffi/encoding_methods.hpp>
 #include <clp/components/core/src/ffi/ir_stream/decoding_methods.hpp>
 
+#include <ffi_go/api_decoration.h>
 #include <ffi_go/defs.h>
 #include <ffi_go/ir/types.hpp>
 #include <ffi_go/types.hpp>
@@ -60,16 +61,16 @@ template <class encoded_var_view_t>
 }
 }  // namespace
 
-extern "C" auto ir_decoder_new() -> void* {
+CLP_FFI_GO_METHOD auto ir_decoder_new() -> void* {
     return new Decoder{};
 }
 
-extern "C" auto ir_decoder_close(void* ir_decoder) -> void {
+CLP_FFI_GO_METHOD auto ir_decoder_close(void* ir_decoder) -> void {
     // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
     delete static_cast<Decoder*>(ir_decoder);
 }
 
-extern "C" auto ir_decoder_decode_eight_byte_log_message(
+CLP_FFI_GO_METHOD auto ir_decoder_decode_eight_byte_log_message(
         StringView logtype,
         Int64tSpan vars,
         StringView dict_vars,
@@ -87,7 +88,7 @@ extern "C" auto ir_decoder_decode_eight_byte_log_message(
     );
 }
 
-extern "C" auto ir_decoder_decode_four_byte_log_message(
+CLP_FFI_GO_METHOD auto ir_decoder_decode_four_byte_log_message(
         StringView logtype,
         Int32tSpan vars,
         StringView dict_vars,

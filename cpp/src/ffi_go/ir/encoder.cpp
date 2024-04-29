@@ -10,6 +10,7 @@
 #include <clp/components/core/src/ffi/encoding_methods.hpp>
 #include <clp/components/core/src/ffi/ir_stream/decoding_methods.hpp>
 
+#include <ffi_go/api_decoration.h>
 #include <ffi_go/defs.h>
 #include <ffi_go/ir/types.hpp>
 #include <ffi_go/types.hpp>
@@ -83,25 +84,25 @@ auto encode_log_message(
 }
 }  // namespace
 
-extern "C" auto ir_encoder_eight_byte_new() -> void* {
+CLP_FFI_GO_METHOD auto ir_encoder_eight_byte_new() -> void* {
     return new Encoder<ffi::eight_byte_encoded_variable_t>{};
 }
 
-extern "C" auto ir_encoder_four_byte_new() -> void* {
+CLP_FFI_GO_METHOD auto ir_encoder_four_byte_new() -> void* {
     return new Encoder<ffi::four_byte_encoded_variable_t>{};
 }
 
-extern "C" auto ir_encoder_eight_byte_close(void* ir_encoder) -> void {
+CLP_FFI_GO_METHOD auto ir_encoder_eight_byte_close(void* ir_encoder) -> void {
     // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
     delete static_cast<Encoder<ffi::eight_byte_encoded_variable_t>*>(ir_encoder);
 }
 
-extern "C" auto ir_encoder_four_byte_close(void* ir_encoder) -> void {
+CLP_FFI_GO_METHOD auto ir_encoder_four_byte_close(void* ir_encoder) -> void {
     // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
     delete static_cast<Encoder<ffi::four_byte_encoded_variable_t>*>(ir_encoder);
 }
 
-extern "C" auto ir_encoder_encode_eight_byte_log_message(
+CLP_FFI_GO_METHOD auto ir_encoder_encode_eight_byte_log_message(
         StringView log_message,
         void* ir_encoder,
         StringView* logtype,
@@ -119,7 +120,7 @@ extern "C" auto ir_encoder_encode_eight_byte_log_message(
     );
 }
 
-extern "C" auto ir_encoder_encode_four_byte_log_message(
+CLP_FFI_GO_METHOD auto ir_encoder_encode_four_byte_log_message(
         StringView log_message,
         void* ir_encoder,
         StringView* logtype,

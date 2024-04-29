@@ -10,6 +10,7 @@
 #include <clp/components/core/src/ffi/ir_stream/decoding_methods.hpp>
 #include <clp/components/core/src/ffi/ir_stream/encoding_methods.hpp>
 
+#include <ffi_go/api_decoration.h>
 #include <ffi_go/defs.h>
 #include <ffi_go/ir/types.hpp>
 #include <ffi_go/types.hpp>
@@ -130,12 +131,12 @@ auto serialize_log_event(
 }
 }  // namespace
 
-extern "C" auto ir_serializer_close(void* ir_serializer) -> void {
+CLP_FFI_GO_METHOD auto ir_serializer_close(void* ir_serializer) -> void {
     // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
     delete static_cast<Serializer*>(ir_serializer);
 }
 
-extern "C" auto ir_serializer_new_eight_byte_serializer_with_preamble(
+CLP_FFI_GO_METHOD auto ir_serializer_new_eight_byte_serializer_with_preamble(
         StringView ts_pattern,
         StringView ts_pattern_syntax,
         StringView time_zone_id,
@@ -152,7 +153,7 @@ extern "C" auto ir_serializer_new_eight_byte_serializer_with_preamble(
     );
 }
 
-extern "C" auto ir_serializer_new_four_byte_serializer_with_preamble(
+CLP_FFI_GO_METHOD auto ir_serializer_new_four_byte_serializer_with_preamble(
         StringView ts_pattern,
         StringView ts_pattern_syntax,
         StringView time_zone_id,
@@ -170,7 +171,7 @@ extern "C" auto ir_serializer_new_four_byte_serializer_with_preamble(
     );
 }
 
-extern "C" auto ir_serializer_serialize_eight_byte_log_event(
+CLP_FFI_GO_METHOD auto ir_serializer_serialize_eight_byte_log_event(
         StringView log_message,
         epoch_time_ms_t timestamp,
         void* ir_serializer,
@@ -184,7 +185,7 @@ extern "C" auto ir_serializer_serialize_eight_byte_log_event(
     );
 }
 
-extern "C" auto ir_serializer_serialize_four_byte_log_event(
+CLP_FFI_GO_METHOD auto ir_serializer_serialize_four_byte_log_event(
         StringView log_message,
         epoch_time_ms_t timestamp_delta,
         void* ir_serializer,

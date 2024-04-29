@@ -16,6 +16,7 @@
 #include <clp/components/core/src/ffi/ir_stream/decoding_methods.hpp>
 #include <clp/components/core/src/ffi/ir_stream/encoding_methods.hpp>
 
+#include <ffi_go/api_decoration.h>
 #include <ffi_go/defs.h>
 #include <ffi_go/ir/types.hpp>
 #include <ffi_go/search/wildcard_query.h>
@@ -205,12 +206,12 @@ auto deserialize_wildcard_match(
 }
 }  // namespace
 
-extern "C" auto ir_deserializer_close(void* ir_deserializer) -> void {
+CLP_FFI_GO_METHOD auto ir_deserializer_close(void* ir_deserializer) -> void {
     // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
     delete static_cast<Deserializer*>(ir_deserializer);
 }
 
-extern "C" auto ir_deserializer_new_deserializer_with_preamble(
+CLP_FFI_GO_METHOD auto ir_deserializer_new_deserializer_with_preamble(
         ByteSpan ir_view,
         size_t* ir_pos,
         int8_t* ir_encoding,
@@ -254,7 +255,7 @@ extern "C" auto ir_deserializer_new_deserializer_with_preamble(
     return static_cast<int>(IRErrorCode_Success);
 }
 
-extern "C" auto ir_deserializer_deserialize_eight_byte_log_event(
+CLP_FFI_GO_METHOD auto ir_deserializer_deserialize_eight_byte_log_event(
         ByteSpan ir_view,
         void* ir_deserializer,
         size_t* ir_pos,
@@ -268,7 +269,7 @@ extern "C" auto ir_deserializer_deserialize_eight_byte_log_event(
     );
 }
 
-extern "C" auto ir_deserializer_deserialize_four_byte_log_event(
+CLP_FFI_GO_METHOD auto ir_deserializer_deserialize_four_byte_log_event(
         ByteSpan ir_view,
         void* ir_deserializer,
         size_t* ir_pos,
@@ -282,7 +283,7 @@ extern "C" auto ir_deserializer_deserialize_four_byte_log_event(
     );
 }
 
-extern "C" auto ir_deserializer_deserialize_eight_byte_wildcard_match(
+CLP_FFI_GO_METHOD auto ir_deserializer_deserialize_eight_byte_wildcard_match(
         ByteSpan ir_view,
         void* ir_deserializer,
         TimestampInterval time_interval,
@@ -302,7 +303,7 @@ extern "C" auto ir_deserializer_deserialize_eight_byte_wildcard_match(
     );
 }
 
-extern "C" auto ir_deserializer_deserialize_four_byte_wildcard_match(
+CLP_FFI_GO_METHOD auto ir_deserializer_deserialize_four_byte_wildcard_match(
         ByteSpan ir_view,
         void* ir_deserializer,
         TimestampInterval time_interval,
