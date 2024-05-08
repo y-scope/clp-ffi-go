@@ -22,7 +22,7 @@ jobs:
           go-version: '1.20.x'
           check-latest: true
 
-      - run: go build
+      - run: go clean -cache && go build ./...
 
       - run: go test -count=1 ./...
 
@@ -55,7 +55,7 @@ jobs:
           go install github.com/segmentio/golines@latest
           go install golang.org/x/tools/cmd/stringer@latest
 
-      - run: go generate
+      - run: go clean -cache && go generate ./...
 
       - run: |
           diff="$(golines -m 100 -t 4 --base-formatter='gofumpt' --dry-run .)"
