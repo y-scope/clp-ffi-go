@@ -29,7 +29,7 @@ type Reader struct {
 // grow if it is too small to contain the preamble or next log event. Returns:
 //   - success: valid [*Reader], nil
 //   - error: nil [*Reader], error propagated from [DeserializePreamble] or
-//     [ioReader.Read]
+//     [io.Reader.Read]
 func NewReaderSize(r io.Reader, size int) (*Reader, error) {
 	irr := &Reader{nil, r, make([]byte, size), 0, 0}
 	var err error
@@ -62,11 +62,10 @@ func (self *Reader) Close() error {
 	return self.Deserializer.Close()
 }
 
-// Read uses [DeserializeLogEvent] to read from the CLP IR byte stream. The
-// underlying buffer will grow if it is too small to contain the next log event.
-// On error returns:
+// Read uses [Deserializer.DeserializeLogEvent] to read from the CLP IR byte stream. The underlying
+// buffer will grow if it is too small to contain the next log event. On error returns:
 //   - nil *ffi.LogEventView
-//   - error propagated from [DeserializeLogEvent] or [ioReader.Read]
+//   - error propagated from [Deserializer.DeserializeLogEvent] or [io.Reader.Read]
 func (self *Reader) Read() (*ffi.LogEventView, error) {
 	var event *ffi.LogEventView
 	var pos int
@@ -171,12 +170,12 @@ func (self *Reader) ReadToSuffix(suffix string) (*ffi.LogEventView, error) {
 }
 
 // fillBuf shifts the remaining valid IR in [Reader.buf] to the front and then
-// calls [ioReader.Read] to fill the remainder with more IR. Before reading into
-// the buffer, it is grown by 1.5x if more than 1/4th of it is unconsumed IR.
-// Forwards the return of [ioReader.Read].
+// calls [io.Reader.Read] to fill the remainder with more IR. Before reading into
+// the buffer, it is doubled if more than half of it is unconsumed IR.
+// Forwards the return of [io.Reader.Read].
 func (self *Reader) fillBuf() (int, error) {
-	if (self.end - self.start) > len(self.buf)>>2 {
-		buf := make([]byte, len(self.buf)+len(self.buf)/2)
+	if (self.end - self.start) > len(self.buf)/2 {
+		buf := make([]byte, len(self.buf)*2)
 		copy(buf, self.buf[self.start:self.end])
 		self.buf = buf
 	} else {

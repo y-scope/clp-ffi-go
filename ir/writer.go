@@ -113,6 +113,11 @@ func (self *Writer) Write(event ffi.LogEvent) (int, error) {
 	if nil != err {
 		return 0, err
 	}
+	// bytes.Buffer.Write will always return nil for err (https://pkg.go.dev/bytes#Buffer.Write)
+	// However, err is still propagated to correctly alert the user in case this ever changes. If
+	// Write can fail in the future, we should either:
+	//   1. fix the issue and retry the write
+	//   2. store irView and provide a retry API (allowing the user to fix the issue and retry)
 	n, err := self.buf.Write(irView)
 	if nil != err {
 		return n, err

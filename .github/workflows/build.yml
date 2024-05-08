@@ -5,9 +5,7 @@ on:
   push:
   workflow_call:
 
-# TODO: add separate jobs for:
-#   1. building, linting, testing c++
-#   2. building and testing go using a fresh built c++ library
+# TODO: add separate jobs for building, linting, and testing c++
 jobs:
   prebuilt-test:
     strategy:
@@ -24,9 +22,9 @@ jobs:
           go-version: '1.20.x'
           check-latest: true
 
-      - run: go build ./...
+      - run: go build
 
-      - run: go test ./...
+      - run: go test -count=1 ./...
 
   build-lint-test:
     strategy:
@@ -57,7 +55,7 @@ jobs:
           go install github.com/segmentio/golines@latest
           go install golang.org/x/tools/cmd/stringer@latest
 
-      - run: go generate ./...
+      - run: go generate
 
       - run: |
           diff="$(golines -m 100 -t 4 --base-formatter='gofumpt' --dry-run .)"
@@ -65,4 +63,4 @@ jobs:
 
       # - run: cmake -S ./cpp -B ./cpp/build -DCMAKE_EXPORT_COMPILE_COMMANDS=1
 
-      - run: go test ./...
+      - run: go test -count=1 ./...

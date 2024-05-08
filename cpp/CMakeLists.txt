@@ -82,6 +82,7 @@ target_sources(${LIB_NAME} PUBLIC
     FILE_SET HEADERS
         BASE_DIRS src/
         FILES
+        src/ffi_go/api_decoration.h
         src/ffi_go/defs.h
         src/ffi_go/ir/decoder.h
         src/ffi_go/ir/deserializer.h

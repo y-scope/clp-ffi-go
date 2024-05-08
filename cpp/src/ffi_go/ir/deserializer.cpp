@@ -120,12 +120,10 @@ auto deserialize_wildcard_match(
     std::string_view const query_view{merged_query.m_queries.m_data, merged_query.m_queries.m_size};
     std::span<size_t> const end_offsets{
             merged_query.m_end_offsets.m_data,
-            merged_query.m_end_offsets.m_size
-    };
+            merged_query.m_end_offsets.m_size};
     std::span<bool> const case_sensitivity{
             merged_query.m_case_sensitivity.m_data,
-            merged_query.m_case_sensitivity.m_size
-    };
+            merged_query.m_case_sensitivity.m_size};
 
     std::vector<std::pair<std::string_view, bool>> queries(merged_query.m_end_offsets.m_size);
     size_t pos{0};
@@ -187,8 +185,7 @@ auto deserialize_wildcard_match(
             continue;
         }
         auto const [has_matching_query, matching_query_idx]{
-                query_fn(deserializer->m_log_event.m_log_message)
-        };
+                query_fn(deserializer->m_log_event.m_log_message)};
         if (false == has_matching_query) {
             continue;
         }
@@ -237,8 +234,8 @@ CLP_FFI_GO_METHOD auto ir_deserializer_new_deserializer_with_preamble(
     }
     *ir_encoding = four_byte_encoding ? 1 : 0;
 
-    if (IRErrorCode const err{decode_preamble(ir_buf, *metadata_type, *metadata_pos, *metadata_size)
-        };
+    if (IRErrorCode const err{
+                decode_preamble(ir_buf, *metadata_type, *metadata_pos, *metadata_size)};
         IRErrorCode_Success != err)
     {
         return static_cast<int>(err);

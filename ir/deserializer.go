@@ -16,6 +16,13 @@ import (
 	"github.com/y-scope/clp-ffi-go/search"
 )
 
+const (
+	metadata_reference_timestamp_key = "REFERENCE_TIMESTAMP"
+	metadata_timestamp_pattern_key = "TIMESTAMP_PATTERN"
+	metadata_timestamp_pattern_syntax_key = "TIMESTAMP_PATTERN_SYNTAX"
+	metadata_tz_id_key = "TZ_ID"
+)
+
 // A Deserializer exports functions to deserialize log events from a CLP IR byte
 // stream. Deserialization functions take an IR buffer as input, but how that
 // buffer is materialized is left to the user. These functions return views
@@ -48,6 +55,9 @@ func DeserializePreamble(irBuf []byte) (Deserializer, int, error) {
 	if 0 >= len(irBuf) {
 		return nil, 0, IncompleteIr
 	}
+
+	// TODO: Add version validation in this method or ir_deserializer_new_deserializer_with_preamble
+	// after updating the clp version.
 
 	var pos C.size_t
 	var irEncoding C.int8_t
@@ -82,20 +92,20 @@ func DeserializePreamble(irBuf []byte) (Deserializer, int, error) {
 	}
 
 	var tsInfo TimestampInfo
-	if tsPat, ok := metadata["TIMESTAMP_PATTERN"].(string); ok {
+	if tsPat, ok := metadata[metadata_timestamp_pattern_key].(string); ok {
 		tsInfo.Pattern = tsPat
 	}
-	if tsSyn, ok := metadata["TIMESTAMP_PATTERN_SYNTAX"].(string); ok {
+	if tsSyn, ok := metadata[metadata_timestamp_pattern_syntax_key].(string); ok {
 		tsInfo.PatternSyntax = tsSyn
 	}
-	if tzid, ok := metadata["TZ_ID"].(string); ok {
+	if tzid, ok := metadata[metadata_tz_id_key].(string); ok {
 		tsInfo.TimeZoneId = tzid
 	}
 
 	var deserializer Deserializer
 	if 1 == irEncoding {
 		var refTs ffi.EpochTimeMs = 0
-		if tsStr, ok := metadata["REFERENCE_TIMESTAMP"].(string); ok {
+		if tsStr, ok := metadata[metadata_reference_timestamp_key].(string); ok {
 			if tsInt, err := strconv.ParseInt(tsStr, 10, 64); nil == err {
 				refTs = ffi.EpochTimeMs(tsInt)
 				*(*ffi.EpochTimeMs)(timestampCptr) = refTs
@@ -151,6 +161,24 @@ func (self *eightByteDeserializer) DeserializeLogEvent(
 	return deserializeLogEvent(self, irBuf)
 }
 
+// DeserializeWildcardMatch attempts to read the next log event from the IR
+// stream in irBuf that matches mergedQuery within timeInterval. It returns the
+// deserialized [ffi.LogEventView], the position read to in irBuf (the end of
+// the log event in irBuf), the index of the matched query in mergedQuery,
+// and an error. On error returns:
+//   - nil *ffi.LogEventView
+//   - 0 position
+//   - -1 index
+//   - [IrError] error: CLP failed to successfully deserialize
+//   - [EndOfIr] error: CLP found the IR stream EOF tag
+func (self *eightByteDeserializer) DeserializeWildcardMatch(
+	irBuf []byte,
+	timeInterval search.TimestampInterval,
+	mergedQuery search.MergedWildcardQuery,
+) (*ffi.LogEventView, int, int, error) {
+	return deserializeWildcardMatch(self, irBuf, timeInterval, mergedQuery)
+}
+
 // fourByteDeserializer contains both a common CLP IR deserializer and stores
 // the previously seen log event's timestamp. The previous timestamp is
 // necessary to calculate the current timestamp as four byte encoding only
@@ -171,24 +199,6 @@ func (self *fourByteDeserializer) DeserializeLogEvent(
 	irBuf []byte,
 ) (*ffi.LogEventView, int, error) {
 	return deserializeLogEvent(self, irBuf)
-}
-
-// DeserializeWildcardMatch attempts to read the next log event from the IR
-// stream in irBuf that matches mergedQuery within timeInterval. It returns the
-// deserialized [ffi.LogEventView], the position read to in irBuf (the end of
-// the log event in irBuf), the index of the matched query in mergedQuery,
-// and an error. On error returns:
-//   - nil *ffi.LogEventView
-//   - 0 position
-//   - -1 index
-//   - [IrError] error: CLP failed to successfully deserialize
-//   - [EndOfIr] error: CLP found the IR stream EOF tag
-func (self *eightByteDeserializer) DeserializeWildcardMatch(
-	irBuf []byte,
-	timeInterval search.TimestampInterval,
-	mergedQuery search.MergedWildcardQuery,
-) (*ffi.LogEventView, int, int, error) {
-	return deserializeWildcardMatch(self, irBuf, timeInterval, mergedQuery)
 }
 
 // DeserializeWildcardMatch attempts to read the next log event from the IR
