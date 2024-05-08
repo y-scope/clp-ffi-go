@@ -17,10 +17,10 @@ import (
 )
 
 const (
-	metadata_reference_timestamp_key = "REFERENCE_TIMESTAMP"
-	metadata_timestamp_pattern_key = "TIMESTAMP_PATTERN"
+	metadata_reference_timestamp_key      = "REFERENCE_TIMESTAMP"
+	metadata_timestamp_pattern_key        = "TIMESTAMP_PATTERN"
 	metadata_timestamp_pattern_syntax_key = "TIMESTAMP_PATTERN_SYNTAX"
-	metadata_tz_id_key = "TZ_ID"
+	metadata_tz_id_key                    = "TZ_ID"
 )
 
 // A Deserializer exports functions to deserialize log events from a CLP IR byte
