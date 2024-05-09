@@ -33,10 +33,10 @@ const (
 // failure to do so will result in a memory leak.
 type Deserializer interface {
 	DeserializeLogEvent(irBuf []byte) (*ffi.LogEventView, int, error)
-	DeserializeWildcardMatch(
+	DeserializeWildcardMatchWithTimeInterval(
 		irBuf []byte,
-		timeInterval search.TimestampInterval,
 		mergedQuery search.MergedWildcardQuery,
+		timeInterval search.TimestampInterval,
 	) (*ffi.LogEventView, int, int, error)
 	TimestampInfo() TimestampInfo
 	Close() error
@@ -161,22 +161,22 @@ func (self *eightByteDeserializer) DeserializeLogEvent(
 	return deserializeLogEvent(self, irBuf)
 }
 
-// DeserializeWildcardMatch attempts to read the next log event from the IR
-// stream in irBuf that matches mergedQuery within timeInterval. It returns the
-// deserialized [ffi.LogEventView], the position read to in irBuf (the end of
-// the log event in irBuf), the index of the matched query in mergedQuery,
-// and an error. On error returns:
+// DeserializeWildcardMatchWithTimeInterval attempts to read the next log event
+// from the IR stream in irBuf that matches mergedQuery within timeInterval. It
+// returns the deserialized [ffi.LogEventView], the position read to in irBuf
+// (the end of the log event in irBuf), the index of the matched query in
+// mergedQuery, and an error. On error returns:
 //   - nil *ffi.LogEventView
 //   - 0 position
 //   - -1 index
 //   - [IrError] error: CLP failed to successfully deserialize
 //   - [EndOfIr] error: CLP found the IR stream EOF tag
-func (self *eightByteDeserializer) DeserializeWildcardMatch(
+func (self *eightByteDeserializer) DeserializeWildcardMatchWithTimeInterval(
 	irBuf []byte,
-	timeInterval search.TimestampInterval,
 	mergedQuery search.MergedWildcardQuery,
+	timeInterval search.TimestampInterval,
 ) (*ffi.LogEventView, int, int, error) {
-	return deserializeWildcardMatch(self, irBuf, timeInterval, mergedQuery)
+	return deserializeWildcardMatch(self, irBuf, mergedQuery, timeInterval)
 }
 
 // fourByteDeserializer contains both a common CLP IR deserializer and stores
@@ -201,22 +201,22 @@ func (self *fourByteDeserializer) DeserializeLogEvent(
 	return deserializeLogEvent(self, irBuf)
 }
 
-// DeserializeWildcardMatch attempts to read the next log event from the IR
-// stream in irBuf that matches mergedQuery within timeInterval. It returns the
-// deserialized [ffi.LogEventView], the position read to in irBuf (the end of
-// the log event in irBuf), the index of the matched query in mergedQuery,
-// and an error. On error returns:
+// DeserializeWildcardMatchWithTimeInterval attempts to read the next log event
+// from the IR stream in irBuf that matches mergedQuery within timeInterval. It
+// returns the deserialized [ffi.LogEventView], the position read to in irBuf
+// (the end of the log event in irBuf), the index of the matched query in
+// mergedQuery, and an error. On error returns:
 //   - nil *ffi.LogEventView
 //   - 0 position
 //   - -1 index
 //   - [IrError] error: CLP failed to successfully deserialize
 //   - [EndOfIr] error: CLP found the IR stream EOF tag
-func (self *fourByteDeserializer) DeserializeWildcardMatch(
+func (self *fourByteDeserializer) DeserializeWildcardMatchWithTimeInterval(
 	irBuf []byte,
-	timeInterval search.TimestampInterval,
 	mergedQuery search.MergedWildcardQuery,
+	timeInterval search.TimestampInterval,
 ) (*ffi.LogEventView, int, int, error) {
-	return deserializeWildcardMatch(self, irBuf, timeInterval, mergedQuery)
+	return deserializeWildcardMatch(self, irBuf, mergedQuery, timeInterval)
 }
 
 func deserializeLogEvent(
@@ -264,8 +264,8 @@ func deserializeLogEvent(
 func deserializeWildcardMatch(
 	deserializer Deserializer,
 	irBuf []byte,
-	time search.TimestampInterval,
 	mergedQuery search.MergedWildcardQuery,
+	time search.TimestampInterval,
 ) (*ffi.LogEventView, int, int, error) {
 	if 0 >= len(irBuf) {
 		return nil, 0, -1, IncompleteIr

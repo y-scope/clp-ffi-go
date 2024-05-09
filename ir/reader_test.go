@@ -42,9 +42,9 @@ func TestIrReader(t *testing.T) {
 		// log, err = irr.Read()
 		// log, err = irr.ReadToContains("ERROR")
 		// var _ search.WildcardQuery
-		log, _, err = irr.ReadToWildcardMatch(
-			interval,
+		log, _, err = irr.ReadToWildcardMatchWithTimeInterval(
 			queries,
+			interval,
 		)
 		if nil != err {
 			break

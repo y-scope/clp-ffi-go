@@ -2,6 +2,7 @@ package ir
 
 import (
 	"io"
+	"math"
 	"strings"
 
 	"github.com/y-scope/clp-ffi-go/ffi"
@@ -86,9 +87,29 @@ func (self *Reader) Read() (*ffi.LogEventView, error) {
 	return event, nil
 }
 
+// ReadToWildcardMatch wraps ReadToWildcardMatchWithTimeInterval, attempting to
+// read the next log event that matches any query in queries, within the entire
+// IR. It forwards the result of ReadToWildcardMatchWithTimeInterval.
 func (self *Reader) ReadToWildcardMatch(
-	timeInterval search.TimestampInterval,
 	queries []search.WildcardQuery,
+) (*ffi.LogEventView, int, error) {
+	return self.ReadToWildcardMatchWithTimeInterval(
+		queries,
+		search.TimestampInterval{0, math.MaxInt64},
+	)
+}
+
+// ReadToWildcardMatchWithTimeInterval attempts to read the next log event that
+// matches any query in queries, within timeInterval. It returns the
+// deserialized [ffi.LogEventView], the index of the matched query in queries,
+// and an error. On error returns:
+//   - nil *ffi.LogEventView
+//   - -1 index
+//   - [IrError] error: CLP failed to successfully deserialize
+//   - [EndOfIr] error: CLP found the IR stream EOF tag
+func (self *Reader) ReadToWildcardMatchWithTimeInterval(
+	queries []search.WildcardQuery,
+	timeInterval search.TimestampInterval,
 ) (*ffi.LogEventView, int, error) {
 	var event *ffi.LogEventView
 	var pos int
@@ -96,10 +117,10 @@ func (self *Reader) ReadToWildcardMatch(
 	var err error
 	mergedQuery := search.MergeWildcardQueries(queries)
 	for {
-		event, pos, matchingQuery, err = self.DeserializeWildcardMatch(
+		event, pos, matchingQuery, err = self.DeserializeWildcardMatchWithTimeInterval(
 			self.buf[self.start:self.end],
-			timeInterval,
 			mergedQuery,
+			timeInterval,
 		)
 		if IncompleteIr != err {
 			break
