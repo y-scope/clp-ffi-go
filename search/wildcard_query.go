@@ -17,7 +17,6 @@ import (
 // query is case sensitive or not. The fields must be accessed through getters
 // to ensure that the query string remains clean/safe after creation by
 // NewWildcardQuery.
-// (Copied from clp/components/core/src/string_utils.hpp)
 // Two wildcards are currently supported: '*' to match 0 or more characters, and
 // '?' to match any single character. Each can be escaped using a preceding '\'.
 // Other characters which are escaped are treated as normal characters.
