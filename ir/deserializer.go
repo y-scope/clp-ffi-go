@@ -17,10 +17,10 @@ import (
 )
 
 const (
-	metadata_reference_timestamp_key      = "REFERENCE_TIMESTAMP"
-	metadata_timestamp_pattern_key        = "TIMESTAMP_PATTERN"
-	metadata_timestamp_pattern_syntax_key = "TIMESTAMP_PATTERN_SYNTAX"
-	metadata_tz_id_key                    = "TZ_ID"
+	metadataReferenceTimestampKey     = "REFERENCE_TIMESTAMP"
+	metadataTimestampPatternKey       = "TIMESTAMP_PATTERN"
+	metadataTimestampPatternSyntaxKey = "TIMESTAMP_PATTERN_SYNTAX"
+	metadataTzIdKey                   = "TZ_ID"
 )
 
 // A Deserializer exports functions to deserialize log events from a CLP IR byte
@@ -79,7 +79,7 @@ func DeserializePreamble(irBuf []byte) (Deserializer, int, error) {
 		return nil, int(pos), err
 	}
 
-	if 1 != metadataType {
+	if metadataType != 1 {
 		return nil, 0, UnsupportedVersion
 	}
 
@@ -92,20 +92,20 @@ func DeserializePreamble(irBuf []byte) (Deserializer, int, error) {
 	}
 
 	var tsInfo TimestampInfo
-	if tsPat, ok := metadata[metadata_timestamp_pattern_key].(string); ok {
+	if tsPat, ok := metadata[metadataTimestampPatternKey].(string); ok {
 		tsInfo.Pattern = tsPat
 	}
-	if tsSyn, ok := metadata[metadata_timestamp_pattern_syntax_key].(string); ok {
+	if tsSyn, ok := metadata[metadataTimestampPatternSyntaxKey].(string); ok {
 		tsInfo.PatternSyntax = tsSyn
 	}
-	if tzid, ok := metadata[metadata_tz_id_key].(string); ok {
+	if tzid, ok := metadata[metadataTzIdKey].(string); ok {
 		tsInfo.TimeZoneId = tzid
 	}
 
 	var deserializer Deserializer
-	if 1 == irEncoding {
+	if irEncoding == 1 {
 		var refTs ffi.EpochTimeMs = 0
-		if tsStr, ok := metadata[metadata_reference_timestamp_key].(string); ok {
+		if tsStr, ok := metadata[metadataReferenceTimestampKey].(string); ok {
 			if tsInt, err := strconv.ParseInt(tsStr, 10, 64); nil == err {
 				refTs = ffi.EpochTimeMs(tsInt)
 				*(*ffi.EpochTimeMs)(timestampCptr) = refTs
@@ -131,17 +131,17 @@ type commonDeserializer struct {
 
 // Close will delete the underlying C++ allocated memory used by the
 // deserializer. Failure to call Close will result in a memory leak.
-func (self *commonDeserializer) Close() error {
-	if nil != self.cptr {
-		C.ir_deserializer_close(self.cptr)
-		self.cptr = nil
+func (deserializer *commonDeserializer) Close() error {
+	if nil != deserializer.cptr {
+		C.ir_deserializer_close(deserializer.cptr)
+		deserializer.cptr = nil
 	}
 	return nil
 }
 
 // Returns the TimestampInfo used by the Deserializer.
-func (self commonDeserializer) TimestampInfo() TimestampInfo {
-	return self.tsInfo
+func (deserializer commonDeserializer) TimestampInfo() TimestampInfo {
+	return deserializer.tsInfo
 }
 
 type eightByteDeserializer struct {
@@ -155,10 +155,10 @@ type eightByteDeserializer struct {
 //   - 0 position
 //   - [IrError] error: CLP failed to successfully deserialize
 //   - [EndOfIr] error: CLP found the IR stream EOF tag
-func (self *eightByteDeserializer) DeserializeLogEvent(
+func (deserializer *eightByteDeserializer) DeserializeLogEvent(
 	irBuf []byte,
 ) (*ffi.LogEventView, int, error) {
-	return deserializeLogEvent(self, irBuf)
+	return deserializeLogEvent(deserializer, irBuf)
 }
 
 // DeserializeWildcardMatchWithTimeInterval attempts to read the next log event
@@ -171,12 +171,12 @@ func (self *eightByteDeserializer) DeserializeLogEvent(
 //   - -1 index
 //   - [IrError] error: CLP failed to successfully deserialize
 //   - [EndOfIr] error: CLP found the IR stream EOF tag
-func (self *eightByteDeserializer) DeserializeWildcardMatchWithTimeInterval(
+func (deserializer *eightByteDeserializer) DeserializeWildcardMatchWithTimeInterval(
 	irBuf []byte,
 	mergedQuery search.MergedWildcardQuery,
 	timeInterval search.TimestampInterval,
 ) (*ffi.LogEventView, int, int, error) {
-	return deserializeWildcardMatch(self, irBuf, mergedQuery, timeInterval)
+	return deserializeWildcardMatch(deserializer, irBuf, mergedQuery, timeInterval)
 }
 
 // fourByteDeserializer contains both a common CLP IR deserializer and stores
@@ -195,10 +195,10 @@ type fourByteDeserializer struct {
 //   - 0 position
 //   - [IrError] error: CLP failed to successfully deserialize
 //   - [EndOfIr] error: CLP found the IR stream EOF tag
-func (self *fourByteDeserializer) DeserializeLogEvent(
+func (deserializer *fourByteDeserializer) DeserializeLogEvent(
 	irBuf []byte,
 ) (*ffi.LogEventView, int, error) {
-	return deserializeLogEvent(self, irBuf)
+	return deserializeLogEvent(deserializer, irBuf)
 }
 
 // DeserializeWildcardMatchWithTimeInterval attempts to read the next log event
@@ -211,12 +211,12 @@ func (self *fourByteDeserializer) DeserializeLogEvent(
 //   - -1 index
 //   - [IrError] error: CLP failed to successfully deserialize
 //   - [EndOfIr] error: CLP found the IR stream EOF tag
-func (self *fourByteDeserializer) DeserializeWildcardMatchWithTimeInterval(
+func (deserializer *fourByteDeserializer) DeserializeWildcardMatchWithTimeInterval(
 	irBuf []byte,
 	mergedQuery search.MergedWildcardQuery,
 	timeInterval search.TimestampInterval,
 ) (*ffi.LogEventView, int, int, error) {
-	return deserializeWildcardMatch(self, irBuf, mergedQuery, timeInterval)
+	return deserializeWildcardMatch(deserializer, irBuf, mergedQuery, timeInterval)
 }
 
 func deserializeLogEvent(

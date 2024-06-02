@@ -2,4 +2,5 @@
 //go:generate cmake --build cpp/build -j
 //go:generate cmake --install cpp/build --prefix .
 
+//nolint:stylecheck
 package clp_ffi_go

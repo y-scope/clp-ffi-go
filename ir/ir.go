@@ -8,6 +8,8 @@
 // [CLP]: https://github.com/y-scope/clp
 // [Uber blog]: https://www.uber.com/blog/reducing-logging-cost-by-two-orders-of-magnitude-using-clp/
 // [log viewer]: https://github.com/y-scope/yscope-log-viewer
+//
+//nolint:revive
 package ir
 
 /*

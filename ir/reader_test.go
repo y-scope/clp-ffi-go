@@ -7,13 +7,14 @@ import (
 	"time"
 
 	"github.com/klauspost/compress/zstd"
+
 	"github.com/y-scope/clp-ffi-go/ffi"
 	"github.com/y-scope/clp-ffi-go/search"
 )
 
 func TestIrReader(t *testing.T) {
 	var fpath string = os.Getenv("go_test_ir")
-	if "" == fpath {
+	if fpath == "" {
 		t.Skip("Set an input ir stream using the env variable: go_test_ir")
 	}
 	var err error

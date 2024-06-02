@@ -60,7 +60,10 @@ func testSerDerLogMessages(
 		events = append(events, event)
 	}
 	irSerializer.Close()
-	ioWriter.Write([]byte{0x0})
+	_, err := ioWriter.Write([]byte{0x0})
+	if nil != err {
+		t.Fatalf("io.Writer.Write message: %v", err)
+	}
 	ioWriter.Close()
 
 	ioReader := openIoReader(t, args)

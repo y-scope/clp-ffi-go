@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/klauspost/compress/zstd"
+
 	"github.com/y-scope/clp-ffi-go/ffi"
 )
 
@@ -209,7 +210,7 @@ func newZstdReader(reader io.Reader) (*zstdReader, error) {
 	return &zstdReader{zreader}, err
 }
 
-func (self *zstdReader) Close() error {
-	self.Decoder.Close()
+func (reader *zstdReader) Close() error {
+	reader.Decoder.Close()
 	return nil
 }

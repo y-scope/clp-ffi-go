@@ -90,6 +90,17 @@ To run all unit tests run: ``go_test_ir="/path/to/my-ir.clp.zst" go test ./...``
   named ``go_test_ir``. It can be an absolute path or a path relative to the
   ``ir`` directory.
 
+Linting
+--------
+1. Install golangci-lint:
+
+.. code:: bash
+
+    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
+      sh -s -- -b $(go env GOPATH)/bin v1.59.0
+
+2. Run with `golangci-lint run`
+
 Using an external C++ library
 -----------------------------
 Use the ``external`` build tag to link with different CLP FFI library instead
@@ -105,5 +116,5 @@ For example, to run the tests using the ``external`` you can run:
 .. code:: bash
 
   CGO_LDFLAGS="-L/path/to/external_libs -lclp_ffi_linux_amd64 -Wl,-rpath=/path/to/external_libs" \
-  go_test_ir="/path/to/my-ir.clp.zst" \
-  go test -tags external ./...
+    go_test_ir="/path/to/my-ir.clp.zst" \
+    go test -tags external ./...

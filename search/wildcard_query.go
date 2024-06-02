@@ -51,8 +51,8 @@ func NewWildcardQuery(query string, caseSensitive bool) WildcardQuery {
 	}
 }
 
-func (self WildcardQuery) Query() string       { return self.query }
-func (self WildcardQuery) CaseSensitive() bool { return self.caseSensitive }
+func (wcq WildcardQuery) Query() string       { return wcq.query }
+func (wcq WildcardQuery) CaseSensitive() bool { return wcq.caseSensitive }
 
 // A MergedWildcardQuery represents the union of multiple wildcard queries
 // (multiple WildcardQuery instances each with their own query string and case
@@ -63,9 +63,9 @@ type MergedWildcardQuery struct {
 	caseSensitivity []bool
 }
 
-func (self MergedWildcardQuery) Queries() string         { return self.queries }
-func (self MergedWildcardQuery) EndOffsets() []int       { return self.endOffsets }
-func (self MergedWildcardQuery) CaseSensitivity() []bool { return self.caseSensitivity }
+func (mwcq MergedWildcardQuery) Queries() string         { return mwcq.queries }
+func (mwcq MergedWildcardQuery) EndOffsets() []int       { return mwcq.endOffsets }
+func (mwcq MergedWildcardQuery) CaseSensitivity() []bool { return mwcq.caseSensitivity }
 
 // Merge multiple WildcardQuery objects together by concatenating their query
 // strings, storing their end/length offsets, and recording their case
