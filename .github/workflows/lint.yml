@@ -50,6 +50,7 @@ jobs:
         if: "${{ matrix.os == 'ubuntu-latest' }}"
         run: |
           wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo apt update
           sudo apt install clang-format-18 clang-tidy-18
 
       - name: "Build for compile commands.json"
