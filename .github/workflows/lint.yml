@@ -49,7 +49,7 @@ jobs:
       - name: "Linux: install clang/llvm"
         if: "${{ matrix.os == 'ubuntu-latest' }}"
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://apt.llvm.org/llvm.sh | bash -s -- 18
+          curl --proto '=https' --tlsv1.2 -sSf https://apt.llvm.org/llvm.sh | sudo bash -s -- 18
           sudo apt install -y clang-format-18 clang-tidy-18
 
       - name: "Build for compile commands.json"
