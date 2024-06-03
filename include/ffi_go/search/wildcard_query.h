@@ -1,11 +1,12 @@
 #ifndef FFI_GO_IR_WILDCARD_QUERY_H
 #define FFI_GO_IR_WILDCARD_QUERY_H
 // header must support C, making modernize checks inapplicable
-// NOLINTBEGIN(modernize-deprecated-headers)
 // NOLINTBEGIN(modernize-use-trailing-return-type)
 // NOLINTBEGIN(modernize-use-using)
 
-#include <stdbool.h>
+#ifndef __cplusplus
+    #include <stdbool.h>
+#endif
 
 #include "ffi_go/api_decoration.h"
 #include "ffi_go/defs.h"
@@ -67,5 +68,4 @@ CLP_FFI_GO_METHOD int wildcard_query_match(StringView target, WildcardQueryView 
 
 // NOLINTEND(modernize-use-using)
 // NOLINTEND(modernize-use-trailing-return-type)
-// NOLINTEND(modernize-deprecated-headers)
 #endif  // FFI_GO_IR_WILDCARD_QUERY_H

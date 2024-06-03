@@ -1,12 +1,7 @@
 #ifndef FFI_GO_IR_DECODER_H
 #define FFI_GO_IR_DECODER_H
 // header must support C, making modernize checks inapplicable
-// NOLINTBEGIN(modernize-deprecated-headers)
 // NOLINTBEGIN(modernize-use-trailing-return-type)
-// NOLINTBEGIN(modernize-use-using)
-
-#include <stdint.h>
-#include <stdlib.h>
 
 #include "ffi_go/api_decoration.h"
 #include "ffi_go/defs.h"
@@ -82,7 +77,5 @@ CLP_FFI_GO_METHOD int ir_decoder_decode_four_byte_log_message(
         StringView* log_message
 );
 
-// NOLINTEND(modernize-use-using)
 // NOLINTEND(modernize-use-trailing-return-type)
-// NOLINTEND(modernize-deprecated-headers)
 #endif  // FFI_GO_IR_DECODER_H
