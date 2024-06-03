@@ -1,60 +1,66 @@
-name: lint
+name: "lint"
 on:
   push:
   pull_request:
   workflow_call:
 
 permissions:
-  contents: read
+  contents: "read"
 
 jobs:
   go-lint:
     strategy:
       matrix:
-        go: ['1.23']
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+        go: ["1.23"]
+        os: ["ubuntu-latest", "macos-latest"]
+    runs-on: "${{ matrix.os }}"
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: "Checkout"
+        uses: "actions/checkout@v4"
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - name: "Setup Go"
+        uses: "actions/setup-go@v5"
         with:
-          go-version: ${{ matrix.go }}
+          go-version: "${{ matrix.go }}"
 
-      - name: Lint go code
-        uses: golangci/golangci-lint-action@v6
+      - name: "Lint go code"
+        uses: "golangci/golangci-lint-action@v6"
         with:
-          version: v1.59
+          version: "v1.59"
 
   cpp-lint:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+        os: ["ubuntu-latest", "macos-latest"]
+    runs-on: "${{ matrix.os }}"
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: "Checkout"
+        uses: "actions/checkout@v4"
         with:
-          submodules: recursive
+          submodules: "recursive"
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - name: "Setup Go"
+        uses: "actions/setup-go@v5"
         with:
-          go-version: ${{ matrix.go }}
+          go-version: "${{ matrix.go }}"
 
-      - name: Macos: install clang/llvm
-        if: ${{ 'macos-latest' == matrix.os }}
+      - name: "Macos: install clang/llvm"
+        if: |
+          ${{ "macos-latest" == matrix.os }}
         run: |
           brew update
           brew install llvm
 
-      - name: Linux: install clang/llvm
-        if: ${{ 'ubuntu-latest' == matrix.os }}
+      - name: "Linux: install clang/llvm"
+        if: |
+            ${{ "ubuntu-latest" == matrix.os }}
         run: |
-            curl --proto '=https' --tlsv1.2 -sSf https://apt.llvm.org/llvm.sh | bash -s -- 16 all
+            curl --proto "=https" --tlsv1.2 -sSf https://apt.llvm.org/llvm.sh | bash -s -- 16 all
 
-     - run: find cpp/src -type f | xargs clang-format-16 -i
+      - name: "Clang format"
+        run: |
+          find cpp/src -type f | xargs clang-format-16 -i
 
-     - run: find cpp/src -type f | xargs clang-tidy-16
+      - name: "Clang tidy"
+        run: |
+          find cpp/src -type f | xargs clang-tidy-16

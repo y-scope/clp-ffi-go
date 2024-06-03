@@ -1,4 +1,4 @@
-name: Test
+name: "Test"
 on:
   pull_request:
   push:
@@ -8,55 +8,57 @@ jobs:
   package-test:
     strategy:
       matrix:
-        go: ['1.23']
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+        go: ["1.23"]
+        os: ["ubuntu-latest", "macos-latest"]
+    runs-on: "${{ matrix.os }}"
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: "Checkout"
+        uses: "actions/checkout@v4"
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - name: "Setup Go"
+        uses: "actions/setup-go@v5"
         with:
-          go-version: ${{ matrix.go }}
+          go-version: "${{ matrix.go }}"
 
-      - name: Go build
-        run: go clean -cache && go build ./...
-
-      - name: Unit tests
-        run: go test -count=1 ./...
+      - name: "Unit tests"
+        run: |
+          go clean -cache
+          go test -count=1 ./...
 
   full-build-test:
     strategy:
       matrix:
-        go: ['1.23']
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+        go: ["1.23"]
+        os: ["ubuntu-latest", "macos-latest"]
+    runs-on: "${{ matrix.os }}"
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: "Checkout"
+        uses: "actions/checkout@v4"
         with:
-          submodules: recursive
+          submodules: "recursive"
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - name: "Setup Go"
+        uses: "actions/setup-go@v5"
         with:
-          go-version: ${{ matrix.go }}
+          go-version: "${{ matrix.go }}"
 
-      - name: Macos: install clang/llvm
-        if: ${{ 'macos-latest' == matrix.os }}
+      - name: "Macos: install clang/llvm"
+        if: |
+            ${{ "macos-latest" == matrix.os }}
         run: |
           brew update
           brew install llvm
 
-      - name: Remove packaged c++ libraries and go code
-        run: rm ./lib/* ./**/*_string.go
+      - name: "Remove packaged c++ libraries and go code"
+        run: |
+          rm ./lib/* ./**/*_string.go
 
-      - name: Install stringer for go generate
-        run: go install golang.org/x/tools/cmd/stringer@latest
+      - name: "Generate go code and build+install c++ library"
+        run: |
+          go install golang.org/x/tools/cmd/stringer@latest
+          go generate ./...
 
-      - name: Generate go code and build+install c++ library
-        run: go clean -cache && go generate ./...
-
-      - name: Unit tests
-        run: go test -count=1 ./...
+      - name: "Unit tests"
+        run: |
+          go clean -cache
+          go test -count=1 ./...
