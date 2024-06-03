@@ -51,6 +51,10 @@ jobs:
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://apt.llvm.org/llvm.sh | sudo bash -s -- 18
           sudo apt install -y clang-format-18 clang-tidy-18
+          for src in /usr/bin/clang*-*; do
+            base="$(basename $src)";
+            ln -s $src /usr/local/bin/${base%-*};
+          done
 
       - name: "Build for compile commands.json"
         run: |
@@ -59,8 +63,8 @@ jobs:
 
       - name: "Clang format"
         run: |
-          find cpp/src -type f | xargs clang-format-18 -i
+          find cpp/src -type f | xargs clang-format -i
 
       - name: "Clang tidy"
         run: |
-          find cpp/src -type f | xargs clang-tidy-18
+          find cpp/src -type f | xargs clang-tidy
