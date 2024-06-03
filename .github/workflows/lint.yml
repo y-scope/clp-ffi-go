@@ -1,4 +1,5 @@
 name: "Lint"
+
 on:
   push:
   pull_request:
@@ -43,13 +44,13 @@ jobs:
         if: "${{ matrix.os == 'macos-latest' }}"
         run: |
           brew update
-          brew install llvm
+          brew install llvm@18
 
       - name: "Linux: install clang/llvm"
         if: "${{ matrix.os == 'ubuntu-latest' }}"
         run: |
           curl --proto "=https" --tlsv1.2 -sSf https://apt.llvm.org/llvm.sh |
-            sudo bash -s -- 16 all
+            sudo bash -s -- 18 all
 
       - name: "Build for compile commands.json"
         run: |
@@ -58,8 +59,8 @@ jobs:
 
       - name: "Clang format"
         run: |
-          find cpp/src -type f | xargs clang-format-16 -i
+          find cpp/src -type f | xargs clang-format-18 -i
 
       - name: "Clang tidy"
         run: |
-          find cpp/src -type f | xargs clang-tidy-16
+          find cpp/src -type f | xargs clang-tidy-18
