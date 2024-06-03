@@ -45,8 +45,8 @@ jobs:
         run: |
           brew update
           brew install llvm@18
-          sudo ln -s /usr/bin/clang-format /usr/local/bin/clang-format-18
-          sudo ln -s /usr/bin/clang-tidy /usr/local/bin/clang-tidy-18
+          sudo ln -s /opt/homebrew/opt/llvm/bin/clang-format /usr/local/bin/clang-format-18
+          sudo ln -s /opt/homebrew/opt/llvm/bin/clang-tidy /usr/local/bin/clang-tidy-18
 
       - name: "Linux: install clang/llvm"
         if: "${{ matrix.os == 'ubuntu-latest' }}"
