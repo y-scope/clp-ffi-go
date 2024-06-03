@@ -49,9 +49,8 @@ jobs:
       - name: "Linux: install clang/llvm"
         if: "${{ matrix.os == 'ubuntu-latest' }}"
         run: |
-          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-          sudo apt update
-          sudo apt install clang-format-18 clang-tidy-18
+          curl --proto '=https' --tlsv1.2 -sSf https://apt.llvm.org/llvm.sh | bash -s -- 18
+          sudo apt install -y clang-format-18 clang-tidy-18
 
       - name: "Build for compile commands.json"
         run: |
@@ -60,8 +59,8 @@ jobs:
 
       - name: "Clang format"
         run: |
-          find cpp/src -type f | xargs clang-format -i
+          find cpp/src -type f | xargs clang-format-18 -i
 
       - name: "Clang tidy"
         run: |
-          find cpp/src -type f | xargs clang-tidy
+          find cpp/src -type f | xargs clang-tidy-18
