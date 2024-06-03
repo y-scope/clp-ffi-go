@@ -7,8 +7,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include <ffi_go/api_decoration.h>
-#include <ffi_go/defs.h>
+#include "ffi_go/api_decoration.h"
+#include "ffi_go/defs.h"
 
 /**
  * Clean up the underlying ir::Serializer of a Go ir.Serializer.

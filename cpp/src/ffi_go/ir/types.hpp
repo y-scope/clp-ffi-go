@@ -8,7 +8,7 @@
 
 #include <clp/components/core/src/ffi/encoding_methods.hpp>
 
-#include <ffi_go/types.hpp>
+#include "ffi_go/types.hpp"
 
 namespace ffi_go::ir {
 
