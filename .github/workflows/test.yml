@@ -43,11 +43,11 @@ jobs:
         with:
           go-version: "${{ matrix.go }}"
 
-      - name: "Macos: install clang/llvm"
+      - name: "Macos: install dependencies"
         if: "${{ matrix.os == 'macos-latest' }}"
         run: |
           brew update
-          brew install llvm
+          brew install cmake gcc
 
       - name: "Remove packaged c++ libraries and go code"
         run: |
