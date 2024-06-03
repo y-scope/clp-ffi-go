@@ -7,8 +7,8 @@
 
 #include <stdbool.h>
 
-#include <ffi_go/api_decoration.h>
-#include <ffi_go/defs.h>
+#include "ffi_go/api_decoration.h"
+#include "ffi_go/defs.h"
 
 /**
  * A timestamp interval of [m_lower, m_upper).

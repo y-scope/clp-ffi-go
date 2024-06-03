@@ -8,8 +8,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include <ffi_go/api_decoration.h>
-#include <ffi_go/defs.h>
+#include "ffi_go/api_decoration.h"
+#include "ffi_go/defs.h"
 
 /**
  * Create a ir::Encoder used as the underlying data storage for a Go ir.Encoder.
