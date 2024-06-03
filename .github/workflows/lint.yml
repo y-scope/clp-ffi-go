@@ -44,17 +44,13 @@ jobs:
         if: "${{ matrix.os == 'macos-latest' }}"
         run: |
           brew update
-          brew install llvm@18
+          brew install llvm
 
       - name: "Linux: install clang/llvm"
         if: "${{ matrix.os == 'ubuntu-latest' }}"
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://apt.llvm.org/llvm.sh | sudo bash -s -- 18
-          sudo apt install -y clang-format-18 clang-tidy-18
-          for src in /usr/bin/clang*-*; do
-            base="$(basename $src)";
-            ln -s $src /usr/local/bin/${base%-*};
-          done
+          curl --proto '=https' --tlsv1.2 -sSf https://apt.llvm.org/llvm.sh | sudo bash -s --
+          sudo apt install -y clang-format clang-tidy
 
       - name: "Build for compile commands.json"
         run: |
