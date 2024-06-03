@@ -8,7 +8,7 @@ jobs:
   package-test:
     strategy:
       matrix:
-        go: ["1.23"]
+        go: ["1.22"]
         os: ["ubuntu-latest", "macos-latest"]
     runs-on: "${{ matrix.os }}"
     steps:
@@ -28,7 +28,7 @@ jobs:
   full-build-test:
     strategy:
       matrix:
-        go: ["1.23"]
+        go: ["1.22"]
         os: ["ubuntu-latest", "macos-latest"]
     runs-on: "${{ matrix.os }}"
     steps:
@@ -43,8 +43,7 @@ jobs:
           go-version: "${{ matrix.go }}"
 
       - name: "Macos: install clang/llvm"
-        if: |
-            matrix.os == 'macos-latest'
+        if: "matrix.os == 'macos-latest'"
         run: |
           brew update
           brew install llvm
