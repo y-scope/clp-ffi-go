@@ -44,7 +44,7 @@ jobs:
 
       - name: "Macos: install clang/llvm"
         if: |
-            ${{ "macos-latest" == matrix.os }}
+            "macos-latest" == matrix.os
         run: |
           brew update
           brew install llvm
