@@ -48,7 +48,8 @@ jobs:
       - name: "Linux: install clang/llvm"
         if: "${{ matrix.os == 'ubuntu-latest' }}"
         run: |
-            curl --proto "=https" --tlsv1.2 -sSf https://apt.llvm.org/llvm.sh | bash -s -- 16 all
+            curl --proto "=https" --tlsv1.2 -sSf https://apt.llvm.org/llvm.sh |
+              sudo bash -s -- 16 all
 
       - name: "Clang format"
         run: |
