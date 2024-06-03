@@ -46,14 +46,14 @@ jobs:
 
       - name: "Macos: install clang/llvm"
         if: |
-          "macos-latest" == matrix.os
+            matrix.os == "macos-latest"
         run: |
           brew update
           brew install llvm
 
       - name: "Linux: install clang/llvm"
         if: |
-            "ubuntu-latest" == matrix.os
+            matrix.os == "ubuntu-latest"
         run: |
             curl --proto "=https" --tlsv1.2 -sSf https://apt.llvm.org/llvm.sh | bash -s -- 16 all
 
