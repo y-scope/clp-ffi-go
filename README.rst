@@ -99,7 +99,7 @@ Linting
     curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
       sh -s -- -b $(go env GOPATH)/bin v1.59.0
 
-2. Run with `golangci-lint run`
+2. Run with ``golangci-lint run``
 
 Using an external C++ library
 -----------------------------

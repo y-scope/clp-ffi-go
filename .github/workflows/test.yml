@@ -43,11 +43,11 @@ jobs:
           brew update
           brew install cmake gcc
 
-      - name: "Remove packaged c++ libraries and go code"
+      - name: "Remove packaged C++ libraries and Go code"
         run: |
           rm ./lib/* ./**/*_string.go
 
-      - name: "Generate go code and build+install c++ library"
+      - name: "Generate Go code and build+install C++ library"
         run: |
           go install golang.org/x/tools/cmd/stringer@latest
           go generate ./...
