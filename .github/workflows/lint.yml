@@ -5,9 +5,6 @@ on:
   pull_request:
   workflow_call:
 
-permissions:
-  contents: "read"
-
 jobs:
   go-lint:
     strategy:
@@ -49,7 +46,7 @@ jobs:
           apt install -y clang-format-18 clang-tidy-18
 
       - name: "Build compile_commands.json for clang tools"
-      - run: |
+        run: |
           cmake -S cpp/ -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=1
           ln -s build/compile_commands.json .
 
