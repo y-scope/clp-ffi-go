@@ -35,16 +35,16 @@ type eightByteEncoder struct {
 
 // Close will delete the underlying C++ allocated memory used by the
 // deserializer. Failure to call Close will result in a memory leak.
-func (self *eightByteEncoder) Close() error {
-	if nil != self.cptr {
-		C.ir_encoder_eight_byte_close(self.cptr)
-		self.cptr = nil
+func (encoder *eightByteEncoder) Close() error {
+	if nil != encoder.cptr {
+		C.ir_encoder_eight_byte_close(encoder.cptr)
+		encoder.cptr = nil
 	}
 	return nil
 }
 
 // Encode a log message into CLP IR, returning a view of the encoded message.
-func (self *eightByteEncoder) EncodeLogMessage(
+func (encoder *eightByteEncoder) EncodeLogMessage(
 	logMessage ffi.LogMessage,
 ) (*LogMessageView[EightByteEncoding], error) {
 	var logtype C.StringView
@@ -53,7 +53,7 @@ func (self *eightByteEncoder) EncodeLogMessage(
 	var dictVarEndOffsets C.Int32tSpan
 	err := IrError(C.ir_encoder_encode_eight_byte_log_message(
 		newCStringView(logMessage),
-		self.cptr,
+		encoder.cptr,
 		&logtype,
 		&vars,
 		&dictVars,
@@ -71,16 +71,16 @@ type fourByteEncoder struct {
 
 // Close will delete the underlying C++ allocated memory used by the
 // deserializer. Failure to call Close will result in a memory leak.
-func (self *fourByteEncoder) Close() error {
-	if nil != self.cptr {
-		C.ir_encoder_four_byte_close(self.cptr)
-		self.cptr = nil
+func (encoder *fourByteEncoder) Close() error {
+	if nil != encoder.cptr {
+		C.ir_encoder_four_byte_close(encoder.cptr)
+		encoder.cptr = nil
 	}
 	return nil
 }
 
 // Encode a log message into CLP IR, returning a view of the encoded message.
-func (self *fourByteEncoder) EncodeLogMessage(
+func (encoder *fourByteEncoder) EncodeLogMessage(
 	logMessage ffi.LogMessage,
 ) (*LogMessageView[FourByteEncoding], error) {
 	var logtype C.StringView
@@ -89,7 +89,7 @@ func (self *fourByteEncoder) EncodeLogMessage(
 	var dictVarEndOffsets C.Int32tSpan
 	err := IrError(C.ir_encoder_encode_four_byte_log_message(
 		newCStringView(logMessage),
-		self.cptr,
+		encoder.cptr,
 		&logtype,
 		&vars,
 		&dictVars,

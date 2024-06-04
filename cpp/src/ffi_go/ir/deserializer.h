@@ -7,9 +7,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include <ffi_go/api_decoration.h>
-#include <ffi_go/defs.h>
-#include <ffi_go/search/wildcard_query.h>
+#include "ffi_go/api_decoration.h"
+#include "ffi_go/defs.h"
+#include "ffi_go/search/wildcard_query.h"
 
 /**
  * Clean up the underlying ir::Deserializer of a Go ir.Deserializer.

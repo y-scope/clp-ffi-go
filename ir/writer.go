@@ -59,7 +59,7 @@ func NewWriterSize[T EightByteEncoding | FourByteEncoding](
 			ffi.EpochTimeMs(time.Now().UnixMilli()),
 		)
 	default:
-		err = fmt.Errorf("Invalid type: %T", t)
+		err = fmt.Errorf("invalid type: %T", t)
 	}
 	if nil != err {
 		return nil, err
@@ -74,9 +74,9 @@ func NewWriterSize[T EightByteEncoding | FourByteEncoding](
 // Close will write a null byte denoting the end of the IR stream and delete the
 // underlying C++ allocated memory used by the serializer. Failure to call Close
 // will result in a memory leak.
-func (self *Writer) Close() error {
-	self.buf.WriteByte(0x0)
-	return self.Serializer.Close()
+func (writer *Writer) Close() error {
+	writer.buf.WriteByte(0x0)
+	return writer.Serializer.Close()
 }
 
 // CloseTo is a combination of [Close] and [WriteTo]. It will completely close
@@ -85,22 +85,22 @@ func (self *Writer) Close() error {
 // Returns:
 //   - success: number of bytes written, nil
 //   - error: number of bytes written, error propagated from [WriteTo]
-func (self *Writer) CloseTo(w io.Writer) (int64, error) {
-	self.Close()
-	return self.WriteTo(w)
+func (writer *Writer) CloseTo(w io.Writer) (int64, error) {
+	writer.Close()
+	return writer.WriteTo(w)
 }
 
 // Bytes returns a slice of the Writer's internal buffer. The slice is valid for
 // use only until the next buffer modification (that is, only until the next
 // call to Write, WriteTo, or Reset).
-func (self *Writer) Bytes() []byte {
-	return self.buf.Bytes()
+func (writer *Writer) Bytes() []byte {
+	return writer.buf.Bytes()
 }
 
 // Reset resets the buffer to be empty, but it retains the underlying storage
 // for use by future writes.
-func (self *Writer) Reset() {
-	self.buf.Reset()
+func (writer *Writer) Reset() {
+	writer.buf.Reset()
 }
 
 // Write uses [SerializeLogEvent] to serialize the provided log event to CLP IR
@@ -108,8 +108,8 @@ func (self *Writer) Reset() {
 //   - success: number of bytes written, nil
 //   - error: number of bytes written (can be 0), error propagated from
 //     [SerializeLogEvent] or [bytes.Buffer.Write]
-func (self *Writer) Write(event ffi.LogEvent) (int, error) {
-	irView, err := self.SerializeLogEvent(event)
+func (writer *Writer) Write(event ffi.LogEvent) (int, error) {
+	irView, err := writer.SerializeLogEvent(event)
 	if nil != err {
 		return 0, err
 	}
@@ -118,7 +118,7 @@ func (self *Writer) Write(event ffi.LogEvent) (int, error) {
 	// Write can fail in the future, we should either:
 	//   1. fix the issue and retry the write
 	//   2. store irView and provide a retry API (allowing the user to fix the issue and retry)
-	n, err := self.buf.Write(irView)
+	n, err := writer.buf.Write(irView)
 	if nil != err {
 		return n, err
 	}
@@ -127,15 +127,15 @@ func (self *Writer) Write(event ffi.LogEvent) (int, error) {
 
 // WriteTo writes data to w until the buffer is drained or an error occurs. If
 // no error occurs the buffer is reset. On an error the user is expected to use
-// [self.Bytes] and [self.Reset] to manually handle the buffer's contents before
+// [writer.Bytes] and [writer.Reset] to manually handle the buffer's contents before
 // continuing. Returns:
 //   - success: number of bytes written, nil
 //   - error: number of bytes written, error propagated from
 //     [bytes.Buffer.WriteTo]
-func (self *Writer) WriteTo(w io.Writer) (int64, error) {
-	n, err := self.buf.WriteTo(w)
+func (writer *Writer) WriteTo(w io.Writer) (int64, error) {
+	n, err := writer.buf.WriteTo(w)
 	if nil == err {
-		self.buf.Reset()
+		writer.buf.Reset()
 	}
 	return n, err
 }

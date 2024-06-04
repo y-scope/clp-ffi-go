@@ -35,10 +35,10 @@ type commonDecoder struct {
 
 // Close will delete the underlying C++ allocated memory used by the
 // deserializer. Failure to call Close will result in a memory leak.
-func (self *commonDecoder) Close() error {
-	if nil != self.cptr {
-		C.ir_decoder_close(self.cptr)
-		self.cptr = nil
+func (decoder *commonDecoder) Close() error {
+	if nil != decoder.cptr {
+		C.ir_decoder_close(decoder.cptr)
+		decoder.cptr = nil
 	}
 	return nil
 }
@@ -49,7 +49,7 @@ type eightByteDecoder struct {
 
 // Decode an IR encoded log message, returning a view of the original
 // (non-encoded) log message.
-func (self *eightByteDecoder) DecodeLogMessage(
+func (decoder *eightByteDecoder) DecodeLogMessage(
 	irMessage LogMessage[EightByteEncoding],
 ) (*ffi.LogMessageView, error) {
 	var msg C.StringView
@@ -58,7 +58,7 @@ func (self *eightByteDecoder) DecodeLogMessage(
 		newCInt64tSpan(irMessage.Vars),
 		newCStringView(irMessage.DictVars),
 		newCInt32tSpan(irMessage.DictVarEndOffsets),
-		self.cptr,
+		decoder.cptr,
 		&msg,
 	))
 	if Success != err {
@@ -74,7 +74,7 @@ type fourByteDecoder struct {
 
 // Decode an IR encoded log message, returning a view of the original
 // (non-encoded) log message.
-func (self *fourByteDecoder) DecodeLogMessage(
+func (decoder *fourByteDecoder) DecodeLogMessage(
 	irMessage LogMessage[FourByteEncoding],
 ) (*ffi.LogMessageView, error) {
 	var msg C.StringView
@@ -83,7 +83,7 @@ func (self *fourByteDecoder) DecodeLogMessage(
 		newCInt32tSpan(irMessage.Vars),
 		newCStringView(irMessage.DictVars),
 		newCInt32tSpan(irMessage.DictVarEndOffsets),
-		self.cptr,
+		decoder.cptr,
 		&msg,
 	))
 	if Success != err {

@@ -5,8 +5,8 @@
 
 #include <clp/components/core/src/string_utils.hpp>
 
-#include <ffi_go/api_decoration.h>
-#include <ffi_go/defs.h>
+#include "ffi_go/api_decoration.h"
+#include "ffi_go/defs.h"
 
 namespace ffi_go::search {
 CLP_FFI_GO_METHOD auto wildcard_query_new(StringView query, void** ptr) -> StringView {

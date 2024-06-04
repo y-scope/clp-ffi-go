@@ -1,0 +1,50 @@
+output:
+  sort-results: true
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters:
+  disable-all: true
+  enable:
+    - "gocritic"
+    - "goimports"
+    - "govet"
+    - "ineffassign"
+    - "nakedret"
+    - "revive"
+    - "staticcheck"
+    - "stylecheck"
+    - "unused"
+
+linters-settings:
+  gocritic:
+    disabled-checks:
+      # Appears to cause a false positive for Cgo calls
+      - "dupSubExpr"
+  goimports:
+    # Put imports beginning with prefix after 3rd-party packages.
+    local-prefixes: "github.com/y-scope/clp-ffi-go"
+  nakedret:
+    # Completely disallow naked returns
+    max-func-lines: 0
+  revive:
+    rules:
+      - name: "line-length-limit"
+        severity: "warning"
+        disabled: false
+        arguments: [100]
+  staticcheck:
+    checks:
+      - "all"
+  stylecheck:
+    checks:
+      - "all"
+      # Documentation guidelines that we don't follow (non-default)
+      - "-ST1020"
+      - "-ST1021"
+      - "-ST1022"
+      # Redundant variable declaration (non-default)
+      - "-ST1023"
+    initialisms: [""]

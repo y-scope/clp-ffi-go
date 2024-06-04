@@ -59,43 +59,43 @@ func NewReader(r io.Reader) (*Reader, error) {
 
 // Close will delete the underlying C++ allocated memory used by the
 // deserializer. Failure to call Close will result in a memory leak.
-func (self *Reader) Close() error {
-	return self.Deserializer.Close()
+func (reader *Reader) Close() error {
+	return reader.Deserializer.Close()
 }
 
-// Read uses [Deserializer.DeserializeLogEvent] to read from the CLP IR byte stream. The underlying
-// buffer will grow if it is too small to contain the next log event. On error returns:
-//   - nil *ffi.LogEventView
-//   - error propagated from [Deserializer.DeserializeLogEvent] or [io.Reader.Read]
-func (self *Reader) Read() (*ffi.LogEventView, error) {
+// Read uses [Deserializer].DeserializeLogEvent to read from the CLP IR byte stream. The
+// underlying buffer will grow if it is too small to contain the next log event. On error returns:
+//   - nil [*ffi.LogEventView]
+//   - error propagated from [Deserializer].DeserializeLogEvent or [io.Reader.Read]
+func (reader *Reader) Read() (*ffi.LogEventView, error) {
 	var event *ffi.LogEventView
 	var pos int
 	var err error
 	for {
-		event, pos, err = self.DeserializeLogEvent(self.buf[self.start:self.end])
+		event, pos, err = reader.DeserializeLogEvent(reader.buf[reader.start:reader.end])
 		if IncompleteIr != err {
 			break
 		}
-		if _, err = self.fillBuf(); nil != err {
+		if _, err = reader.fillBuf(); nil != err {
 			break
 		}
 	}
 	if nil != err {
 		return nil, err
 	}
-	self.start += pos
+	reader.start += pos
 	return event, nil
 }
 
 // ReadToWildcardMatch wraps ReadToWildcardMatchWithTimeInterval, attempting to
 // read the next log event that matches any query in queries, within the entire
 // IR. It forwards the result of ReadToWildcardMatchWithTimeInterval.
-func (self *Reader) ReadToWildcardMatch(
+func (reader *Reader) ReadToWildcardMatch(
 	queries []search.WildcardQuery,
 ) (*ffi.LogEventView, int, error) {
-	return self.ReadToWildcardMatchWithTimeInterval(
+	return reader.ReadToWildcardMatchWithTimeInterval(
 		queries,
-		search.TimestampInterval{0, math.MaxInt64},
+		search.TimestampInterval{Lower: 0, Upper: math.MaxInt64},
 	)
 }
 
@@ -107,7 +107,7 @@ func (self *Reader) ReadToWildcardMatch(
 //   - -1 index
 //   - [IrError] error: CLP failed to successfully deserialize
 //   - [EndOfIr] error: CLP found the IR stream EOF tag
-func (self *Reader) ReadToWildcardMatchWithTimeInterval(
+func (reader *Reader) ReadToWildcardMatchWithTimeInterval(
 	queries []search.WildcardQuery,
 	timeInterval search.TimestampInterval,
 ) (*ffi.LogEventView, int, error) {
@@ -117,32 +117,32 @@ func (self *Reader) ReadToWildcardMatchWithTimeInterval(
 	var err error
 	mergedQuery := search.MergeWildcardQueries(queries)
 	for {
-		event, pos, matchingQuery, err = self.DeserializeWildcardMatchWithTimeInterval(
-			self.buf[self.start:self.end],
+		event, pos, matchingQuery, err = reader.DeserializeWildcardMatchWithTimeInterval(
+			reader.buf[reader.start:reader.end],
 			mergedQuery,
 			timeInterval,
 		)
 		if IncompleteIr != err {
 			break
 		}
-		if _, err = self.fillBuf(); nil != err {
+		if _, err = reader.fillBuf(); nil != err {
 			break
 		}
 	}
 	if nil != err {
 		return nil, -1, err
 	}
-	self.start += pos
+	reader.start += pos
 	return event, matchingQuery, nil
 }
 
 // Read the CLP IR byte stream until f returns true for a [ffi.LogEventView].
-// The successful LogEvent is returned. Errors are propagated from [Read].
-func (self *Reader) ReadToFunc(
+// The successful LogEvent is returned. Errors are propagated from [Reader.Read].
+func (reader *Reader) ReadToFunc(
 	f func(*ffi.LogEventView) bool,
 ) (*ffi.LogEventView, error) {
 	for {
-		event, err := self.Read()
+		event, err := reader.Read()
 		if nil != err {
 			return event, err
 		}
@@ -153,58 +153,58 @@ func (self *Reader) ReadToFunc(
 }
 
 // Read the CLP IR stream until a [ffi.LogEventView] is greater than or equal to
-// the given timestamp. Errors are propagated from [ReadToFunc].
-func (self *Reader) ReadToEpochTime(
+// the given timestamp. Errors are propagated from [Reader.ReadToFunc].
+func (reader *Reader) ReadToEpochTime(
 	time ffi.EpochTimeMs,
 ) (*ffi.LogEventView, error) {
-	return self.ReadToFunc(func(event *ffi.LogEventView) bool { return event.Timestamp >= time })
+	return reader.ReadToFunc(func(event *ffi.LogEventView) bool { return event.Timestamp >= time })
 }
 
 // Read the CLP IR stream until [strings/Contains] returns true for a
 // [ffi.LogEventView] and the given sub string. Errors are propagated from
-// [ReadToFunc].
-func (self *Reader) ReadToContains(substr string) (*ffi.LogEventView, error) {
+// [Reader.ReadToFunc].
+func (reader *Reader) ReadToContains(substr string) (*ffi.LogEventView, error) {
 	fn := func(event *ffi.LogEventView) bool {
 		return strings.Contains(event.LogMessageView, substr)
 	}
-	return self.ReadToFunc(fn)
+	return reader.ReadToFunc(fn)
 }
 
 // Read the CLP IR stream until [strings/HasPrefix] returns true for a
 // [ffi.LogEventView] and the given prefix. Errors are propagated from
-// [ReadToFunc].
-func (self *Reader) ReadToPrefix(prefix string) (*ffi.LogEventView, error) {
+// [Reader.ReadToFunc].
+func (reader *Reader) ReadToPrefix(prefix string) (*ffi.LogEventView, error) {
 	fn := func(event *ffi.LogEventView) bool {
 		return strings.HasPrefix(event.LogMessageView, prefix)
 	}
-	return self.ReadToFunc(fn)
+	return reader.ReadToFunc(fn)
 }
 
 // Read the CLP IR stream until [strings/HasSuffix] returns true for a
 // [ffi.LogEventView] and the given suffix. Errors are propagated from
-// [ReadToFunc].
-func (self *Reader) ReadToSuffix(suffix string) (*ffi.LogEventView, error) {
+// [Reader.ReadToFunc].
+func (reader *Reader) ReadToSuffix(suffix string) (*ffi.LogEventView, error) {
 	fn := func(event *ffi.LogEventView) bool {
 		return strings.HasSuffix(event.LogMessageView, suffix)
 	}
-	return self.ReadToFunc(fn)
+	return reader.ReadToFunc(fn)
 }
 
 // fillBuf shifts the remaining valid IR in [Reader.buf] to the front and then
 // calls [io.Reader.Read] to fill the remainder with more IR. Before reading into
 // the buffer, it is doubled if more than half of it is unconsumed IR.
 // Forwards the return of [io.Reader.Read].
-func (self *Reader) fillBuf() (int, error) {
-	if (self.end - self.start) > len(self.buf)/2 {
-		buf := make([]byte, len(self.buf)*2)
-		copy(buf, self.buf[self.start:self.end])
-		self.buf = buf
+func (reader *Reader) fillBuf() (int, error) {
+	if (reader.end - reader.start) > len(reader.buf)/2 {
+		buf := make([]byte, len(reader.buf)*2)
+		copy(buf, reader.buf[reader.start:reader.end])
+		reader.buf = buf
 	} else {
-		copy(self.buf, self.buf[self.start:self.end])
+		copy(reader.buf, reader.buf[reader.start:reader.end])
 	}
-	self.end -= self.start
-	self.start = 0
-	n, err := self.read()
+	reader.end -= reader.start
+	reader.start = 0
+	n, err := reader.read()
 	return n, err
 }
 
@@ -213,9 +213,9 @@ func (self *Reader) fillBuf() (int, error) {
 // read. On success nil is returned. On failure an error is forwarded from
 // [io.Reader], unless n > 0 and io.EOF == err as we have not yet consumed the
 // CLP IR.
-func (self *Reader) read() (int, error) {
-	n, err := self.ioReader.Read(self.buf[self.end:])
-	self.end += n
+func (reader *Reader) read() (int, error) {
+	n, err := reader.ioReader.Read(reader.buf[reader.end:])
+	reader.end += n
 	if nil != err && io.EOF != err {
 		return n, err
 	}

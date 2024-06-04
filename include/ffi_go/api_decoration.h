@@ -6,9 +6,9 @@
  * ensure C linkage.
  */
 #ifdef __cplusplus
-#define CLP_FFI_GO_EXTERN_C extern "C"
+    #define CLP_FFI_GO_EXTERN_C extern "C"
 #else
-#define CLP_FFI_GO_EXTERN_C
+    #define CLP_FFI_GO_EXTERN_C
 #endif
 
 /**

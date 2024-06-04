@@ -4,7 +4,10 @@
 // NOLINTBEGIN(modernize-deprecated-headers)
 // NOLINTBEGIN(modernize-use-using)
 
-#include <stdbool.h>
+#ifndef __cplusplus
+    #include <stdbool.h>
+#endif
+
 #include <stdint.h>
 #include <stdlib.h>
 

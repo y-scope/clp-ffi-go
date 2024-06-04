@@ -7,9 +7,9 @@
 #include <clp/components/core/src/ffi/ir_stream/decoding_methods.hpp>
 #include <clp/components/core/src/ffi/ir_stream/encoding_methods.hpp>
 
-#include <ffi_go/api_decoration.h>
-#include <ffi_go/defs.h>
-#include <ffi_go/ir/types.hpp>
+#include "ffi_go/api_decoration.h"
+#include "ffi_go/defs.h"
+#include "ffi_go/ir/types.hpp"
 
 namespace ffi_go::ir {
 using namespace ffi;
@@ -98,6 +98,7 @@ auto serialize_log_event(
     }
     Serializer* serializer{static_cast<Serializer*>(ir_serializer)};
     serializer->m_ir_buf.clear();
+    serializer->reserve(log_message.m_size);
 
     bool success{false};
     if constexpr (std::is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>) {

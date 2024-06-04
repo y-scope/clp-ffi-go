@@ -17,6 +17,6 @@ const (
 	UnsupportedVersion // not from clp
 )
 
-func (self IrError) Error() string {
-	return self.String()
+func (err IrError) Error() string {
+	return err.String()
 }

@@ -94,17 +94,17 @@ type commonSerializer struct {
 
 // Closes the serializer by releasing the underlying C++ allocated memory.
 // Failure to call Close will result in a memory leak.
-func (self *commonSerializer) Close() error {
-	if nil != self.cptr {
-		C.ir_serializer_close(self.cptr)
-		self.cptr = nil
+func (serializer *commonSerializer) Close() error {
+	if nil != serializer.cptr {
+		C.ir_serializer_close(serializer.cptr)
+		serializer.cptr = nil
 	}
 	return nil
 }
 
 // Returns the TimestampInfo of the Serializer.
-func (self commonSerializer) TimestampInfo() TimestampInfo {
-	return self.tsInfo
+func (serializer commonSerializer) TimestampInfo() TimestampInfo {
+	return serializer.tsInfo
 }
 
 type eightByteSerializer struct {
@@ -115,10 +115,10 @@ type eightByteSerializer struct {
 // byte encoded CLP IR byte stream. On error returns:
 //   - a nil BufView
 //   - [IrError] based on the failure of the Cgo call
-func (self *eightByteSerializer) SerializeLogEvent(
+func (serializer *eightByteSerializer) SerializeLogEvent(
 	event ffi.LogEvent,
 ) (BufView, error) {
-	return serializeLogEvent(self, event)
+	return serializeLogEvent(serializer, event)
 }
 
 // fourByteSerializer contains both a common CLP IR serializer and stores the
@@ -134,10 +134,10 @@ type fourByteSerializer struct {
 // byte encoded CLP IR byte stream. On error returns:
 //   - nil BufView
 //   - [IrError] based on the failure of the Cgo call
-func (self *fourByteSerializer) SerializeLogEvent(
+func (serializer *fourByteSerializer) SerializeLogEvent(
 	event ffi.LogEvent,
 ) (BufView, error) {
-	return serializeLogEvent(self, event)
+	return serializeLogEvent(serializer, event)
 }
 
 func serializeLogEvent(

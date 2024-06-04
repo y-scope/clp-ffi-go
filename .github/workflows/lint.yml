@@ -1,0 +1,57 @@
+name: "lint"
+
+on:
+  push:
+  pull_request:
+  workflow_call:
+
+jobs:
+  go-lint:
+    strategy:
+      matrix:
+        go: ["1.22"]
+        os: ["ubuntu-latest", "macos-latest"]
+    runs-on: "${{ matrix.os }}"
+    steps:
+      - uses: "actions/checkout@v4"
+
+      - uses: "actions/setup-go@v5"
+        with:
+          go-version: "${{ matrix.go }}"
+
+      - uses: "golangci/golangci-lint-action@v6"
+        with:
+          version: "v1.59"
+
+  cpp-lint:
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "macos-latest"]
+    runs-on: "${{ matrix.os }}"
+    steps:
+      - uses: "actions/checkout@v4"
+        with:
+          submodules: "recursive"
+
+      - if: "${{ matrix.os == 'macos-latest' }}"
+        run: |
+          brew update
+          brew install llvm@18
+          ln -s /opt/homebrew/opt/llvm/bin/clang-format /usr/local/bin/clang-format-18
+          ln -s /opt/homebrew/opt/llvm/bin/clang-tidy /usr/local/bin/clang-tidy-18
+
+      - if: "${{ matrix.os == 'ubuntu-latest' }}"
+        run: |
+          curl https://apt.llvm.org/llvm.sh | sudo bash -s -- 18
+          sudo apt install -y clang-format-18 clang-tidy-18
+
+      - name: "Build compile_commands.json for clang tools"
+        run: |
+          cmake -S cpp/ -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+          ln -s build/compile_commands.json .
+
+      - run: |
+          find cpp/src -type f | xargs clang-format-18 --Werror --dry-run
+
+      - run: |
+          find cpp/src -type f | xargs clang-tidy-18

@@ -71,9 +71,13 @@ target_compile_options(${LIB_NAME}
 )
 
 target_include_directories(${LIB_NAME}
-    PRIVATE
+    SYSTEM PRIVATE
     ${CLP_SRC_DIR}/components/core/submodules
     ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_include_directories(${LIB_NAME}
+    PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
