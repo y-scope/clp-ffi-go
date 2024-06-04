@@ -19,24 +19,104 @@ WarningsAsErrors: "*"
 FormatStyle: "file"
 CheckOptions:
   misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: true
+
+  readability-identifier-naming.MacroDefinitionCase: "UPPER_CASE"
+
+  # NAMESPACES
+  # NamespaceCase implies:
+  # readability-identifier-naming.InlineNamespaceCase
+  readability-identifier-naming.NamespaceCase: "lower_case"
+
+  # CLASSES
+  # ClassCase implies:
+  # AbstractClassCase
+  # StructCase
   readability-identifier-naming.ClassCase: "CamelCase"
-  readability-identifier-naming.ClassMemberCase: "lower_case"
-  readability-identifier-naming.ClassMemberPrefix: "m_"
-  readability-identifier-naming.ClassMethodCase: "lower_case"
+
+  readability-identifier-naming.UnionCase: "CamelCase"
+
+  # CONSTANTS
   readability-identifier-naming.ConstexprVariableCase: "CamelCase"
   readability-identifier-naming.ConstexprVariablePrefix: "c"
-  readability-identifier-naming.EnumCase: "CamelCase"
-  readability-identifier-naming.EnumConstantCase: "CamelCase"
-  readability-identifier-naming.GlobalConstantCase: "CamelCase"
-  readability-identifier-naming.GlobalConstantPrefix: "c"
-  readability-identifier-naming.GlobalFunctionCase: "lower_case"
-  readability-identifier-naming.GlobalVariableCase: "lower_case"
-  readability-identifier-naming.LocalVariableCase: "lower_case"
+  # ConstantCase implies:
+  # ClassConstantCase
+  # ConstantMemberCase
+  # ConstantParameterCase
+  # ConstantPointerParameterCase
+  # GlobalConstantCase
+  # GlobalConstantPointerCase
+  # LocalConstantCase
+  # LocalConstantPointerCase
+  # StaticConstantCase
+  readability-identifier-naming.ConstantCase: "CamelCase"
+  # ConstantPrefix implies:
+  # ClassConstantPrefix
+  # ConstantMemberPrefix
+  # ConstantParameterPrefix
+  # ConstantPointerParameterPrefix
+  # GlobalConstantPrefix
+  # GlobalConstantPointerPrefix
+  # LocalConstantPrefix
+  # LocalConstantPointerPrefix
+  # StaticConstantPrefix
+  readability-identifier-naming.ConstantPrefix: "c"
+  # Below are constants which can be determined at runtime, so we use the variable naming convention
+  readability-identifier-naming.ConstantMemberCase: "lower_case"
+  # ConstantParameterCase implies:
+  # ConstantPointerParameterCase
+  readability-identifier-naming.ConstantParameterCase: "lower_case"
+  # LocalConstantCase implies:
+  # LocalConstantPointerCase
+  readability-identifier-naming.LocalConstantCase: "lower_case"
+
+  # VARIABLES
+  # VariableCase implies:
+  # GlobalPointerCase
+  # GlobalVariableCase
+  # LocalPointerCase
+  # LocalVariableCase
+  # StaticVariableCase
+  readability-identifier-naming.VariableCase: "lower_case"
+
+  # CLASS MEMBERS
+  readability-identifier-naming.ClassMemberCase: "lower_case"
+  readability-identifier-naming.ClassMemberPrefix: "m_"
+  # MemberCase implies:
+  # PrivateMemberCase
+  # ProtectedMemberCase
+  # PublicMemberCase
   readability-identifier-naming.MemberCase: "lower_case"
   readability-identifier-naming.MemberPrefix: "m_"
-  readability-identifier-naming.MethodCase: "lower_case"
+  readability-identifier-naming.PublicMemberPrefix: ""
+
+  # PARAMETERS
+  # ParameterCase implies:
+  # PointerParameterCase
   readability-identifier-naming.ParameterCase: "lower_case"
-  readability-identifier-naming.StructCase: "CamelCase"
+  readability-identifier-naming.TemplateParameterCase: "lower_case"
+
+  # FUNCTIONS
+  # FunctionCase implies:
+  # ClassMethodCase
+  # ConstexprFunctionCase
+  # ConstexprMethodCase
+  # GlobalFunctionCase
+  # MethodCase
+  # PublicMethodCase
+  # ProtectedMethodCase
+  # PrivateMethodCase
+  # VirtualMethodCase
+  readability-identifier-naming.FunctionCase: "lower_case"
+
+  readability-identifier-naming.EnumCase: "CamelCase"
+  # EnumConstantCase implies:
+  # ScopedEnumConstantCase
+  readability-identifier-naming.EnumConstantCase: "CamelCase"
+
+  # TYPE NAMES
+  readability-identifier-naming.TypeAliasCase: "CamelCase"
+  readability-identifier-naming.TypeAliasIgnoredRegexp: "[0-9a-z_]+_t"
   readability-identifier-naming.TypedefCase: "CamelCase"
-  readability-identifier-naming.TypedefIgnoredRegexp: "[a-z_]+_t"
-  readability-identifier-naming.UnionCase: "CamelCase"
+  readability-identifier-naming.TypedefIgnoredRegexp: "[0-9a-z_]+_t"
+  readability-identifier-naming.TypeTemplateParameterCase: "CamelCase"
+  readability-identifier-naming.TypeTemplateParameterIgnoredRegexp: "[0-9a-z_]+_t"
