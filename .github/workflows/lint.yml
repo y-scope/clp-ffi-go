@@ -1,4 +1,4 @@
-name: "Lint"
+name: "lint"
 
 on:
   push:
@@ -16,16 +16,13 @@ jobs:
         os: ["ubuntu-latest", "macos-latest"]
     runs-on: "${{ matrix.os }}"
     steps:
-      - name: "Checkout"
-        uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v4"
 
-      - name: "Setup Go"
-        uses: "actions/setup-go@v5"
+      - uses: "actions/setup-go@v5"
         with:
           go-version: "${{ matrix.go }}"
 
-      - name: "Lint go code"
-        uses: "golangci/golangci-lint-action@v6"
+      - uses: "golangci/golangci-lint-action@v6"
         with:
           version: "v1.59"
 
@@ -35,34 +32,29 @@ jobs:
         os: ["ubuntu-latest", "macos-latest"]
     runs-on: "${{ matrix.os }}"
     steps:
-      - name: "Checkout"
-        uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v4"
         with:
           submodules: "recursive"
 
-      - name: "Macos: install clang/llvm"
-        if: "${{ matrix.os == 'macos-latest' }}"
+      - if: "${{ matrix.os == 'macos-latest' }}"
         run: |
           brew update
           brew install llvm@18
-          sudo ln -s /opt/homebrew/opt/llvm/bin/clang-format /usr/local/bin/clang-format-18
-          sudo ln -s /opt/homebrew/opt/llvm/bin/clang-tidy /usr/local/bin/clang-tidy-18
+          ln -s /opt/homebrew/opt/llvm/bin/clang-format /usr/local/bin/clang-format-18
+          ln -s /opt/homebrew/opt/llvm/bin/clang-tidy /usr/local/bin/clang-tidy-18
 
-      - name: "Linux: install clang/llvm"
-        if: "${{ matrix.os == 'ubuntu-latest' }}"
+      - if: "${{ matrix.os == 'ubuntu-latest' }}"
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://apt.llvm.org/llvm.sh | sudo bash -s -- 18
-          sudo apt install -y clang-format-18 clang-tidy-18
+          curl https://apt.llvm.org/llvm.sh | sudo bash -s -- 18
+          apt install -y clang-format-18 clang-tidy-18
 
-      - name: "Build for compile commands.json"
-        run: |
+      - name: "Build compile_commands.json for clang tools"
+      - run: |
           cmake -S cpp/ -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=1
           ln -s build/compile_commands.json .
 
-      - name: "Clang format"
-        run: |
-          find cpp/src -type f | xargs clang-format-18 -i
+      - run: |
+          find cpp/src -type f | xargs clang-format-18 --Werror --dry-run
 
-      - name: "Clang tidy"
-        run: |
+      - run: |
           find cpp/src -type f | xargs clang-tidy-18
