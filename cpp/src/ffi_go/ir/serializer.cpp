@@ -98,6 +98,7 @@ auto serialize_log_event(
     }
     Serializer* serializer{static_cast<Serializer*>(ir_serializer)};
     serializer->m_ir_buf.clear();
+    serializer->reserve(log_message.m_size);
 
     bool success{false};
     if constexpr (std::is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>) {
