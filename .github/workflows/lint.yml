@@ -43,7 +43,7 @@ jobs:
       - if: "${{ matrix.os == 'ubuntu-latest' }}"
         run: |
           curl https://apt.llvm.org/llvm.sh | sudo bash -s -- 18
-          apt install -y clang-format-18 clang-tidy-18
+          sudo apt install -y clang-format-18 clang-tidy-18
 
       - name: "Build compile_commands.json for clang tools"
         run: |
