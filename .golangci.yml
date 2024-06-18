@@ -4,6 +4,10 @@ output:
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
+  exclude-rules:
+    - linters:
+        - revive
+      source: "^\\s*// (?:\\[.+\\]: )?https?://.+"
 
 linters:
   disable-all: true
