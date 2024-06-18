@@ -7,7 +7,7 @@ issues:
   exclude-rules:
     - linters:
         - revive
-      source: "^// \\[.+\\]: https?://.+"
+      source: "^\\s*// (?:\\[.+\\]: )?https?://.+"
 
 linters:
   disable-all: true
