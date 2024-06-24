@@ -4,9 +4,9 @@ clp-ffi-go
    :alt: CLP on Zulip
    :target: https://yscope-clp.zulipchat.com/
 
-This module provides Go packages to interface with `CLP's core features`__
-through CLP's FFI (foreign function interface). For complete technical
-documentation see the Go docs: https://pkg.go.dev/github.com/y-scope/clp-ffi-go
+This module provides Go packages to interface with `CLP's core features`__ through CLP's FFI
+(foreign function interface). For complete technical documentation see the Go docs:
+https://pkg.go.dev/github.com/y-scope/clp-ffi-go
 
 __ https://github.com/y-scope/clp/tree/main/components/core
 
@@ -14,8 +14,7 @@ Getting started
 ---------------
 To add the module to your project run: ``go get github.com/y-scope/clp-ffi-go``
 
-Here's an example showing how to decode each log event containing "ERROR" from
-a CLP IR byte stream.
+Here's an example showing how to decode each log event containing "ERROR" from a CLP IR byte stream.
 
 .. code:: golang
 
@@ -51,13 +50,13 @@ a CLP IR byte stream.
 
 Building
 --------
-We use the ``go generate`` command to build the C++ interface to CLP's FFI code
-as well as stringify ``Enum`` style types.
+We use the ``go generate`` command to build the C++ interface to CLP's FFI code as well as stringify
+``Enum`` style types.
 
 1. Install requirements:
 
-   a. A C++ compiler that supports C++17
-   #. CMake 3.11 or higher
+   a. A C++ compiler that supports C++20
+   #. CMake 3.23 or higher
    #. The Stringer tool: https://pkg.go.dev/golang.org/x/tools/cmd/stringer
 
       - ``go install golang.org/x/tools/cmd/stringer@latest``
@@ -68,11 +67,36 @@ as well as stringify ``Enum`` style types.
 
 Bazel support
 '''''''''''''
-We provide Bazel build files for each Go package in the repository, enabling
-you to add any package to your `build dependency list`__ with no extra
-arguments or modifications.
+We provide a Bazel module and build files for each Go package in the repository.
+Additionally, we provide a module extension for the FFI core component of CLP necessary to build the
+native library.
 
-__ https://github.com/bazelbuild/rules_go/blob/master/docs/go/core/rules.md#go_library-deps
+The following is an example to pull in the ``ir`` Go package as a dependency through Bazel. For
+development and testing it may be useful to use `git_override`_ or `local_path_override`_ to use
+your own copy of the ffi-go repository.
+
+.. _git_override: https://bazel.build/versions/6.0.0/rules/lib/globals#git_override
+.. _local_patt_override: https://bazel.build/versions/6.0.0/rules/lib/globals#local_path_override
+
+.. code:: bazel
+
+# Add to MODULE.bazel
+
+bazel_dep(name = "com_github_y_scope_clp_ffi_go", version = "0.0.5-beta")
+
+clp_ffi_go_ext_deps = use_extension("@com_github_y_scope_clp_ffi_go//cpp:deps.bzl", "clp_ffi_go_ext_deps")
+use_repo(clp_ffi_go_ext_deps, "com_github_y_scope_clp")
+
+.. code:: bazel
+
+# Add a ffi-go package as a dependency in a BUILD.bazel file
+
+go_binary(
+    name = "example",
+    srcs = ["example.go"],
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_y_scope_clp_ffi_go//ir"],
+)
 
 Why not build with cgo?
 '''''''''''''''''''''''
