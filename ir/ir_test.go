@@ -100,9 +100,9 @@ func TestLogMessagesLongLogs(t *testing.T) {
 func assertEndOfIr(
 	t *testing.T,
 	reader io.Reader,
-	irreader *Reader,
+	irReader *Reader,
 ) {
-	_, err := irreader.Read()
+	_, err := irReader.Read()
 	if EndOfIr != err {
 		t.Fatalf("assertEndOfIr failed got: %v", err)
 	}
@@ -111,10 +111,10 @@ func assertEndOfIr(
 func assertIrLogEvent(
 	t *testing.T,
 	reader io.Reader,
-	irreader *Reader,
+	irReader *Reader,
 	event ffi.LogEvent,
 ) {
-	log, err := irreader.Read()
+	log, err := irReader.Read()
 	if nil != err {
 		t.Fatalf("Reader.Read failed: %v", err)
 	}

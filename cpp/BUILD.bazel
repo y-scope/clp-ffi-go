@@ -1,0 +1,16 @@
+cc_library(
+    name = "libclp_ffi_go",
+    srcs = glob(["src/ffi_go/**"]) + [
+    ],
+    hdrs = glob(["src/ffi_go/**/*.h"]),
+    includes = [
+        "src",
+    ],
+    deps = [
+        "@com_github_y_scope_clp//:libclp_ffi_core",
+    ],
+    copts = [
+        "-std=c++20",
+    ],
+    visibility = ["//visibility:public"],
+)

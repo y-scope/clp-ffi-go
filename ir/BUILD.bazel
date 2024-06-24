@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "ir",
@@ -12,10 +12,11 @@ go_library(
        "irerror_string.go",
        "reader.go",
        "serializer.go",
+       "writer.go",
     ],
     cgo = True,
     cdeps = [
-        "//:libclp_ffi",
+        "//cpp:libclp_ffi_go",
     ],
     importpath = "github.com/y-scope/clp-ffi-go/ir",
     visibility = ["//visibility:public"],
