@@ -77,21 +77,21 @@ your own copy of the ffi-go repository.
 
 .. _git_override: https://bazel.build/versions/6.0.0/rules/lib/globals#git_override
 
-.. _local_patt_override: https://bazel.build/versions/6.0.0/rules/lib/globals#local_path_override
+.. _local_path_override: https://bazel.build/versions/6.0.0/rules/lib/globals#local_path_override
 
 .. code:: bazel
 
   # Add to MODULE.bazel
-  
+
   bazel_dep(name = "com_github_y_scope_clp_ffi_go", version = "0.0.5-beta")
-  
+
   clp_ffi_go_ext_deps = use_extension("@com_github_y_scope_clp_ffi_go//cpp:deps.bzl", "clp_ffi_go_ext_deps")
   use_repo(clp_ffi_go_ext_deps, "com_github_y_scope_clp")
 
 .. code:: bazel
 
   # Add a ffi-go package as a dependency in a BUILD.bazel file
-  
+
   go_binary(
       name = "example",
       srcs = ["example.go"],
