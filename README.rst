@@ -72,18 +72,30 @@ Additionally, we provide a module extension for the FFI core component of CLP ne
 native library.
 
 The following is an example to pull in the ``ir`` Go package as a dependency through Bazel. For
-development and testing it may be useful to use `git_override`_ or `local_path_override`_ to use
-your own copy of the ffi-go repository.
-
-.. _git_override: https://bazel.build/versions/6.0.0/rules/lib/globals#git_override
+development and testing it may be useful to use the commented `local_path_override`_ snippet instead
+of the `git_override`_ code.
 
 .. _local_path_override: https://bazel.build/versions/6.0.0/rules/lib/globals#local_path_override
+
+.. _git_override: https://bazel.build/versions/6.0.0/rules/lib/globals#git_override
 
 .. code:: bazel
 
   # Add to MODULE.bazel
 
-  bazel_dep(name = "com_github_y_scope_clp_ffi_go", version = "0.0.5-beta")
+  bazel_dep(name = "com_github_y_scope_clp_ffi_go", version = "<version>")
+  _com_github_y_scope_clp_ffi_go_commit = "<commit hash>"
+  archive_override(
+      module_name = "com_github_y_scope_clp_ffi_go",
+      integrity = "sha256/512-<base 64 sha of commit>",
+      urls = ["https://github.com/y-scope/clp-ffi-go/archive/{}.zip".format(_com_github_y_scope_clp_ffi_go_commit)],
+      strip_prefix = "clp-ffi-go-{}".format(_com_github_y_scope_clp_ffi_go_commit),
+  )
+  # Use as an alternative to archive_override for local development
+  # local_path_override(
+  #     module_name = "com_github_y_scope_clp_ffi_go",
+  #     path = "/home/user/clp-ffi-go",
+  # )
   clp_ffi_go_ext_deps = use_extension("@com_github_y_scope_clp_ffi_go//cpp:deps.bzl", "clp_ffi_go_ext_deps")
   use_repo(clp_ffi_go_ext_deps, "com_github_y_scope_clp")
 
