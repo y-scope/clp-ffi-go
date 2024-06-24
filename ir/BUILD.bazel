@@ -35,9 +35,7 @@ alias(
 go_test(
     name = "ir_test",
     srcs = [
-        "ir_test.go",
-        "reader_test.go",
-        "serder_test.go",
+        "*_test.go",
     ],
     embed = [":ir"],
     deps = [
