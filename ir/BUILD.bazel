@@ -34,9 +34,7 @@ alias(
 
 go_test(
     name = "ir_test",
-    srcs = [
-        "*_test.go",
-    ],
+    srcs = glob([ "*_test.go"]),
     embed = [":ir"],
     deps = [
         "@com_github_klauspost_compress//zstd",
