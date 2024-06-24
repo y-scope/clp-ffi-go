@@ -84,7 +84,6 @@ your own copy of the ffi-go repository.
   # Add to MODULE.bazel
 
   bazel_dep(name = "com_github_y_scope_clp_ffi_go", version = "0.0.5-beta")
-
   clp_ffi_go_ext_deps = use_extension("@com_github_y_scope_clp_ffi_go//cpp:deps.bzl", "clp_ffi_go_ext_deps")
   use_repo(clp_ffi_go_ext_deps, "com_github_y_scope_clp")
 
