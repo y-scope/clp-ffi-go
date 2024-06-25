@@ -3,7 +3,7 @@ load("@rules_go//go:def.bzl", "go_library")
 go_library(
     name = "ffi",
     srcs = [
-        "ffi.go",
+        glob("*.go", exclude=["build_*.go"]),
     ],
     importpath = "github.com/y-scope/clp-ffi-go/ffi",
     visibility = ["//visibility:public"],

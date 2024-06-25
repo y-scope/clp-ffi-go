@@ -3,16 +3,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "ir",
     srcs = [
-       "cgo_defs.go",
-       "decoder.go",
-       "deserializer.go",
-       "encoder.go",
-       "ir.go",
-       "irerror.go",
-       "irerror_string.go",
-       "reader.go",
-       "serializer.go",
-       "writer.go",
+        glob("*.go", exclude=["build_*.go"]),
     ],
     cgo = True,
     cdeps = [

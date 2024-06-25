@@ -3,7 +3,7 @@ load("@rules_go//go:def.bzl", "go_library")
 go_library(
     name = "search",
     srcs = [
-        "wildcard_query.go",
+        glob("*.go", exclude=["build_*.go"]),
     ],
     cgo = True,
     cdeps = [
