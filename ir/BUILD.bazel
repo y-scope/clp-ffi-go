@@ -1,10 +1,8 @@
-load("@rules_go//go:def.bzl", "go_library", "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "ir",
-    srcs = [
-        glob("*.go", exclude=["build_*.go"]),
-    ],
+    srcs = glob(["*.go"], exclude=["build_*.go", "*_test.go"]),
     cgo = True,
     cdeps = [
         "//cpp:libclp_ffi_go",
