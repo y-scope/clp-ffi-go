@@ -1,8 +1,13 @@
-**/compile_commands.json
+# Bazel-generated files
 bazel-bin
 bazel-ffi-go
 bazel-out
 bazel-testlogs
-build/
+
+# C++ build generated files
 cpp/.cache/
-cpp/clp/
+cpp/build/
+**/compile_commands.json
+
+# Submodules
+cpp/clp
