@@ -5,7 +5,7 @@ clp-ffi-go
    :target: https://yscope-clp.zulipchat.com/
 
 This module provides Go packages to interface with `CLP's core features`__ through CLP's FFI
-(foreign function interface). For complete technical documentation see the Go docs:
+(foreign function interface). For complete technical documentation, see the Go docs:
 https://pkg.go.dev/github.com/y-scope/clp-ffi-go
 
 __ https://github.com/y-scope/clp/tree/main/components/core
@@ -101,7 +101,7 @@ of the `git_override`_ code.
 
 .. code:: bazel
 
-  # Add a ffi-go package as a dependency in a BUILD.bazel file
+  # Add the ffi-go package as a dependency in a BUILD.bazel file
 
   go_binary(
       name = "example",
