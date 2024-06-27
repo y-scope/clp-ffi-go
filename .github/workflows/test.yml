@@ -6,6 +6,18 @@ on:
   workflow_call:
 
 jobs:
+  bazel-test:
+    strategy:
+      matrix:
+        go: ["1.22"]
+        os: ["ubuntu-latest", "macos-latest"]
+    runs-on: "${{ matrix.os }}"
+    steps:
+      - uses: "actions/checkout@v4"
+
+      - run: |
+          bazel test //ir:ir_test
+
   package-test:
     strategy:
       matrix:

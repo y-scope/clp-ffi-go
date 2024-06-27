@@ -2,12 +2,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "search",
-    srcs = [
-        "wildcard_query.go",
-    ],
+    srcs = glob(["*.go"], exclude=["build_*.go", "*_test.go"]),
     cgo = True,
     cdeps = [
-        "//:libclp_ffi",
+        "//cpp:libclp_ffi_go",
     ],
     importpath = "github.com/y-scope/clp-ffi-go/search",
     visibility = ["//visibility:public"],
