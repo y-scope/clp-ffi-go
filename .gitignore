@@ -1,8 +1,8 @@
-build/
-cpp/.cache/
-cpp/clp/
 **/compile_commands.json
 bazel-bin
 bazel-ffi-go
 bazel-out
 bazel-testlogs
+build/
+cpp/.cache/
+cpp/clp/

@@ -88,7 +88,11 @@ of the `git_override`_ code.
   archive_override(
       module_name = "com_github_y_scope_clp_ffi_go",
       integrity = "sha256/512-<base 64 sha of commit>",
-      urls = ["https://github.com/y-scope/clp-ffi-go/archive/{}.zip".format(_com_github_y_scope_clp_ffi_go_commit)],
+      urls = [
+          "https://github.com/y-scope/clp-ffi-go/archive/{}.zip".format(
+              _com_github_y_scope_clp_ffi_go_commit
+          ),
+      ],
       strip_prefix = "clp-ffi-go-{}".format(_com_github_y_scope_clp_ffi_go_commit),
   )
   # Use as an alternative to archive_override for local development
@@ -96,7 +100,9 @@ of the `git_override`_ code.
   #     module_name = "com_github_y_scope_clp_ffi_go",
   #     path = "/home/user/clp-ffi-go",
   # )
-  clp_ffi_go_ext_deps = use_extension("@com_github_y_scope_clp_ffi_go//cpp:deps.bzl", "clp_ffi_go_ext_deps")
+  clp_ffi_go_ext_deps = use_extension(
+      "@com_github_y_scope_clp_ffi_go//cpp:deps.bzl", "clp_ffi_go_ext_deps"
+  )
   use_repo(clp_ffi_go_ext_deps, "com_github_y_scope_clp")
 
 .. code:: bazel
