@@ -5,16 +5,17 @@
 #include <cstdint>
 #include <functional>
 #include <span>
+#include <string_utils/string_utils.hpp>
 #include <string_view>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
-#include <clp/components/core/src/BufferReader.hpp>
-#include <clp/components/core/src/ErrorCode.hpp>
-#include <clp/components/core/src/ffi/encoding_methods.hpp>
-#include <clp/components/core/src/ffi/ir_stream/decoding_methods.hpp>
-#include <clp/components/core/src/string_utils.hpp>
+#include <clp/components/core/src/clp/BufferReader.hpp>
+#include <clp/components/core/src/clp/ErrorCode.hpp>
+#include <clp/components/core/src/clp/ffi/ir_stream/decoding_methods.hpp>
+#include <clp/components/core/src/clp/ffi/ir_stream/protocol_constants.hpp>
+#include <clp/components/core/src/clp/ir/types.hpp>
 
 #include "ffi_go/api_decoration.h"
 #include "ffi_go/defs.h"
@@ -23,8 +24,14 @@
 #include "ffi_go/types.hpp"
 
 namespace ffi_go::ir {
-using namespace ffi;
-using namespace ffi::ir_stream;
+using clp::BufferReader;
+using clp::ffi::ir_stream::cProtocol::Eof;
+using clp::ffi::ir_stream::deserialize_preamble;
+using clp::ffi::ir_stream::deserialize_tag;
+using clp::ffi::ir_stream::get_encoding_type;
+using clp::ffi::ir_stream::IRErrorCode;
+using clp::ir::eight_byte_encoded_variable_t;
+using clp::ir::four_byte_encoded_variable_t;
 
 namespace {
 /**
@@ -60,23 +67,33 @@ auto deserialize_log_event(
         LogEventView* log_event
 ) -> int {
     if (nullptr == ir_deserializer || nullptr == ir_pos || nullptr == log_event) {
-        return static_cast<int>(IRErrorCode_Corrupted_IR);
+        return static_cast<int>(IRErrorCode::IRErrorCode_Corrupted_IR);
     }
     BufferReader ir_buf{static_cast<char const*>(ir_view.m_data), ir_view.m_size};
     Deserializer* deserializer{static_cast<Deserializer*>(ir_deserializer)};
 
+    clp::ffi::ir_stream::encoded_tag_t tag{};
+    if (auto const err{deserialize_tag(ir_buf, tag)}; IRErrorCode::IRErrorCode_Success != err) {
+        return static_cast<int>(err);
+    }
+    if (Eof == tag) {
+        return static_cast<int>(IRErrorCode::IRErrorCode_Eof);
+    }
+
     IRErrorCode err{};
     epoch_time_ms_t timestamp{};
     if constexpr (std::is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>) {
-        err = eight_byte_encoding::decode_next_message(
+        err = clp::ffi::ir_stream::eight_byte_encoding::deserialize_log_event(
                 ir_buf,
+                tag,
                 deserializer->m_log_event.m_log_message,
                 timestamp
         );
     } else if constexpr (std::is_same_v<encoded_variable_t, four_byte_encoded_variable_t>) {
         epoch_time_ms_t timestamp_delta{};
-        err = four_byte_encoding::decode_next_message(
+        err = clp::ffi::ir_stream::four_byte_encoding::deserialize_log_event(
                 ir_buf,
+                tag,
                 deserializer->m_log_event.m_log_message,
                 timestamp_delta
         );
@@ -84,20 +101,20 @@ auto deserialize_log_event(
     } else {
         static_assert(cAlwaysFalse<encoded_variable_t>, "Invalid/unhandled encoding type");
     }
-    if (IRErrorCode_Success != err) {
+    if (IRErrorCode::IRErrorCode_Success != err) {
         return static_cast<int>(err);
     }
     deserializer->m_timestamp = timestamp;
 
     size_t pos{0};
-    if (ErrorCode_Success != ir_buf.try_get_pos(pos)) {
-        return static_cast<int>(IRErrorCode_Decode_Error);
+    if (clp::ErrorCode_Success != ir_buf.try_get_pos(pos)) {
+        return static_cast<int>(IRErrorCode::IRErrorCode_Decode_Error);
     }
     *ir_pos = pos;
     log_event->m_log_message.m_data = deserializer->m_log_event.m_log_message.data();
     log_event->m_log_message.m_size = deserializer->m_log_event.m_log_message.size();
     log_event->m_timestamp = deserializer->m_timestamp;
-    return static_cast<int>(IRErrorCode_Success);
+    return static_cast<int>(IRErrorCode::IRErrorCode_Success);
 }
 
 template <class encoded_variable_t>
@@ -113,7 +130,7 @@ auto deserialize_wildcard_match(
     if (nullptr == ir_deserializer || nullptr == ir_pos || nullptr == log_event
         || nullptr == matching_query)
     {
-        return static_cast<int>(IRErrorCode_Corrupted_IR);
+        return static_cast<int>(IRErrorCode::IRErrorCode_Corrupted_IR);
     }
     BufferReader ir_buf{static_cast<char const*>(ir_view.m_data), ir_view.m_size};
     Deserializer* deserializer{static_cast<Deserializer*>(ir_deserializer)};
@@ -143,7 +160,11 @@ auto deserialize_wildcard_match(
                     queries.cbegin(),
                     queries.cend(),
                     [&](std::pair<std::string_view, bool> const& query) -> bool {
-                        return wildcard_match_unsafe(log_message, query.first, query.second);
+                        return clp::string_utils::wildcard_match_unsafe(
+                                log_message,
+                                query.first,
+                                query.second
+                        );
                     }
             );
             return {queries.cend() != found_query, found_query - queries.cbegin()};
@@ -154,17 +175,27 @@ auto deserialize_wildcard_match(
 
     IRErrorCode err{};
     while (true) {
+        clp::ffi::ir_stream::encoded_tag_t tag{};
+        if (err = deserialize_tag(ir_buf, tag); IRErrorCode::IRErrorCode_Success != err) {
+            return static_cast<int>(err);
+        }
+        if (Eof == tag) {
+            return static_cast<int>(IRErrorCode::IRErrorCode_Eof);
+        }
+
         epoch_time_ms_t timestamp{};
         if constexpr (std::is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>) {
-            err = eight_byte_encoding::decode_next_message(
+            err = clp::ffi::ir_stream::eight_byte_encoding::deserialize_log_event(
                     ir_buf,
+                    tag,
                     deserializer->m_log_event.m_log_message,
                     timestamp
             );
         } else if constexpr (std::is_same_v<encoded_variable_t, four_byte_encoded_variable_t>) {
             epoch_time_ms_t timestamp_delta{};
-            err = four_byte_encoding::decode_next_message(
+            err = clp::ffi::ir_stream::four_byte_encoding::deserialize_log_event(
                     ir_buf,
+                    tag,
                     deserializer->m_log_event.m_log_message,
                     timestamp_delta
             );
@@ -172,7 +203,7 @@ auto deserialize_wildcard_match(
         } else {
             static_assert(cAlwaysFalse<encoded_variable_t>, "Invalid/unhandled encoding type");
         }
-        if (IRErrorCode_Success != err) {
+        if (IRErrorCode::IRErrorCode_Success != err) {
             return static_cast<int>(err);
         }
         deserializer->m_timestamp = timestamp;
@@ -181,7 +212,7 @@ auto deserialize_wildcard_match(
             // TODO this is an extremely fragile hack until the CLP ffi ir
             // code is refactored and IRErrorCode includes things beyond
             // decoding.
-            return static_cast<int>(IRErrorCode_Incomplete_IR + 1);
+            return static_cast<int>(IRErrorCode::IRErrorCode_Incomplete_IR + 1);
         }
         if (time_interval.m_lower > deserializer->m_timestamp) {
             continue;
@@ -192,16 +223,16 @@ auto deserialize_wildcard_match(
         if (false == has_matching_query) {
             continue;
         }
-        size_t pos{0};
-        if (ErrorCode_Success != ir_buf.try_get_pos(pos)) {
-            return static_cast<int>(IRErrorCode_Decode_Error);
+        size_t curr_ir_pos{0};
+        if (clp::ErrorCode_Success != ir_buf.try_get_pos(curr_ir_pos)) {
+            return static_cast<int>(IRErrorCode::IRErrorCode_Decode_Error);
         }
-        *ir_pos = pos;
+        *ir_pos = curr_ir_pos;
         log_event->m_log_message.m_data = deserializer->m_log_event.m_log_message.data();
         log_event->m_log_message.m_size = deserializer->m_log_event.m_log_message.size();
         log_event->m_timestamp = deserializer->m_timestamp;
         *matching_query = matching_query_idx;
-        return static_cast<int>(IRErrorCode_Success);
+        return static_cast<int>(IRErrorCode::IRErrorCode_Success);
     }
 }
 }  // namespace
@@ -225,34 +256,35 @@ CLP_FFI_GO_METHOD auto ir_deserializer_new_deserializer_with_preamble(
         || nullptr == metadata_pos || nullptr == metadata_size || nullptr == ir_deserializer_ptr
         || nullptr == timestamp_ptr)
     {
-        return static_cast<int>(IRErrorCode_Corrupted_IR);
+        return static_cast<int>(IRErrorCode::IRErrorCode_Corrupted_IR);
     }
     BufferReader ir_buf{static_cast<char const*>(ir_view.m_data), ir_view.m_size};
 
     bool four_byte_encoding{};
     if (IRErrorCode const err{get_encoding_type(ir_buf, four_byte_encoding)};
-        IRErrorCode_Success != err)
+        IRErrorCode::IRErrorCode_Success != err)
     {
         return static_cast<int>(err);
     }
     *ir_encoding = four_byte_encoding ? 1 : 0;
 
-    if (IRErrorCode const err{decode_preamble(ir_buf, *metadata_type, *metadata_pos, *metadata_size)
+    if (IRErrorCode const err{
+                deserialize_preamble(ir_buf, *metadata_type, *metadata_pos, *metadata_size)
         };
-        IRErrorCode_Success != err)
+        IRErrorCode::IRErrorCode_Success != err)
     {
         return static_cast<int>(err);
     }
 
     size_t pos{0};
-    if (ErrorCode_Success != ir_buf.try_get_pos(pos)) {
-        return static_cast<int>(IRErrorCode_Decode_Error);
+    if (clp::ErrorCode_Success != ir_buf.try_get_pos(pos)) {
+        return static_cast<int>(IRErrorCode::IRErrorCode_Decode_Error);
     }
     *ir_pos = pos;
     auto* deserializer{new Deserializer()};
     *ir_deserializer_ptr = deserializer;
     *timestamp_ptr = &deserializer->m_timestamp;
-    return static_cast<int>(IRErrorCode_Success);
+    return static_cast<int>(IRErrorCode::IRErrorCode_Success);
 }
 
 CLP_FFI_GO_METHOD auto ir_deserializer_deserialize_eight_byte_log_event(
