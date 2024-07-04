@@ -28,8 +28,6 @@ cc_library(
         "clp/components/core/src/clp/Defs.h",
         "clp/components/core/src/clp/ErrorCode.hpp",
         "clp/components/core/src/clp/ReaderInterface.hpp",
-        "clp/components/core/src/clp/string_utils.hpp",
-        "clp/components/core/src/clp/string_utils.inc",
         "clp/components/core/src/clp/TraceableException.hpp",
         "clp/components/core/src/clp/type_utils.hpp",
         "clp/components/core/src/clp/ffi/encoding_methods.hpp",
