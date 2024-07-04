@@ -15,7 +15,7 @@
 #include <clp/components/core/src/clp/ffi/ir_stream/decoding_methods.hpp>
 #include <clp/components/core/src/clp/ffi/ir_stream/protocol_constants.hpp>
 #include <clp/components/core/src/clp/ir/types.hpp>
-#include <string_utils/string_utils.hpp>
+#include <clp/components/core/src/clp/string_utils/string_utils.hpp>
 
 #include "ffi_go/api_decoration.h"
 #include "ffi_go/defs.h"
