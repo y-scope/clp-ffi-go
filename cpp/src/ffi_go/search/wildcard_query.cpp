@@ -1,8 +1,9 @@
 #include "wildcard_query.h"
 
 #include <string>
-#include <string_utils/string_utils.hpp>
 #include <string_view>
+
+#include <string_utils/string_utils.hpp>
 
 #include "ffi_go/api_decoration.h"
 #include "ffi_go/defs.h"
