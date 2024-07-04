@@ -15,12 +15,12 @@ cc_library(
     name = "libclp_ffi_core",
     srcs = [
         "clp/components/core/src/clp/BufferReader.cpp",
-        "clp/components/core/src/clp/ReaderInterface.cpp",
         "clp/components/core/src/clp/ffi/encoding_methods.cpp",
         "clp/components/core/src/clp/ffi/ir_stream/encoding_methods.cpp",
         "clp/components/core/src/clp/ffi/ir_stream/decoding_methods.cpp",
         "clp/components/core/src/clp/ffi/ir_stream/utils.cpp",
         "clp/components/core/src/clp/ir/parsing.cpp",
+        "clp/components/core/src/clp/ReaderInterface.cpp",
         "clp/components/core/src/clp/string_utils/string_utils.cpp",
     ],
     hdrs = [
