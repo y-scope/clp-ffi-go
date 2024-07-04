@@ -29,6 +29,7 @@ cc_library(
         "clp/components/core/src/clp/ErrorCode.hpp",
         "clp/components/core/src/clp/ReaderInterface.hpp",
         "clp/components/core/src/clp/TraceableException.hpp",
+        "clp/components/core/src/clp/time_types.hpp",
         "clp/components/core/src/clp/type_utils.hpp",
         "clp/components/core/src/clp/ffi/encoding_methods.hpp",
         "clp/components/core/src/clp/ffi/encoding_methods.inc",

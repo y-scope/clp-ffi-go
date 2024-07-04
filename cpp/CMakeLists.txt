@@ -120,6 +120,7 @@ target_sources(${LIB_NAME} PUBLIC
     ${CLP_SRC_DIR}/components/core/src/clp/string_utils/string_utils.cpp
     ${CLP_SRC_DIR}/components/core/src/clp/string_utils/string_utils.hpp
     ${CLP_SRC_DIR}/components/core/src/clp/TraceableException.hpp
+    ${CLP_SRC_DIR}/components/core/src/clp/time_types.hpp
     ${CLP_SRC_DIR}/components/core/src/clp/type_utils.hpp
     src/ffi_go/types.hpp
     src/ffi_go/ir/decoder.cpp
