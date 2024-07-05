@@ -70,10 +70,11 @@ target_compile_options(${LIB_NAME}
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
 )
 
+# Mark below headers as system headers so that the compiler (including clang-tidy) doesn't generate
+# warnings from them.
 target_include_directories(${LIB_NAME}
     SYSTEM PRIVATE
     ${CLP_SRC_DIR}/components/core/submodules
-    # Guard against circular header in clp/ffi/ir_stream/decoding_methods.hpp
     ${CLP_SRC_DIR}/components/core/src
 )
 
