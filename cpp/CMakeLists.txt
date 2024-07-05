@@ -73,6 +73,8 @@ target_compile_options(${LIB_NAME}
 target_include_directories(${LIB_NAME}
     SYSTEM PRIVATE
     ${CLP_SRC_DIR}/components/core/submodules
+    # Guard against circular header in clp/ffi/ir_stream/decoding_methods.hpp
+    ${CLP_SRC_DIR}/components/core/src
 )
 
 target_include_directories(${LIB_NAME}
