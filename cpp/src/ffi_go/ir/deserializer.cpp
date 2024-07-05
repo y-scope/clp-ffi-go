@@ -10,12 +10,12 @@
 #include <utility>
 #include <vector>
 
-#include <clp/components/core/src/clp/BufferReader.hpp>
-#include <clp/components/core/src/clp/ErrorCode.hpp>
-#include <clp/components/core/src/clp/ffi/ir_stream/decoding_methods.hpp>
-#include <clp/components/core/src/clp/ffi/ir_stream/protocol_constants.hpp>
-#include <clp/components/core/src/clp/ir/types.hpp>
-#include <clp/components/core/src/clp/string_utils/string_utils.hpp>
+#include <clp/BufferReader.hpp>
+#include <clp/ErrorCode.hpp>
+#include <clp/ffi/ir_stream/decoding_methods.hpp>
+#include <clp/ffi/ir_stream/protocol_constants.hpp>
+#include <clp/ir/types.hpp>
+#include <clp/string_utils/string_utils.hpp>
 
 #include "ffi_go/api_decoration.h"
 #include "ffi_go/defs.h"

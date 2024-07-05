@@ -45,7 +45,7 @@ cc_library(
         "clp/components/core/src/clp/type_utils.hpp",
     ],
     includes = [
-        ".",
+        "./clp/components/core/src",
         "./clp/components/core/src/clp",
     ],
     copts = [

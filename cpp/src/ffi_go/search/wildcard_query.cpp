@@ -3,7 +3,7 @@
 #include <string>
 #include <string_view>
 
-#include <clp/components/core/src/clp/string_utils/string_utils.hpp>
+#include <clp/string_utils/string_utils.hpp>
 
 #include "ffi_go/api_decoration.h"
 #include "ffi_go/defs.h"

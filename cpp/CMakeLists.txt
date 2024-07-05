@@ -73,13 +73,15 @@ target_compile_options(${LIB_NAME}
 target_include_directories(${LIB_NAME}
     SYSTEM PRIVATE
     ${CLP_SRC_DIR}/components/core/submodules
-    ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_include_directories(${LIB_NAME}
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CLP_SRC_DIR}/components/core/src/clp # For string_utils
+    ${CLP_SRC_DIR}/components/core/src
+    # CLP source expects string_utils to be included as a library <string_utils/...>, but we
+    # directly bundle string_utils source files so we must add it to the include path.
+    ${CLP_SRC_DIR}/components/core/src/clp
 )
 
 target_sources(${LIB_NAME} PUBLIC

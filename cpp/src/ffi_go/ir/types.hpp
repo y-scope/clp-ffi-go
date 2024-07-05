@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include <clp/components/core/src/clp/ir/types.hpp>
+#include <clp/ir/types.hpp>
 
 #include "ffi_go/types.hpp"
 

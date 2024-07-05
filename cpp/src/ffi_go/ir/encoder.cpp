@@ -6,9 +6,9 @@
 #include <type_traits>
 #include <vector>
 
-#include <clp/components/core/src/clp/ffi/encoding_methods.hpp>
-#include <clp/components/core/src/clp/ffi/ir_stream/decoding_methods.hpp>
-#include <clp/components/core/src/clp/ir/types.hpp>
+#include <clp/ffi/encoding_methods.hpp>
+#include <clp/ffi/ir_stream/decoding_methods.hpp>
+#include <clp/ir/types.hpp>
 
 #include "ffi_go/api_decoration.h"
 #include "ffi_go/defs.h"
