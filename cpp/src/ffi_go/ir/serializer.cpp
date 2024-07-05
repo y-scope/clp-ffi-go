@@ -3,17 +3,18 @@
 #include <string_view>
 #include <vector>
 
-#include <clp/components/core/src/ffi/encoding_methods.hpp>
-#include <clp/components/core/src/ffi/ir_stream/decoding_methods.hpp>
-#include <clp/components/core/src/ffi/ir_stream/encoding_methods.hpp>
+#include <clp/ffi/ir_stream/decoding_methods.hpp>
+#include <clp/ffi/ir_stream/encoding_methods.hpp>
+#include <clp/ir/types.hpp>
 
 #include "ffi_go/api_decoration.h"
 #include "ffi_go/defs.h"
 #include "ffi_go/ir/types.hpp"
 
 namespace ffi_go::ir {
-using namespace ffi;
-using namespace ffi::ir_stream;
+using clp::ffi::ir_stream::IRErrorCode;
+using clp::ir::eight_byte_encoded_variable_t;
+using clp::ir::four_byte_encoded_variable_t;
 
 namespace {
 /**
@@ -50,24 +51,24 @@ auto new_serializer_with_preamble(
         ByteSpan* ir_view
 ) -> int {
     if (nullptr == ir_serializer_ptr || nullptr == ir_view) {
-        return static_cast<int>(IRErrorCode_Corrupted_IR);
+        return static_cast<int>(IRErrorCode::IRErrorCode_Corrupted_IR);
     }
     Serializer* serializer{new Serializer{}};
     if (nullptr == serializer) {
-        return static_cast<int>(IRErrorCode_Corrupted_IR);
+        return static_cast<int>(IRErrorCode::IRErrorCode_Corrupted_IR);
     }
     *ir_serializer_ptr = serializer;
 
     bool success{false};
     if constexpr (std::is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>) {
-        success = eight_byte_encoding::encode_preamble(
+        success = clp::ffi::ir_stream::eight_byte_encoding::serialize_preamble(
                 std::string_view{ts_pattern.m_data, ts_pattern.m_size},
                 std::string_view{ts_pattern_syntax.m_data, ts_pattern_syntax.m_size},
                 std::string_view{time_zone_id.m_data, time_zone_id.m_size},
                 serializer->m_ir_buf
         );
     } else if constexpr (std::is_same_v<encoded_variable_t, four_byte_encoded_variable_t>) {
-        success = four_byte_encoding::encode_preamble(
+        success = clp::ffi::ir_stream::four_byte_encoding::serialize_preamble(
                 std::string_view{ts_pattern.m_data, ts_pattern.m_size},
                 std::string_view{ts_pattern_syntax.m_data, ts_pattern_syntax.m_size},
                 std::string_view{time_zone_id.m_data, time_zone_id.m_size},
@@ -78,12 +79,12 @@ auto new_serializer_with_preamble(
         static_assert(cAlwaysFalse<encoded_variable_t>, "Invalid/unhandled encoding type");
     }
     if (false == success) {
-        return static_cast<int>(IRErrorCode_Corrupted_IR);
+        return static_cast<int>(IRErrorCode::IRErrorCode_Corrupted_IR);
     }
 
     ir_view->m_data = serializer->m_ir_buf.data();
     ir_view->m_size = serializer->m_ir_buf.size();
-    return static_cast<int>(IRErrorCode_Success);
+    return static_cast<int>(IRErrorCode::IRErrorCode_Success);
 }
 
 template <class encoded_variable_t>
@@ -94,7 +95,7 @@ auto serialize_log_event(
         ByteSpan* ir_view
 ) -> int {
     if (nullptr == ir_serializer || nullptr == ir_view) {
-        return static_cast<int>(IRErrorCode_Corrupted_IR);
+        return static_cast<int>(IRErrorCode::IRErrorCode_Corrupted_IR);
     }
     Serializer* serializer{static_cast<Serializer*>(ir_serializer)};
     serializer->m_ir_buf.clear();
@@ -102,14 +103,14 @@ auto serialize_log_event(
 
     bool success{false};
     if constexpr (std::is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>) {
-        success = eight_byte_encoding::encode_message(
+        success = clp::ffi::ir_stream::eight_byte_encoding::serialize_log_event(
                 timestamp_or_delta,
                 std::string_view{log_message.m_data, log_message.m_size},
                 serializer->m_logtype,
                 serializer->m_ir_buf
         );
     } else if constexpr (std::is_same_v<encoded_variable_t, four_byte_encoded_variable_t>) {
-        success = four_byte_encoding::encode_message(
+        success = clp::ffi::ir_stream::four_byte_encoding::serialize_log_event(
                 timestamp_or_delta,
                 std::string_view{log_message.m_data, log_message.m_size},
                 serializer->m_logtype,
@@ -119,12 +120,12 @@ auto serialize_log_event(
         static_assert(cAlwaysFalse<encoded_variable_t>, "Invalid/unhandled encoding type");
     }
     if (false == success) {
-        return static_cast<int>(IRErrorCode_Corrupted_IR);
+        return static_cast<int>(IRErrorCode::IRErrorCode_Corrupted_IR);
     }
 
     ir_view->m_data = serializer->m_ir_buf.data();
     ir_view->m_size = serializer->m_ir_buf.size();
-    return static_cast<int>(IRErrorCode_Success);
+    return static_cast<int>(IRErrorCode::IRErrorCode_Success);
 }
 }  // namespace
 

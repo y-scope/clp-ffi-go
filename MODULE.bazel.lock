@@ -83,7 +83,7 @@
   "moduleExtensions": {
     "//cpp:deps.bzl%clp_ffi_go_ext_deps": {
       "general": {
-        "bzlTransitiveDigest": "NJV2vicSED6RPr8cfyJfGpXXSwQp6UQyDPTjsPMbcV8=",
+        "bzlTransitiveDigest": "B9oCb6w6eVxTzje85vfRMCZ78QDtBXi/nyYZj34KAMM=",
         "usagesDigest": "D7z6fAnG/fRPs4uUPHy4GqCSlDUekEARjYSWg2XD2fc=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
@@ -99,20 +99,20 @@
               ],
               "strip_prefix": "json-fec56a1a16c6e1c1b1f4e116a20e79398282626c",
               "add_prefix": "json",
-              "build_file": "@@//cpp:clp_ext_com_github_nlohmann_json.bzl"
+              "build_file_content": "\ncc_library(\n    name = \"libjson\",\n    srcs = [\"json/single_include/nlohmann/json.hpp\"],\n    hdrs = [\"json/single_include/nlohmann/json.hpp\"],\n    includes = [\".\"],\n    visibility = [\"//visibility:public\"],\n)\n"
             }
           },
           "com_github_y_scope_clp": {
             "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
             "ruleClassName": "http_archive",
             "attributes": {
-              "sha256": "3aea613f00b8ca2e07803c5774a2faf8d7a315d983093eb4ce23a14a73414f72",
+              "sha256": "1daaa432357ed470eb8a2b5e7c8b4064418fa0f5d89fd075c6f1b4aef1ac6319",
               "urls": [
-                "https://github.com/y-scope/clp/archive/084efa35b7e9a63aecc5e327b97aea2a1cef83bc.zip"
+                "https://github.com/y-scope/clp/archive/3c1f0ad1c44b53d6c17fd7c1d578ec61616b5661.zip"
               ],
-              "strip_prefix": "clp-084efa35b7e9a63aecc5e327b97aea2a1cef83bc",
+              "strip_prefix": "clp-3c1f0ad1c44b53d6c17fd7c1d578ec61616b5661",
               "add_prefix": "clp",
-              "build_file": "@@//cpp:com_github_y_scope_clp.bzl"
+              "build_file_content": "\ncc_library(\n    name = \"libclp_ffi_core\",\n    srcs = [\n        \"clp/components/core/src/clp/BufferReader.cpp\",\n        \"clp/components/core/src/clp/ReaderInterface.cpp\",\n        \"clp/components/core/src/clp/ffi/encoding_methods.cpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/encoding_methods.cpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/decoding_methods.cpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/utils.cpp\",\n        \"clp/components/core/src/clp/ir/parsing.cpp\",\n        \"clp/components/core/src/clp/string_utils/string_utils.cpp\",\n    ],\n    hdrs = [\n        \"clp/components/core/src/clp/BufferReader.hpp\",\n        \"clp/components/core/src/clp/Defs.h\",\n        \"clp/components/core/src/clp/ErrorCode.hpp\",\n        \"clp/components/core/src/clp/ReaderInterface.hpp\",\n        \"clp/components/core/src/clp/ffi/encoding_methods.hpp\",\n        \"clp/components/core/src/clp/ffi/encoding_methods.inc\",\n        \"clp/components/core/src/clp/ffi/ir_stream/byteswap.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/encoding_methods.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/decoding_methods.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/decoding_methods.inc\",\n        \"clp/components/core/src/clp/ffi/ir_stream/protocol_constants.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/utils.hpp\",\n        \"clp/components/core/src/clp/ir/parsing.inc\",\n        \"clp/components/core/src/clp/ir/parsing.hpp\",\n        \"clp/components/core/src/clp/ir/types.hpp\",\n        \"clp/components/core/src/clp/string_utils/string_utils.hpp\",\n        \"clp/components/core/src/clp/TraceableException.hpp\",\n        \"clp/components/core/src/clp/time_types.hpp\",\n        \"clp/components/core/src/clp/type_utils.hpp\",\n    ],\n    includes = [\n        \"./clp/components/core/src\",\n        \"./clp/components/core/src/clp\",\n    ],\n    copts = [\n        \"-std=c++20\",\n    ] + select({\n        \"@platforms//os:osx\": [\n            \"-mmacosx-version-min=10.15\",\n        ],\n        \"//conditions:default\": [],\n    }),\n    deps = [\n        \"@clp_ext_com_github_nlohmann_json//:libjson\",\n    ],\n    visibility = [\"//visibility:public\"],\n)\n"
             }
           }
         },

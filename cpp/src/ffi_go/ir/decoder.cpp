@@ -4,15 +4,16 @@
 #include <string_view>
 #include <type_traits>
 
-#include <clp/components/core/src/ffi/encoding_methods.hpp>
-#include <clp/components/core/src/ffi/ir_stream/decoding_methods.hpp>
+#include <clp/ffi/encoding_methods.hpp>
+#include <clp/ffi/ir_stream/decoding_methods.hpp>
+#include <clp/ir/types.hpp>
 
 #include "ffi_go/api_decoration.h"
 #include "ffi_go/defs.h"
 #include "ffi_go/ir/types.hpp"
 
 namespace ffi_go::ir {
-using namespace ffi::ir_stream;
+using clp::ffi::ir_stream::IRErrorCode;
 
 namespace {
 /**
@@ -29,18 +30,18 @@ template <class encoded_var_view_t>
 ) -> int {
     using encoded_var_t = std::conditional_t<
             std::is_same_v<Int64tSpan, encoded_var_view_t>,
-            ffi::eight_byte_encoded_variable_t,
-            ffi::four_byte_encoded_variable_t>;
+            clp::ir::eight_byte_encoded_variable_t,
+            clp::ir::four_byte_encoded_variable_t>;
     if (nullptr == ir_decoder || nullptr == log_msg_view) {
-        return static_cast<int>(IRErrorCode_Corrupted_IR);
+        return static_cast<int>(IRErrorCode::IRErrorCode_Corrupted_IR);
     }
     Decoder* decoder{static_cast<Decoder*>(ir_decoder)};
     auto& log_msg{decoder->m_log_message};
     log_msg.reserve(logtype.m_size + dict_vars.m_size);
 
-    IRErrorCode err{IRErrorCode_Success};
+    IRErrorCode err{IRErrorCode::IRErrorCode_Success};
     try {
-        log_msg = ffi::decode_message<encoded_var_t>(
+        log_msg = clp::ffi::decode_message<encoded_var_t>(
                 std::string_view(logtype.m_data, logtype.m_size),
                 vars.m_data,
                 vars.m_size,
@@ -48,8 +49,8 @@ template <class encoded_var_view_t>
                 dict_var_end_offsets.m_data,
                 dict_var_end_offsets.m_size
         );
-    } catch (ffi::EncodingException const& e) {
-        err = IRErrorCode_Decode_Error;
+    } catch (clp::ffi::EncodingException const& e) {
+        err = IRErrorCode::IRErrorCode_Decode_Error;
     }
 
     log_msg_view->m_data = log_msg.data();

@@ -36,7 +36,7 @@ if (NOT EXISTS ${CLP_SRC_DIR})
     FetchContent_Declare(
         clp-core
         GIT_REPOSITORY https://github.com/y-scope/clp.git
-        GIT_TAG 084efa35b7e9a63aecc5e327b97aea2a1cef83bc
+        GIT_TAG 3c1f0ad1c44b53d6c17fd7c1d578ec61616b5661
         SOURCE_DIR ${CLP_SRC_DIR}
     )
     message(STATUS "Fetching CLP from github.")
@@ -70,15 +70,21 @@ target_compile_options(${LIB_NAME}
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
 )
 
+# Mark below headers as system headers so that the compiler (including clang-tidy) doesn't generate
+# warnings from them.
 target_include_directories(${LIB_NAME}
     SYSTEM PRIVATE
     ${CLP_SRC_DIR}/components/core/submodules
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CLP_SRC_DIR}/components/core/src
 )
 
 target_include_directories(${LIB_NAME}
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CLP_SRC_DIR}/components/core/src
+    # CLP source expects string_utils to be included as a library <string_utils/...>, but we
+    # directly bundle string_utils source files so we must add it to the include path.
+    ${CLP_SRC_DIR}/components/core/src/clp
 )
 
 target_sources(${LIB_NAME} PUBLIC
@@ -94,27 +100,33 @@ target_sources(${LIB_NAME} PUBLIC
         src/ffi_go/ir/serializer.h
         src/ffi_go/search/wildcard_query.h
     PRIVATE
-    ${CLP_SRC_DIR}/components/core/src/BufferReader.cpp
-    ${CLP_SRC_DIR}/components/core/src/BufferReader.hpp
-    ${CLP_SRC_DIR}/components/core/src/Defs.h
-    ${CLP_SRC_DIR}/components/core/src/ErrorCode.hpp
-    ${CLP_SRC_DIR}/components/core/src/ReaderInterface.cpp
-    ${CLP_SRC_DIR}/components/core/src/ReaderInterface.hpp
-    ${CLP_SRC_DIR}/components/core/src/string_utils.cpp
-    ${CLP_SRC_DIR}/components/core/src/string_utils.hpp
-    ${CLP_SRC_DIR}/components/core/src/string_utils.inc
-    ${CLP_SRC_DIR}/components/core/src/TraceableException.hpp
-    ${CLP_SRC_DIR}/components/core/src/type_utils.hpp
-    ${CLP_SRC_DIR}/components/core/src/ffi/encoding_methods.cpp
-    ${CLP_SRC_DIR}/components/core/src/ffi/encoding_methods.hpp
-    ${CLP_SRC_DIR}/components/core/src/ffi/encoding_methods.inc
-    ${CLP_SRC_DIR}/components/core/src/ffi/ir_stream/byteswap.hpp
-    ${CLP_SRC_DIR}/components/core/src/ffi/ir_stream/encoding_methods.cpp
-    ${CLP_SRC_DIR}/components/core/src/ffi/ir_stream/encoding_methods.hpp
-    ${CLP_SRC_DIR}/components/core/src/ffi/ir_stream/decoding_methods.cpp
-    ${CLP_SRC_DIR}/components/core/src/ffi/ir_stream/decoding_methods.hpp
-    ${CLP_SRC_DIR}/components/core/src/ffi/ir_stream/decoding_methods.inc
-    ${CLP_SRC_DIR}/components/core/src/ffi/ir_stream/protocol_constants.hpp
+    ${CLP_SRC_DIR}/components/core/src/clp/BufferReader.cpp
+    ${CLP_SRC_DIR}/components/core/src/clp/BufferReader.hpp
+    ${CLP_SRC_DIR}/components/core/src/clp/Defs.h
+    ${CLP_SRC_DIR}/components/core/src/clp/ErrorCode.hpp
+    ${CLP_SRC_DIR}/components/core/src/clp/ffi/encoding_methods.cpp
+    ${CLP_SRC_DIR}/components/core/src/clp/ffi/encoding_methods.hpp
+    ${CLP_SRC_DIR}/components/core/src/clp/ffi/encoding_methods.inc
+    ${CLP_SRC_DIR}/components/core/src/clp/ffi/ir_stream/byteswap.hpp
+    ${CLP_SRC_DIR}/components/core/src/clp/ffi/ir_stream/encoding_methods.cpp
+    ${CLP_SRC_DIR}/components/core/src/clp/ffi/ir_stream/encoding_methods.hpp
+    ${CLP_SRC_DIR}/components/core/src/clp/ffi/ir_stream/decoding_methods.cpp
+    ${CLP_SRC_DIR}/components/core/src/clp/ffi/ir_stream/decoding_methods.hpp
+    ${CLP_SRC_DIR}/components/core/src/clp/ffi/ir_stream/decoding_methods.inc
+    ${CLP_SRC_DIR}/components/core/src/clp/ffi/ir_stream/protocol_constants.hpp
+    ${CLP_SRC_DIR}/components/core/src/clp/ffi/ir_stream/utils.cpp
+    ${CLP_SRC_DIR}/components/core/src/clp/ffi/ir_stream/utils.hpp
+    ${CLP_SRC_DIR}/components/core/src/clp/ir/parsing.cpp
+    ${CLP_SRC_DIR}/components/core/src/clp/ir/parsing.hpp
+    ${CLP_SRC_DIR}/components/core/src/clp/ir/parsing.inc
+    ${CLP_SRC_DIR}/components/core/src/clp/ir/types.hpp
+    ${CLP_SRC_DIR}/components/core/src/clp/ReaderInterface.cpp
+    ${CLP_SRC_DIR}/components/core/src/clp/ReaderInterface.hpp
+    ${CLP_SRC_DIR}/components/core/src/clp/string_utils/string_utils.cpp
+    ${CLP_SRC_DIR}/components/core/src/clp/string_utils/string_utils.hpp
+    ${CLP_SRC_DIR}/components/core/src/clp/TraceableException.hpp
+    ${CLP_SRC_DIR}/components/core/src/clp/time_types.hpp
+    ${CLP_SRC_DIR}/components/core/src/clp/type_utils.hpp
     src/ffi_go/types.hpp
     src/ffi_go/ir/decoder.cpp
     src/ffi_go/ir/deserializer.cpp

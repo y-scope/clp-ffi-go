@@ -14,31 +14,40 @@ _build_com_github_y_scope_clp = """
 cc_library(
     name = "libclp_ffi_core",
     srcs = [
-        "clp/components/core/src/BufferReader.cpp",
-        "clp/components/core/src/ReaderInterface.cpp",
-        "clp/components/core/src/string_utils.cpp",
-        "clp/components/core/src/ffi/encoding_methods.cpp",
-        "clp/components/core/src/ffi/ir_stream/encoding_methods.cpp",
-        "clp/components/core/src/ffi/ir_stream/decoding_methods.cpp",
+        "clp/components/core/src/clp/BufferReader.cpp",
+        "clp/components/core/src/clp/ffi/encoding_methods.cpp",
+        "clp/components/core/src/clp/ffi/ir_stream/encoding_methods.cpp",
+        "clp/components/core/src/clp/ffi/ir_stream/decoding_methods.cpp",
+        "clp/components/core/src/clp/ffi/ir_stream/utils.cpp",
+        "clp/components/core/src/clp/ir/parsing.cpp",
+        "clp/components/core/src/clp/ReaderInterface.cpp",
+        "clp/components/core/src/clp/string_utils/string_utils.cpp",
     ],
     hdrs = [
-        "clp/components/core/src/BufferReader.hpp",
-        "clp/components/core/src/Defs.h",
-        "clp/components/core/src/ErrorCode.hpp",
-        "clp/components/core/src/ReaderInterface.hpp",
-        "clp/components/core/src/string_utils.hpp",
-        "clp/components/core/src/string_utils.inc",
-        "clp/components/core/src/TraceableException.hpp",
-        "clp/components/core/src/type_utils.hpp",
-        "clp/components/core/src/ffi/encoding_methods.hpp",
-        "clp/components/core/src/ffi/encoding_methods.inc",
-        "clp/components/core/src/ffi/ir_stream/byteswap.hpp",
-        "clp/components/core/src/ffi/ir_stream/encoding_methods.hpp",
-        "clp/components/core/src/ffi/ir_stream/decoding_methods.hpp",
-        "clp/components/core/src/ffi/ir_stream/decoding_methods.inc",
-        "clp/components/core/src/ffi/ir_stream/protocol_constants.hpp",
+        "clp/components/core/src/clp/BufferReader.hpp",
+        "clp/components/core/src/clp/Defs.h",
+        "clp/components/core/src/clp/ErrorCode.hpp",
+        "clp/components/core/src/clp/ReaderInterface.hpp",
+        "clp/components/core/src/clp/ffi/encoding_methods.hpp",
+        "clp/components/core/src/clp/ffi/encoding_methods.inc",
+        "clp/components/core/src/clp/ffi/ir_stream/byteswap.hpp",
+        "clp/components/core/src/clp/ffi/ir_stream/encoding_methods.hpp",
+        "clp/components/core/src/clp/ffi/ir_stream/decoding_methods.hpp",
+        "clp/components/core/src/clp/ffi/ir_stream/decoding_methods.inc",
+        "clp/components/core/src/clp/ffi/ir_stream/protocol_constants.hpp",
+        "clp/components/core/src/clp/ffi/ir_stream/utils.hpp",
+        "clp/components/core/src/clp/ir/parsing.inc",
+        "clp/components/core/src/clp/ir/parsing.hpp",
+        "clp/components/core/src/clp/ir/types.hpp",
+        "clp/components/core/src/clp/string_utils/string_utils.hpp",
+        "clp/components/core/src/clp/TraceableException.hpp",
+        "clp/components/core/src/clp/time_types.hpp",
+        "clp/components/core/src/clp/type_utils.hpp",
     ],
-    includes = ["."],
+    includes = [
+        "./clp/components/core/src",
+        "./clp/components/core/src/clp",
+    ],
     copts = [
         "-std=c++20",
     ] + select({
@@ -69,8 +78,8 @@ def _clp_ext_com_github_nlohmann_json():
 def com_github_y_scope_clp():
     _clp_ext_com_github_nlohmann_json()
 
-    commit = "084efa35b7e9a63aecc5e327b97aea2a1cef83bc"
-    commit_sha256 = "3aea613f00b8ca2e07803c5774a2faf8d7a315d983093eb4ce23a14a73414f72"
+    commit = "3c1f0ad1c44b53d6c17fd7c1d578ec61616b5661"
+    commit_sha256 = "1daaa432357ed470eb8a2b5e7c8b4064418fa0f5d89fd075c6f1b4aef1ac6319"
     http_archive(
         name = "com_github_y_scope_clp",
         sha256 = commit_sha256,

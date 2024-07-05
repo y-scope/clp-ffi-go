@@ -6,15 +6,18 @@
 #include <type_traits>
 #include <vector>
 
-#include <clp/components/core/src/ffi/encoding_methods.hpp>
-#include <clp/components/core/src/ffi/ir_stream/decoding_methods.hpp>
+#include <clp/ffi/encoding_methods.hpp>
+#include <clp/ffi/ir_stream/decoding_methods.hpp>
+#include <clp/ir/types.hpp>
 
 #include "ffi_go/api_decoration.h"
 #include "ffi_go/defs.h"
 #include "ffi_go/ir/types.hpp"
 
 namespace ffi_go::ir {
-using namespace ffi::ir_stream;
+using clp::ffi::ir_stream::IRErrorCode;
+using clp::ir::eight_byte_encoded_variable_t;
+using clp::ir::four_byte_encoded_variable_t;
 
 namespace {
 /**
@@ -31,12 +34,12 @@ auto encode_log_message(
 ) -> int {
     using encoded_var_t = std::conditional_t<
             std::is_same_v<Int64tSpan, encoded_var_view_t>,
-            ffi::eight_byte_encoded_variable_t,
-            ffi::four_byte_encoded_variable_t>;
+            eight_byte_encoded_variable_t,
+            four_byte_encoded_variable_t>;
     if (nullptr == ir_encoder || nullptr == logtype || nullptr == vars || nullptr == dict_vars
         || nullptr == dict_var_end_offsets)
     {
-        return static_cast<int>(IRErrorCode_Corrupted_IR);
+        return static_cast<int>(IRErrorCode::IRErrorCode_Corrupted_IR);
     }
     Encoder<encoded_var_t>* encoder{static_cast<Encoder<encoded_var_t>*>(ir_encoder)};
     auto& ir_log_msg{encoder->m_log_message};
@@ -45,14 +48,14 @@ auto encode_log_message(
     std::string_view const log_msg_view{log_message.m_data, log_message.m_size};
     std::vector<int32_t> dict_var_offsets;
     if (false
-        == ffi::encode_message<encoded_var_t>(
+        == clp::ffi::encode_message<encoded_var_t>(
                 log_msg_view,
                 ir_log_msg.m_logtype,
                 ir_log_msg.m_vars,
                 dict_var_offsets
         ))
     {
-        return static_cast<int>(IRErrorCode_Corrupted_IR);
+        return static_cast<int>(IRErrorCode::IRErrorCode_Corrupted_IR);
     }
 
     // dict_var_offsets contains begin_pos followed by end_pos of each
@@ -78,28 +81,28 @@ auto encode_log_message(
     dict_vars->m_size = ir_log_msg.m_dict_vars.size();
     dict_var_end_offsets->m_data = ir_log_msg.m_dict_var_end_offsets.data();
     dict_var_end_offsets->m_size = ir_log_msg.m_dict_var_end_offsets.size();
-    return static_cast<int>(IRErrorCode_Success);
+    return static_cast<int>(IRErrorCode::IRErrorCode_Success);
 }
 }  // namespace
 
 CLP_FFI_GO_METHOD auto ir_encoder_eight_byte_new() -> void* {
     // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
-    return new Encoder<ffi::eight_byte_encoded_variable_t>{};
+    return new Encoder<eight_byte_encoded_variable_t>{};
 }
 
 CLP_FFI_GO_METHOD auto ir_encoder_four_byte_new() -> void* {
     // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
-    return new Encoder<ffi::four_byte_encoded_variable_t>{};
+    return new Encoder<four_byte_encoded_variable_t>{};
 }
 
 CLP_FFI_GO_METHOD auto ir_encoder_eight_byte_close(void* ir_encoder) -> void {
     // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
-    delete static_cast<Encoder<ffi::eight_byte_encoded_variable_t>*>(ir_encoder);
+    delete static_cast<Encoder<eight_byte_encoded_variable_t>*>(ir_encoder);
 }
 
 CLP_FFI_GO_METHOD auto ir_encoder_four_byte_close(void* ir_encoder) -> void {
     // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
-    delete static_cast<Encoder<ffi::four_byte_encoded_variable_t>*>(ir_encoder);
+    delete static_cast<Encoder<four_byte_encoded_variable_t>*>(ir_encoder);
 }
 
 CLP_FFI_GO_METHOD auto ir_encoder_encode_eight_byte_log_message(
