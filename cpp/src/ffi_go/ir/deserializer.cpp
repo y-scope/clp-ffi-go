@@ -64,18 +64,40 @@ template <class encoded_variable_t>
 ) -> int;
 
 /**
- * Deserializes UTC offset changes until the next read tag is not a UTC offset change packet.
+ * Tries to deserialize UTC offset changes until the next IR packet doesn't indicate a UTC offset
+ * change.
  * @param ir_buf
  * @param tag Outputs the tag after deserializing UTC offset changes.
- * @param utc_offset Outputs the last deserialized UTC offset.
+ * @param deserializer The deserialized of the current IR stream. The underlying UTC offset will be
+ * updated by the last deserialized UTC offset on success.
  * @return IRErrorCode::IRErrorCode_Success on success.
  * @return IRErrorCode::IRErrorCode_Incomplete_IR if the reader doesn't contain enough data to
  * deserialize.
  */
-[[nodiscard]] auto deserialize_utc_offset_changes(
+[[nodiscard]] auto try_deserialize_utc_offset_changes(
         BufferReader& ir_buf,
         encoded_tag_t& tag,
-        UtcOffset& utc_offset
+        Deserializer* deserializer
+) -> IRErrorCode;
+
+/**
+ * Tries to deserialize the next log event from the IR buffer.
+ * @tparam encoded_variable_t
+ * @param ir_buf
+ * @param tag
+ * @param deserializer The deserializer of the current IR stream to buffer the deserialized
+ * log message.
+ * @param timestamp Outputs the deserialized IR stream.
+ * @return The return code of `clp::ffi::ir_stream::four_byte_encoding::deserialize_log_event` or
+ * `clp::ffi::ir_stream::eight_byte_encoding::deserialize_log_event`, depending on the encoded type
+ * `encoded_variable_t`.
+ */
+template <class encoded_variable_t>
+[[nodiscard]] auto try_deserialize_next_log_event(
+        BufferReader& ir_buf,
+        encoded_tag_t tag,
+        Deserializer* deserializer,
+        epoch_time_ms_t& timestamp
 ) -> IRErrorCode;
 
 template <class encoded_variable_t>
@@ -95,41 +117,20 @@ auto deserialize_log_event(
     if (auto const err{deserialize_tag(ir_buf, tag)}; IRErrorCode::IRErrorCode_Success != err) {
         return static_cast<int>(err);
     }
-    if (UtcOffsetChange == tag) {
-        UtcOffset utc_offset{0};
-        if (auto const err{deserialize_utc_offset_changes(ir_buf, tag, utc_offset)};
-            IRErrorCode::IRErrorCode_Success != err)
-        {
-            return err;
-        }
-        deserializer->m_utc_offset = utc_offset;
+    if (auto const err{try_deserialize_utc_offset_changes(ir_buf, tag, deserializer)};
+        IRErrorCode::IRErrorCode_Success != err)
+    {
+        return static_cast<int>(err);
     }
     if (Eof == tag) {
         return static_cast<int>(IRErrorCode::IRErrorCode_Eof);
     }
 
-    IRErrorCode err{};
     epoch_time_ms_t timestamp{};
-    if constexpr (std::is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>) {
-        err = clp::ffi::ir_stream::eight_byte_encoding::deserialize_log_event(
-                ir_buf,
-                tag,
-                deserializer->m_log_event.m_log_message,
-                timestamp
-        );
-    } else if constexpr (std::is_same_v<encoded_variable_t, four_byte_encoded_variable_t>) {
-        epoch_time_ms_t timestamp_delta{};
-        err = clp::ffi::ir_stream::four_byte_encoding::deserialize_log_event(
-                ir_buf,
-                tag,
-                deserializer->m_log_event.m_log_message,
-                timestamp_delta
-        );
-        timestamp = deserializer->m_timestamp + timestamp_delta;
-    } else {
-        static_assert(cAlwaysFalse<encoded_variable_t>, "Invalid/unhandled encoding type");
-    }
-    if (IRErrorCode::IRErrorCode_Success != err) {
+    if (auto const err{try_deserialize_next_log_event<
+                encoded_variable_t>(ir_buf, tag, deserializer, timestamp)};
+        IRErrorCode::IRErrorCode_Success != err)
+    {
         return static_cast<int>(err);
     }
     deserializer->m_timestamp = timestamp;
@@ -202,46 +203,25 @@ auto deserialize_wildcard_match(
         query_fn = [](ffi_go::LogMessage const&) -> std::pair<bool, size_t> { return {true, 0}; };
     }
 
-    IRErrorCode err{};
     while (true) {
         encoded_tag_t tag{};
-        if (err = deserialize_tag(ir_buf, tag); IRErrorCode::IRErrorCode_Success != err) {
+        if (auto const err{deserialize_tag(ir_buf, tag)}; IRErrorCode::IRErrorCode_Success != err) {
             return static_cast<int>(err);
         }
-        if (UtcOffsetChange == tag) {
-            UtcOffset utc_offset{0};
-            if (err = deserialize_utc_offset_changes(ir_buf, tag, utc_offset);
-                IRErrorCode::IRErrorCode_Success != err)
-            {
-                return err;
-            }
-            deserializer->m_utc_offset = utc_offset;
+        if (auto const err{try_deserialize_utc_offset_changes(ir_buf, tag, deserializer)};
+            IRErrorCode::IRErrorCode_Success != err)
+        {
+            return static_cast<int>(IRErrorCode::IRErrorCode_Eof);
         }
         if (Eof == tag) {
             return static_cast<int>(IRErrorCode::IRErrorCode_Eof);
         }
 
         epoch_time_ms_t timestamp{};
-        if constexpr (std::is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>) {
-            err = clp::ffi::ir_stream::eight_byte_encoding::deserialize_log_event(
-                    ir_buf,
-                    tag,
-                    deserializer->m_log_event.m_log_message,
-                    timestamp
-            );
-        } else if constexpr (std::is_same_v<encoded_variable_t, four_byte_encoded_variable_t>) {
-            epoch_time_ms_t timestamp_delta{};
-            err = clp::ffi::ir_stream::four_byte_encoding::deserialize_log_event(
-                    ir_buf,
-                    tag,
-                    deserializer->m_log_event.m_log_message,
-                    timestamp_delta
-            );
-            timestamp = deserializer->m_timestamp + timestamp_delta;
-        } else {
-            static_assert(cAlwaysFalse<encoded_variable_t>, "Invalid/unhandled encoding type");
-        }
-        if (IRErrorCode::IRErrorCode_Success != err) {
+        if (auto const err{try_deserialize_next_log_event<
+                    encoded_variable_t>(ir_buf, tag, deserializer, timestamp)};
+            IRErrorCode::IRErrorCode_Success != err)
+        {
             return static_cast<int>(err);
         }
         deserializer->m_timestamp = timestamp;
@@ -275,8 +255,16 @@ auto deserialize_wildcard_match(
     }
 }
 
-auto deserialize_utc_offset_changes(BufferReader& ir_buf, encoded_tag_t& tag, UtcOffset& utc_offset)
-        -> IRErrorCode {
+auto try_deserialize_utc_offset_changes(
+        BufferReader& ir_buf,
+        encoded_tag_t& tag,
+        Deserializer* deserializer
+) -> IRErrorCode {
+    if (UtcOffsetChange != tag) {
+        return IRErrorCode::IRErrorCode_Success;
+    }
+
+    UtcOffset utc_offset{0};
     while (UtcOffsetChange == tag) {
         if (auto const err{clp::ffi::ir_stream::deserialize_utc_offset_change(ir_buf, utc_offset)})
         {
@@ -286,7 +274,40 @@ auto deserialize_utc_offset_changes(BufferReader& ir_buf, encoded_tag_t& tag, Ut
             return err;
         }
     }
+    deserializer->m_utc_offset = utc_offset;
     return IRErrorCode::IRErrorCode_Success;
+}
+
+template <class encoded_variable_t>
+auto try_deserialize_next_log_event(
+        BufferReader& ir_buf,
+        encoded_tag_t tag,
+        Deserializer* deserializer,
+        epoch_time_ms_t& timestamp
+) -> IRErrorCode {
+    static_assert(
+            (std::is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>
+             || std::is_same_v<encoded_variable_t, four_byte_encoded_variable_t>)
+    );
+    IRErrorCode err{};
+    if constexpr (std::is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>) {
+        err = clp::ffi::ir_stream::eight_byte_encoding::deserialize_log_event(
+                ir_buf,
+                tag,
+                deserializer->m_log_event.m_log_message,
+                timestamp
+        );
+    } else {
+        epoch_time_ms_t timestamp_delta{};
+        err = clp::ffi::ir_stream::four_byte_encoding::deserialize_log_event(
+                ir_buf,
+                tag,
+                deserializer->m_log_event.m_log_message,
+                timestamp_delta
+        );
+        timestamp = deserializer->m_timestamp + timestamp_delta;
+    }
+    return err;
 }
 }  // namespace
 
