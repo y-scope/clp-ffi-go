@@ -16,6 +16,7 @@
 #include <clp/ffi/ir_stream/protocol_constants.hpp>
 #include <clp/ir/types.hpp>
 #include <clp/string_utils/string_utils.hpp>
+#include <clp/time_types.hpp>
 
 #include "ffi_go/api_decoration.h"
 #include "ffi_go/defs.h"
@@ -26,12 +27,15 @@
 namespace ffi_go::ir {
 using clp::BufferReader;
 using clp::ffi::ir_stream::cProtocol::Eof;
+using clp::ffi::ir_stream::cProtocol::Payload::UtcOffsetChange;
 using clp::ffi::ir_stream::deserialize_preamble;
 using clp::ffi::ir_stream::deserialize_tag;
+using clp::ffi::ir_stream::encoded_tag_t;
 using clp::ffi::ir_stream::get_encoding_type;
 using clp::ffi::ir_stream::IRErrorCode;
 using clp::ir::eight_byte_encoded_variable_t;
 using clp::ir::four_byte_encoded_variable_t;
+using clp::UtcOffset;
 
 namespace {
 /**
@@ -59,6 +63,21 @@ template <class encoded_variable_t>
         size_t* matching_query
 ) -> int;
 
+/**
+ * Deserializes UTC offset changes until the next read tag is not a UTC offset change packet.
+ * @param ir_buf
+ * @param tag Outputs the tag after deserializing UTC offset changes.
+ * @param utc_offset Outputs the last deserialized UTC offset.
+ * @return IRErrorCode::IRErrorCode_Success on success.
+ * @return IRErrorCode::IRErrorCode_Incomplete_IR if the reader doesn't contain enough data to
+ * deserialize.
+ */
+[[nodiscard]] auto deserialize_utc_offset_changes(
+        BufferReader& ir_buf,
+        encoded_tag_t& tag,
+        UtcOffset& utc_offset
+) -> IRErrorCode;
+
 template <class encoded_variable_t>
 auto deserialize_log_event(
         ByteSpan ir_view,
@@ -72,9 +91,18 @@ auto deserialize_log_event(
     BufferReader ir_buf{static_cast<char const*>(ir_view.m_data), ir_view.m_size};
     Deserializer* deserializer{static_cast<Deserializer*>(ir_deserializer)};
 
-    clp::ffi::ir_stream::encoded_tag_t tag{};
+    encoded_tag_t tag{};
     if (auto const err{deserialize_tag(ir_buf, tag)}; IRErrorCode::IRErrorCode_Success != err) {
         return static_cast<int>(err);
+    }
+    if (UtcOffsetChange == tag) {
+        UtcOffset utc_offset{0};
+        if (auto const err{deserialize_utc_offset_changes(ir_buf, tag, utc_offset)};
+            IRErrorCode::IRErrorCode_Success != err)
+        {
+            return err;
+        }
+        deserializer->m_utc_offset = utc_offset;
     }
     if (Eof == tag) {
         return static_cast<int>(IRErrorCode::IRErrorCode_Eof);
@@ -114,6 +142,7 @@ auto deserialize_log_event(
     log_event->m_log_message.m_data = deserializer->m_log_event.m_log_message.data();
     log_event->m_log_message.m_size = deserializer->m_log_event.m_log_message.size();
     log_event->m_timestamp = deserializer->m_timestamp;
+    log_event->m_utc_offset = static_cast<epoch_time_ms_t>(deserializer->m_utc_offset.count());
     return static_cast<int>(IRErrorCode::IRErrorCode_Success);
 }
 
@@ -175,9 +204,18 @@ auto deserialize_wildcard_match(
 
     IRErrorCode err{};
     while (true) {
-        clp::ffi::ir_stream::encoded_tag_t tag{};
+        encoded_tag_t tag{};
         if (err = deserialize_tag(ir_buf, tag); IRErrorCode::IRErrorCode_Success != err) {
             return static_cast<int>(err);
+        }
+        if (UtcOffsetChange == tag) {
+            UtcOffset utc_offset{0};
+            if (err = deserialize_utc_offset_changes(ir_buf, tag, utc_offset);
+                IRErrorCode::IRErrorCode_Success != err)
+            {
+                return err;
+            }
+            deserializer->m_utc_offset = utc_offset;
         }
         if (Eof == tag) {
             return static_cast<int>(IRErrorCode::IRErrorCode_Eof);
@@ -231,9 +269,24 @@ auto deserialize_wildcard_match(
         log_event->m_log_message.m_data = deserializer->m_log_event.m_log_message.data();
         log_event->m_log_message.m_size = deserializer->m_log_event.m_log_message.size();
         log_event->m_timestamp = deserializer->m_timestamp;
+        log_event->m_utc_offset = static_cast<epoch_time_ms_t>(deserializer->m_utc_offset.count());
         *matching_query = matching_query_idx;
         return static_cast<int>(IRErrorCode::IRErrorCode_Success);
     }
+}
+
+auto deserialize_utc_offset_changes(BufferReader& ir_buf, encoded_tag_t& tag, UtcOffset& utc_offset)
+        -> IRErrorCode {
+    while (UtcOffsetChange == tag) {
+        if (auto const err{clp::ffi::ir_stream::deserialize_utc_offset_change(ir_buf, utc_offset)})
+        {
+            return err;
+        }
+        if (auto const err{deserialize_tag(ir_buf, tag)}) {
+            return err;
+        }
+    }
+    return IRErrorCode::IRErrorCode_Success;
 }
 }  // namespace
 

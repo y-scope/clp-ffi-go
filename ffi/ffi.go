@@ -29,4 +29,5 @@ type LogEvent struct {
 type LogEventView struct {
 	LogMessageView
 	Timestamp EpochTimeMs
+	UtcOffset EpochTimeMs
 }

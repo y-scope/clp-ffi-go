@@ -68,6 +68,7 @@ typedef struct {
 typedef struct {
     StringView m_log_message;
     epoch_time_ms_t m_timestamp;
+    epoch_time_ms_t m_utc_offset;
 } LogEventView;
 
 // NOLINTEND(modernize-use-using)

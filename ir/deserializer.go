@@ -43,7 +43,7 @@ type Deserializer interface {
 }
 
 // DeserializePreamble attempts to read an IR stream preamble from irBuf,
-// returning an Deserializer (of the correct stream encoding size), the position
+// returning a Deserializer (of the correct stream encoding size), the position
 // read to in irBuf (the end of the preamble), and an error. Note the metadata
 // stored in the preamble is sparse and certain fields in TimestampInfo may be 0
 // value. On error returns:
@@ -307,6 +307,7 @@ func deserializeWildcardMatch(
 				event.m_log_message.m_size,
 			),
 			Timestamp: ffi.EpochTimeMs(event.m_timestamp),
+			UtcOffset: ffi.EpochTimeMs(event.m_utc_offset),
 		},
 		int(pos),
 		int(match),
