@@ -86,8 +86,7 @@ template <class encoded_variable_t>
  * @param ir_buf
  * @param tag
  * @param deserializer The deserializer of the current IR stream to buffer the deserialized
- * log message.
- * @param timestamp Outputs the deserialized IR stream.
+ * log event.
  * @return The return code of `clp::ffi::ir_stream::four_byte_encoding::deserialize_log_event` or
  * `clp::ffi::ir_stream::eight_byte_encoding::deserialize_log_event`, depending on the encoded type
  * `encoded_variable_t`.
@@ -96,8 +95,7 @@ template <class encoded_variable_t>
 [[nodiscard]] auto try_deserialize_next_log_event(
         BufferReader& ir_buf,
         encoded_tag_t tag,
-        Deserializer* deserializer,
-        epoch_time_ms_t& timestamp
+        Deserializer* deserializer
 ) -> IRErrorCode;
 
 template <class encoded_variable_t>
@@ -126,14 +124,12 @@ auto deserialize_log_event(
         return static_cast<int>(IRErrorCode::IRErrorCode_Eof);
     }
 
-    epoch_time_ms_t timestamp{};
-    if (auto const err{try_deserialize_next_log_event<
-                encoded_variable_t>(ir_buf, tag, deserializer, timestamp)};
+    if (auto const err{try_deserialize_next_log_event<encoded_variable_t>(ir_buf, tag, deserializer)
+        };
         IRErrorCode::IRErrorCode_Success != err)
     {
         return static_cast<int>(err);
     }
-    deserializer->m_timestamp = timestamp;
 
     size_t pos{0};
     if (clp::ErrorCode_Success != ir_buf.try_get_pos(pos)) {
@@ -217,14 +213,13 @@ auto deserialize_wildcard_match(
             return static_cast<int>(IRErrorCode::IRErrorCode_Eof);
         }
 
-        epoch_time_ms_t timestamp{};
-        if (auto const err{try_deserialize_next_log_event<
-                    encoded_variable_t>(ir_buf, tag, deserializer, timestamp)};
+        if (auto const err{
+                    try_deserialize_next_log_event<encoded_variable_t>(ir_buf, tag, deserializer)
+            };
             IRErrorCode::IRErrorCode_Success != err)
         {
             return static_cast<int>(err);
         }
-        deserializer->m_timestamp = timestamp;
 
         if (time_interval.m_upper <= deserializer->m_timestamp) {
             // TODO this is an extremely fragile hack until the CLP ffi ir
@@ -282,13 +277,14 @@ template <class encoded_variable_t>
 auto try_deserialize_next_log_event(
         BufferReader& ir_buf,
         encoded_tag_t tag,
-        Deserializer* deserializer,
-        epoch_time_ms_t& timestamp
+        Deserializer* deserializer
 ) -> IRErrorCode {
     static_assert(
             (std::is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>
              || std::is_same_v<encoded_variable_t, four_byte_encoded_variable_t>)
     );
+
+    epoch_time_ms_t timestamp{};
     IRErrorCode err{};
     if constexpr (std::is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>) {
         err = clp::ffi::ir_stream::eight_byte_encoding::deserialize_log_event(
@@ -306,6 +302,10 @@ auto try_deserialize_next_log_event(
                 timestamp_delta
         );
         timestamp = deserializer->m_timestamp + timestamp_delta;
+    }
+
+    if (IRErrorCode::IRErrorCode_Success == err) {
+        deserializer->m_timestamp = timestamp;
     }
     return err;
 }
