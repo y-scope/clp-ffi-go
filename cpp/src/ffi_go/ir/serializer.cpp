@@ -204,7 +204,7 @@ CLP_FFI_GO_METHOD auto ir_serializer_serialize_utc_offset_change(
         ByteSpan* ir_view
 ) -> void {
     Serializer* serializer{static_cast<Serializer*>(ir_serializer)};
-    clp::UtcOffset utc_offset{utc_offset_change};
+    clp::UtcOffset const utc_offset{utc_offset_change};
     serializer->m_ir_buf.clear();
     if (utc_offset != serializer->m_curr_utc_offset) {
         clp::ffi::ir_stream::serialize_utc_offset_change(utc_offset, serializer->m_ir_buf);
