@@ -6,6 +6,7 @@
 #include <clp/ffi/ir_stream/decoding_methods.hpp>
 #include <clp/ffi/ir_stream/encoding_methods.hpp>
 #include <clp/ir/types.hpp>
+#include <clp/time_types.hpp>
 
 #include "ffi_go/api_decoration.h"
 #include "ffi_go/defs.h"
@@ -195,5 +196,21 @@ CLP_FFI_GO_METHOD auto ir_serializer_serialize_four_byte_log_event(
             ir_serializer,
             ir_view
     );
+}
+
+CLP_FFI_GO_METHOD auto ir_serializer_serialize_utc_offset_change(
+        epoch_time_ms_t utc_offset_change,
+        void* ir_serializer,
+        ByteSpan* ir_view
+) -> void {
+    Serializer* serializer{static_cast<Serializer*>(ir_serializer)};
+    clp::UtcOffset utc_offset{utc_offset_change};
+    serializer->m_ir_buf.clear();
+    if (utc_offset != serializer->m_curr_utc_offset) {
+        clp::ffi::ir_stream::serialize_utc_offset_change(utc_offset, serializer->m_ir_buf);
+        serializer->m_curr_utc_offset = utc_offset;
+    }
+    ir_view->m_data = serializer->m_ir_buf.data();
+    ir_view->m_size = serializer->m_ir_buf.size();
 }
 }  // namespace ffi_go::ir

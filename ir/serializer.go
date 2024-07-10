@@ -21,6 +21,7 @@ import (
 // so will result in a memory leak.
 type Serializer interface {
 	SerializeLogEvent(event ffi.LogEvent) (BufView, error)
+	SerializeUtcOffsetChange(utcOffset ffi.EpochTimeMs) BufView
 	TimestampInfo() TimestampInfo
 	Close() error
 }
@@ -92,7 +93,15 @@ type commonSerializer struct {
 	cptr   unsafe.Pointer
 }
 
-// Closes the serializer by releasing the underlying C++ allocated memory.
+// SerializeUtcOffsetChange attempts to serialize the UTC offset change, utcOffset, into an IR
+// stream. It returns a view of the encoded IR bytes (could be an empty view).
+func (serializer *commonSerializer) SerializeUtcOffsetChange(utcOffset ffi.EpochTimeMs) BufView {
+	var irView C.ByteSpan
+	C.ir_serializer_serialize_utc_offset_change(C.int64_t(utcOffset), serializer.cptr, &irView)
+	return unsafe.Slice((*byte)(irView.m_data), irView.m_size)
+}
+
+// Close attempts to close the serializer by releasing the underlying C++ allocated memory.
 // Failure to call Close will result in a memory leak.
 func (serializer *commonSerializer) Close() error {
 	if nil != serializer.cptr {

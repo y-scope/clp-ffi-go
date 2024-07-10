@@ -43,6 +43,13 @@ func testSerDerLogMessages(
 	}
 	irSerializer := serializeIrPreamble(t, args, preamble, ioWriter)
 
+	utcOffsetToronto := ffi.EpochTimeMs(-4 * 60 * 60 * 1000)
+	irView := irSerializer.SerializeUtcOffsetChange(utcOffsetToronto)
+	_, err := ioWriter.Write(irView)
+	if nil != err {
+		t.Fatalf("io.Writer.Write message: %v", err)
+	}
+
 	var events []ffi.LogEvent
 	for _, msg := range logMessages {
 		event := ffi.LogEvent{
@@ -60,7 +67,7 @@ func testSerDerLogMessages(
 		events = append(events, event)
 	}
 	irSerializer.Close()
-	_, err := ioWriter.Write([]byte{0x0})
+	_, err = ioWriter.Write([]byte{0x0})
 	if nil != err {
 		t.Fatalf("io.Writer.Write message: %v", err)
 	}
@@ -72,7 +79,7 @@ func testSerDerLogMessages(
 	defer irReader.Close()
 
 	for _, event := range events {
-		assertIrLogEvent(t, ioReader, irReader, event)
+		assertIrLogEvent(t, ioReader, irReader, event, utcOffsetToronto)
 	}
 	assertEndOfIr(t, ioReader, irReader)
 }

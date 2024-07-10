@@ -125,6 +125,19 @@ func (writer *Writer) Write(event ffi.LogEvent) (int, error) {
 	return n, nil
 }
 
+// WriteUtcOffsetChange uses [SerializeUtcOffsetChange] to serialize the given UTC offset change to
+// CLP IR and then stores it in the internal buffer. Returns:
+//   - success: number of bytes written, nil
+//   - error: number of bytes written (can be 0), error propagated from [bytes.Buffer.Write]
+func (writer *Writer) WriteUtcOffsetChange(utcOffset ffi.EpochTimeMs) (int, error) {
+	irView := writer.SerializeUtcOffsetChange(utcOffset)
+	n, err := writer.buf.Write(irView)
+	if nil != err {
+		return n, err
+	}
+	return n, nil
+}
+
 // WriteTo writes data to w until the buffer is drained or an error occurs. If
 // no error occurs the buffer is reset. On an error the user is expected to use
 // [writer.Bytes] and [writer.Reset] to manually handle the buffer's contents before

@@ -76,6 +76,7 @@ struct Serializer {
 
     std::string m_logtype;
     std::vector<int8_t> m_ir_buf;
+    clp::UtcOffset m_curr_utc_offset{0};
 };
 }  // namespace ffi_go::ir
 

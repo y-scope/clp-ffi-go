@@ -101,5 +101,19 @@ CLP_FFI_GO_METHOD int ir_serializer_serialize_four_byte_log_event(
         ByteSpan* ir_view
 );
 
+/**
+ * Given an UTC offset, serialize it into an IR byte stream. An ir::Serializer must be provided to
+ * use as the backing storage for the corresponding Go ir.Serializer. All pointer parameters must be
+ * non-null (non-nil Cgo C.<type> pointer or unsafe.Pointer from Go)
+ * @param[in] utc_offset_change UTC offset change to serialize in milliseconds
+ * @param[in] ir_serializer ir::Serializer object to be used as storage
+ * @param[out] ir_view View of a IR buffer containing the serialized log event
+ */
+CLP_FFI_GO_METHOD void ir_serializer_serialize_utc_offset_change(
+        epoch_time_ms_t utc_offset_change,
+        void* ir_serializer,
+        ByteSpan* ir_view
+);
+
 // NOLINTEND(modernize-use-trailing-return-type)
 #endif  // FFI_GO_IR_SERIALIZER_H

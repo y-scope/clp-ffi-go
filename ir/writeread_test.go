@@ -16,6 +16,21 @@ func testWriteReadLogMessages(
 	ioWriter := openIoWriter(t, args)
 	irWriter := openIrWriter(t, args, ioWriter)
 
+	utcOffsetToronto := ffi.EpochTimeMs(-4 * 60 * 60 * 1000)
+	utcOffsetTokyo := ffi.EpochTimeMs(9 * 60 * 60 * 100)
+	_, err := irWriter.WriteUtcOffsetChange(utcOffsetTokyo)
+	if nil != err {
+		t.Fatalf("ir.Writer.WriteUtcOffset failed: %v", err)
+	}
+	_, err = irWriter.WriteUtcOffsetChange(utcOffsetToronto)
+	if nil != err {
+		t.Fatalf("ir.Writer.WriteUtcOffset failed: %v", err)
+	}
+
+	if nil != err {
+		t.Fatalf("ir.Writer.CloseTo failed: %v", err)
+	}
+
 	var events []ffi.LogEvent
 	for _, msg := range messages {
 		event := ffi.LogEvent{
@@ -28,7 +43,7 @@ func testWriteReadLogMessages(
 		}
 		events = append(events, event)
 	}
-	_, err := irWriter.CloseTo(ioWriter)
+	_, err = irWriter.CloseTo(ioWriter)
 	if nil != err {
 		t.Fatalf("ir.Writer.CloseTo failed: %v", err)
 	}
@@ -43,7 +58,7 @@ func testWriteReadLogMessages(
 	defer irReader.Close()
 
 	for _, event := range events {
-		assertIrLogEvent(t, ioReader, irReader, event)
+		assertIrLogEvent(t, ioReader, irReader, event, utcOffsetToronto)
 	}
 	assertEndOfIr(t, ioReader, irReader)
 }

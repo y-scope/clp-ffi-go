@@ -256,6 +256,7 @@ func deserializeLogEvent(
 				event.m_log_message.m_size,
 			),
 			Timestamp: ffi.EpochTimeMs(event.m_timestamp),
+			UtcOffset: ffi.EpochTimeMs(event.m_utc_offset),
 		},
 		int(pos),
 		nil
