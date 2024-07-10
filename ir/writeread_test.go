@@ -18,17 +18,22 @@ func testWriteReadLogMessages(
 
 	utcOffsetToronto := ffi.EpochTimeMs(-4 * 60 * 60 * 1000)
 	utcOffsetTokyo := ffi.EpochTimeMs(9 * 60 * 60 * 100)
+
 	_, err := irWriter.WriteUtcOffsetChange(utcOffsetTokyo)
 	if nil != err {
 		t.Fatalf("ir.Writer.WriteUtcOffset failed: %v", err)
 	}
+
+	// Overwrite the previous UTC offset
 	_, err = irWriter.WriteUtcOffsetChange(utcOffsetToronto)
 	if nil != err {
 		t.Fatalf("ir.Writer.WriteUtcOffset failed: %v", err)
 	}
 
+	// Serialize the same UTC offset again
+	_, err = irWriter.WriteUtcOffsetChange(utcOffsetToronto)
 	if nil != err {
-		t.Fatalf("ir.Writer.CloseTo failed: %v", err)
+		t.Fatalf("ir.Writer.WriteUtcOffset failed: %v", err)
 	}
 
 	var events []ffi.LogEvent
