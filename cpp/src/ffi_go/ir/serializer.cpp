@@ -46,7 +46,6 @@ template <class encoded_variable_t>
 auto new_serializer_with_preamble(
         StringView ts_pattern,
         StringView ts_pattern_syntax,
-        StringView time_zone_id,
         [[maybe_unused]] epoch_time_ms_t reference_ts,
         void** ir_serializer_ptr,
         ByteSpan* ir_view
@@ -65,14 +64,14 @@ auto new_serializer_with_preamble(
         success = clp::ffi::ir_stream::eight_byte_encoding::serialize_preamble(
                 std::string_view{ts_pattern.m_data, ts_pattern.m_size},
                 std::string_view{ts_pattern_syntax.m_data, ts_pattern_syntax.m_size},
-                std::string_view{time_zone_id.m_data, time_zone_id.m_size},
+                "",
                 serializer->m_ir_buf
         );
     } else if constexpr (std::is_same_v<encoded_variable_t, four_byte_encoded_variable_t>) {
         success = clp::ffi::ir_stream::four_byte_encoding::serialize_preamble(
                 std::string_view{ts_pattern.m_data, ts_pattern.m_size},
                 std::string_view{ts_pattern_syntax.m_data, ts_pattern_syntax.m_size},
-                std::string_view{time_zone_id.m_data, time_zone_id.m_size},
+                "",
                 reference_ts,
                 serializer->m_ir_buf
         );
@@ -138,14 +137,12 @@ CLP_FFI_GO_METHOD auto ir_serializer_close(void* ir_serializer) -> void {
 CLP_FFI_GO_METHOD auto ir_serializer_new_eight_byte_serializer_with_preamble(
         StringView ts_pattern,
         StringView ts_pattern_syntax,
-        StringView time_zone_id,
         void** ir_serializer_ptr,
         ByteSpan* ir_view
 ) -> int {
     return new_serializer_with_preamble<eight_byte_encoded_variable_t>(
             ts_pattern,
             ts_pattern_syntax,
-            time_zone_id,
             0,
             ir_serializer_ptr,
             ir_view
@@ -155,7 +152,6 @@ CLP_FFI_GO_METHOD auto ir_serializer_new_eight_byte_serializer_with_preamble(
 CLP_FFI_GO_METHOD auto ir_serializer_new_four_byte_serializer_with_preamble(
         StringView ts_pattern,
         StringView ts_pattern_syntax,
-        StringView time_zone_id,
         epoch_time_ms_t reference_ts,
         void** ir_serializer_ptr,
         ByteSpan* ir_view
@@ -163,7 +159,6 @@ CLP_FFI_GO_METHOD auto ir_serializer_new_four_byte_serializer_with_preamble(
     return new_serializer_with_preamble<four_byte_encoded_variable_t>(
             ts_pattern,
             ts_pattern_syntax,
-            time_zone_id,
             reference_ts,
             ir_serializer_ptr,
             ir_view

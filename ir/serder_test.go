@@ -10,7 +10,7 @@ import (
 
 func TestPreamble(t *testing.T) {
 	preamble := preambleFields{
-		TimestampInfo{defaultTimestampPattern, defaultTimestampPatternSyntax, defaultTimeZoneId},
+		TimestampInfo{defaultTimestampPattern, defaultTimestampPatternSyntax},
 		ffi.EpochTimeMs(time.Now().UnixMilli()),
 	}
 	for _, args := range generateTestArgs(t, t.Name()) {
@@ -38,7 +38,7 @@ func testSerDerLogMessages(
 	ioWriter := openIoWriter(t, args)
 
 	preamble := preambleFields{
-		TimestampInfo{defaultTimestampPattern, defaultTimestampPatternSyntax, defaultTimeZoneId},
+		TimestampInfo{defaultTimestampPattern, defaultTimestampPatternSyntax},
 		ffi.EpochTimeMs(time.Now().UnixMilli()),
 	}
 	irSerializer := serializeIrPreamble(t, args, preamble, ioWriter)
@@ -98,13 +98,11 @@ func serializeIrPreamble(
 		serializer, preambleIr, err = EightByteSerializer(
 			preamble.Pattern,
 			preamble.PatternSyntax,
-			preamble.TimeZoneId,
 		)
 	case fourByteEncoding:
 		serializer, preambleIr, err = FourByteSerializer(
 			preamble.Pattern,
 			preamble.PatternSyntax,
-			preamble.TimeZoneId,
 			preamble.prevTimestamp,
 		)
 	default:
@@ -145,13 +143,6 @@ func assertIrPreamble(
 			"NewReader wrong pattern syntax: '%v' != '%v'",
 			irreader.TimestampInfo().PatternSyntax,
 			preamble.PatternSyntax,
-		)
-	}
-	if irreader.TimestampInfo().TimeZoneId != preamble.TimeZoneId {
-		t.Fatalf(
-			"NewReader wrong time zone id: '%v' != '%v'",
-			irreader.TimestampInfo().TimeZoneId,
-			preamble.TimeZoneId,
 		)
 	}
 	if fourByteEncoding == args.encoding {

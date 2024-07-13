@@ -17,7 +17,6 @@ import (
 const (
 	defaultTimestampPattern       string = "yyyy-MM-dd HH:mm:ss,SSS"
 	defaultTimestampPatternSyntax string = "java::SimpleDateFormat"
-	defaultTimeZoneId             string = "America/Toronto"
 )
 
 type testArg int

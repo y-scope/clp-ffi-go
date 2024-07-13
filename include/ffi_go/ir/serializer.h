@@ -23,7 +23,6 @@ CLP_FFI_GO_METHOD void ir_serializer_close(void* ir_serializer);
  *     deserializing the IR
  * @param[in] ts_pattern_syntax Type of the format string for understanding how
  *     to parse it
- * @param[in] time_zone_id TZID timezone of the timestamps in the IR
  * @param[out] ir_serializer_ptr Address of a new ir::Serializer
  * @param[out] ir_view View of a IR buffer containing the serialized preamble
  * @return ffi::ir_stream::IRErrorCode forwarded from
@@ -32,7 +31,6 @@ CLP_FFI_GO_METHOD void ir_serializer_close(void* ir_serializer);
 CLP_FFI_GO_METHOD int ir_serializer_new_eight_byte_serializer_with_preamble(
         StringView ts_pattern,
         StringView ts_pattern_syntax,
-        StringView time_zone_id,
         void** ir_serializer_ptr,
         ByteSpan* ir_view
 );
@@ -47,7 +45,6 @@ CLP_FFI_GO_METHOD int ir_serializer_new_eight_byte_serializer_with_preamble(
  *     deserializing the IR
  * @param[in] ts_pattern_syntax Type of the format string for understanding how
  *     to parse it
- * @param[in] time_zone_id TZID timezone of the timestamps in the IR
  * @param[out] ir_serializer_ptr Address of a new ir::Serializer
  * @param[out] ir_view View of a IR buffer containing the serialized preamble
  * @return ffi::ir_stream::IRErrorCode forwarded from
@@ -56,7 +53,6 @@ CLP_FFI_GO_METHOD int ir_serializer_new_eight_byte_serializer_with_preamble(
 CLP_FFI_GO_METHOD int ir_serializer_new_four_byte_serializer_with_preamble(
         StringView ts_pattern,
         StringView ts_pattern_syntax,
-        StringView time_zone_id,
         epoch_time_ms_t reference_ts,
         void** ir_serializer_ptr,
         ByteSpan* ir_view

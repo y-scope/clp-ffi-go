@@ -77,9 +77,9 @@ func openIrWriter(
 	var err error
 	switch args.encoding {
 	case eightByteEncoding:
-		irWriter, err = NewWriterSize[EightByteEncoding](1024*1024, defaultTimeZoneId)
+		irWriter, err = NewWriterSize[EightByteEncoding](1024 * 1024)
 	case fourByteEncoding:
-		irWriter, err = NewWriterSize[FourByteEncoding](1024*1024, defaultTimeZoneId)
+		irWriter, err = NewWriterSize[FourByteEncoding](1024 * 1024)
 	default:
 		t.Fatalf("unsupported encoding: %v", args.encoding)
 	}

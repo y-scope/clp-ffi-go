@@ -35,16 +35,14 @@ type Serializer interface {
 func EightByteSerializer(
 	tsPattern string,
 	tsPatternSyntax string,
-	timeZoneId string,
 ) (Serializer, BufView, error) {
 	var irView C.ByteSpan
 	irs := eightByteSerializer{
-		commonSerializer{TimestampInfo{tsPattern, tsPatternSyntax, timeZoneId}, nil},
+		commonSerializer{TimestampInfo{tsPattern, tsPatternSyntax}, nil},
 	}
 	if err := IrError(C.ir_serializer_new_eight_byte_serializer_with_preamble(
 		newCStringView(tsPattern),
 		newCStringView(tsPatternSyntax),
-		newCStringView(timeZoneId),
 		&irs.cptr,
 		&irView,
 	)); Success != err {
@@ -62,18 +60,16 @@ func EightByteSerializer(
 func FourByteSerializer(
 	tsPattern string,
 	tsPatternSyntax string,
-	timeZoneId string,
 	referenceTs ffi.EpochTimeMs,
 ) (Serializer, BufView, error) {
 	var irView C.ByteSpan
 	irs := fourByteSerializer{
-		commonSerializer{TimestampInfo{tsPattern, tsPatternSyntax, timeZoneId}, nil},
+		commonSerializer{TimestampInfo{tsPattern, tsPatternSyntax}, nil},
 		referenceTs,
 	}
 	if err := IrError(C.ir_serializer_new_four_byte_serializer_with_preamble(
 		newCStringView(tsPattern),
 		newCStringView(tsPatternSyntax),
-		newCStringView(timeZoneId),
 		C.int64_t(referenceTs),
 		&irs.cptr,
 		&irView,

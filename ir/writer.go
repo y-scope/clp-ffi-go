@@ -19,25 +19,19 @@ type Writer struct {
 	buf bytes.Buffer
 }
 
-// Returns [NewWriterSize] with a FourByteEncoding Serializer using the local
-// time zone, and a buffer size of 1MB.
+// Returns [NewWriterSize] with a FourByteEncoding Serializer with a 1MB buffer size.
 func NewWriter() (*Writer, error) {
-	return NewWriterSize[FourByteEncoding](1024*1024, time.Local.String())
+	return NewWriterSize[FourByteEncoding](1024 * 1024)
 }
 
 // NewWriterSize creates a new [Writer] with a [Serializer] based on T, and
 // writes a CLP IR preamble. The preamble is stored inside the Writer's internal
 // buffer to be written out later. The size parameter denotes the initial buffer
-// size to use and timeZoneId denotes the time zone of the source producing the
-// log events, so that local times (any time that is not a unix timestamp) are
-// handled correctly.
+// size to use.
 //   - success: valid [*Writer], nil
 //   - error: nil [*Writer], invalid type error or an error propagated from
 //     [FourByteSerializer], [EightByteSerializer], or [bytes.Buffer.Write]
-func NewWriterSize[T EightByteEncoding | FourByteEncoding](
-	size int,
-	timeZoneId string,
-) (*Writer, error) {
+func NewWriterSize[T EightByteEncoding | FourByteEncoding](size int) (*Writer, error) {
 	var irw Writer
 	irw.buf.Grow(size)
 
@@ -49,13 +43,11 @@ func NewWriterSize[T EightByteEncoding | FourByteEncoding](
 		irw.Serializer, irView, err = EightByteSerializer(
 			"",
 			"",
-			timeZoneId,
 		)
 	case FourByteEncoding:
 		irw.Serializer, irView, err = FourByteSerializer(
 			"",
 			"",
-			timeZoneId,
 			ffi.EpochTimeMs(time.Now().UnixMilli()),
 		)
 	default:
