@@ -64,14 +64,14 @@ auto new_serializer_with_preamble(
         success = clp::ffi::ir_stream::eight_byte_encoding::serialize_preamble(
                 std::string_view{ts_pattern.m_data, ts_pattern.m_size},
                 std::string_view{ts_pattern_syntax.m_data, ts_pattern_syntax.m_size},
-                "",
+                "",  // ignore timezone ID until removed from CLP core
                 serializer->m_ir_buf
         );
     } else if constexpr (std::is_same_v<encoded_variable_t, four_byte_encoded_variable_t>) {
         success = clp::ffi::ir_stream::four_byte_encoding::serialize_preamble(
                 std::string_view{ts_pattern.m_data, ts_pattern.m_size},
                 std::string_view{ts_pattern_syntax.m_data, ts_pattern_syntax.m_size},
-                "",
+                "",  // ignore timezone ID until removed from CLP core
                 reference_ts,
                 serializer->m_ir_buf
         );
@@ -201,10 +201,7 @@ CLP_FFI_GO_METHOD auto ir_serializer_serialize_utc_offset_change(
     Serializer* serializer{static_cast<Serializer*>(ir_serializer)};
     clp::UtcOffset const utc_offset{utc_offset_change};
     serializer->m_ir_buf.clear();
-    if (utc_offset != serializer->m_curr_utc_offset) {
-        clp::ffi::ir_stream::serialize_utc_offset_change(utc_offset, serializer->m_ir_buf);
-        serializer->m_curr_utc_offset = utc_offset;
-    }
+    clp::ffi::ir_stream::serialize_utc_offset_change(utc_offset, serializer->m_ir_buf);
     ir_view->m_data = serializer->m_ir_buf.data();
     ir_view->m_size = serializer->m_ir_buf.size();
 }
