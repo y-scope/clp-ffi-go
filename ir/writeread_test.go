@@ -42,9 +42,9 @@ func testWriteReadLogMessages(
 			LogMessage: msg,
 			Timestamp:  ffi.EpochTimeMs(time.Now().UnixMilli()),
 		}
-		_, err := irWriter.Write(event)
+		_, err := irWriter.WriteLogEvent(event)
 		if nil != err {
-			t.Fatalf("ir.Writer.Write failed: %v", err)
+			t.Fatalf("ir.Writer.WriteLogEvent failed: %v", err)
 		}
 		events = append(events, event)
 	}
