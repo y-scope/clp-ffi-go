@@ -17,7 +17,6 @@ import (
 const (
 	defaultTimestampPattern       string = "yyyy-MM-dd HH:mm:ss,SSS"
 	defaultTimestampPatternSyntax string = "java::SimpleDateFormat"
-	defaultTimeZoneId             string = "America/Toronto"
 )
 
 type testArg int
@@ -113,6 +112,7 @@ func assertIrLogEvent(
 	reader io.Reader,
 	irReader *Reader,
 	event ffi.LogEvent,
+	utcOffset ffi.EpochTimeMs,
 ) {
 	log, err := irReader.Read()
 	if nil != err {
@@ -123,6 +123,9 @@ func assertIrLogEvent(
 	}
 	if event.LogMessage != log.LogMessageView {
 		t.Fatalf("Reader.Read wrong message: '%v' != '%v'", log.LogMessageView, event.LogMessage)
+	}
+	if utcOffset != log.UtcOffset {
+		t.Fatalf("Reader.Read wrong UTC offset: '%v' != '%v'", log.UtcOffset, utcOffset)
 	}
 	t.Logf("'%v' : '%.128v'\n", log.Timestamp, log.LogMessageView)
 }

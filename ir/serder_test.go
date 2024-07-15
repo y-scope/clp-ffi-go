@@ -10,7 +10,7 @@ import (
 
 func TestPreamble(t *testing.T) {
 	preamble := preambleFields{
-		TimestampInfo{defaultTimestampPattern, defaultTimestampPatternSyntax, defaultTimeZoneId},
+		TimestampInfo{defaultTimestampPattern, defaultTimestampPatternSyntax},
 		ffi.EpochTimeMs(time.Now().UnixMilli()),
 	}
 	for _, args := range generateTestArgs(t, t.Name()) {
@@ -38,10 +38,17 @@ func testSerDerLogMessages(
 	ioWriter := openIoWriter(t, args)
 
 	preamble := preambleFields{
-		TimestampInfo{defaultTimestampPattern, defaultTimestampPatternSyntax, defaultTimeZoneId},
+		TimestampInfo{defaultTimestampPattern, defaultTimestampPatternSyntax},
 		ffi.EpochTimeMs(time.Now().UnixMilli()),
 	}
 	irSerializer := serializeIrPreamble(t, args, preamble, ioWriter)
+
+	utcOffsetToronto := ffi.EpochTimeMs(-4 * 60 * 60 * 1000)
+	irView := irSerializer.SerializeUtcOffsetChange(utcOffsetToronto)
+	_, err := ioWriter.Write(irView)
+	if nil != err {
+		t.Fatalf("io.Writer.Write message: %v", err)
+	}
 
 	var events []ffi.LogEvent
 	for _, msg := range logMessages {
@@ -60,7 +67,7 @@ func testSerDerLogMessages(
 		events = append(events, event)
 	}
 	irSerializer.Close()
-	_, err := ioWriter.Write([]byte{0x0})
+	_, err = ioWriter.Write([]byte{0x0})
 	if nil != err {
 		t.Fatalf("io.Writer.Write message: %v", err)
 	}
@@ -72,7 +79,7 @@ func testSerDerLogMessages(
 	defer irReader.Close()
 
 	for _, event := range events {
-		assertIrLogEvent(t, ioReader, irReader, event)
+		assertIrLogEvent(t, ioReader, irReader, event, utcOffsetToronto)
 	}
 	assertEndOfIr(t, ioReader, irReader)
 }
@@ -91,13 +98,11 @@ func serializeIrPreamble(
 		serializer, preambleIr, err = EightByteSerializer(
 			preamble.Pattern,
 			preamble.PatternSyntax,
-			preamble.TimeZoneId,
 		)
 	case fourByteEncoding:
 		serializer, preambleIr, err = FourByteSerializer(
 			preamble.Pattern,
 			preamble.PatternSyntax,
-			preamble.TimeZoneId,
 			preamble.prevTimestamp,
 		)
 	default:
@@ -138,13 +143,6 @@ func assertIrPreamble(
 			"NewReader wrong pattern syntax: '%v' != '%v'",
 			irreader.TimestampInfo().PatternSyntax,
 			preamble.PatternSyntax,
-		)
-	}
-	if irreader.TimestampInfo().TimeZoneId != preamble.TimeZoneId {
-		t.Fatalf(
-			"NewReader wrong time zone id: '%v' != '%v'",
-			irreader.TimestampInfo().TimeZoneId,
-			preamble.TimeZoneId,
 		)
 	}
 	if fourByteEncoding == args.encoding {

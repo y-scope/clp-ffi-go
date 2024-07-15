@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <span>
 #include <string_view>
 #include <type_traits>
@@ -16,6 +17,7 @@
 #include <clp/ffi/ir_stream/protocol_constants.hpp>
 #include <clp/ir/types.hpp>
 #include <clp/string_utils/string_utils.hpp>
+#include <clp/time_types.hpp>
 
 #include "ffi_go/api_decoration.h"
 #include "ffi_go/defs.h"
@@ -25,10 +27,6 @@
 
 namespace ffi_go::ir {
 using clp::BufferReader;
-using clp::ffi::ir_stream::cProtocol::Eof;
-using clp::ffi::ir_stream::deserialize_preamble;
-using clp::ffi::ir_stream::deserialize_tag;
-using clp::ffi::ir_stream::get_encoding_type;
 using clp::ffi::ir_stream::IRErrorCode;
 using clp::ir::eight_byte_encoded_variable_t;
 using clp::ir::four_byte_encoded_variable_t;
@@ -59,6 +57,18 @@ template <class encoded_variable_t>
         size_t* matching_query
 ) -> int;
 
+/**
+ * Deserializes packets from the given IR buffer until a new log event is fully deserialized.
+ * @tparam encoded_variable_t
+ * @param ir_buf
+ * @param deserializer The deserializer of the current IR stream to buffer the deserialized
+ * log event.
+ * @return ffi::ir_stream::IRErrorCode forwarded from the underlying deserialization methods.
+ */
+template <class encoded_variable_t>
+[[nodiscard]] auto
+deserialize_to_next_log_event(BufferReader& ir_buf, Deserializer* deserializer) -> IRErrorCode;
+
 template <class encoded_variable_t>
 auto deserialize_log_event(
         ByteSpan ir_view,
@@ -72,39 +82,11 @@ auto deserialize_log_event(
     BufferReader ir_buf{static_cast<char const*>(ir_view.m_data), ir_view.m_size};
     Deserializer* deserializer{static_cast<Deserializer*>(ir_deserializer)};
 
-    clp::ffi::ir_stream::encoded_tag_t tag{};
-    if (auto const err{deserialize_tag(ir_buf, tag)}; IRErrorCode::IRErrorCode_Success != err) {
-        return static_cast<int>(err);
+    if (auto const err{deserialize_to_next_log_event<encoded_variable_t>(ir_buf, deserializer)};
+        IRErrorCode::IRErrorCode_Success != err)
+    {
+        return err;
     }
-    if (Eof == tag) {
-        return static_cast<int>(IRErrorCode::IRErrorCode_Eof);
-    }
-
-    IRErrorCode err{};
-    epoch_time_ms_t timestamp{};
-    if constexpr (std::is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>) {
-        err = clp::ffi::ir_stream::eight_byte_encoding::deserialize_log_event(
-                ir_buf,
-                tag,
-                deserializer->m_log_event.m_log_message,
-                timestamp
-        );
-    } else if constexpr (std::is_same_v<encoded_variable_t, four_byte_encoded_variable_t>) {
-        epoch_time_ms_t timestamp_delta{};
-        err = clp::ffi::ir_stream::four_byte_encoding::deserialize_log_event(
-                ir_buf,
-                tag,
-                deserializer->m_log_event.m_log_message,
-                timestamp_delta
-        );
-        timestamp = deserializer->m_timestamp + timestamp_delta;
-    } else {
-        static_assert(cAlwaysFalse<encoded_variable_t>, "Invalid/unhandled encoding type");
-    }
-    if (IRErrorCode::IRErrorCode_Success != err) {
-        return static_cast<int>(err);
-    }
-    deserializer->m_timestamp = timestamp;
 
     size_t pos{0};
     if (clp::ErrorCode_Success != ir_buf.try_get_pos(pos)) {
@@ -114,6 +96,7 @@ auto deserialize_log_event(
     log_event->m_log_message.m_data = deserializer->m_log_event.m_log_message.data();
     log_event->m_log_message.m_size = deserializer->m_log_event.m_log_message.size();
     log_event->m_timestamp = deserializer->m_timestamp;
+    log_event->m_utc_offset = static_cast<epoch_time_ms_t>(deserializer->m_utc_offset.count());
     return static_cast<int>(IRErrorCode::IRErrorCode_Success);
 }
 
@@ -173,40 +156,12 @@ auto deserialize_wildcard_match(
         query_fn = [](ffi_go::LogMessage const&) -> std::pair<bool, size_t> { return {true, 0}; };
     }
 
-    IRErrorCode err{};
     while (true) {
-        clp::ffi::ir_stream::encoded_tag_t tag{};
-        if (err = deserialize_tag(ir_buf, tag); IRErrorCode::IRErrorCode_Success != err) {
-            return static_cast<int>(err);
+        if (auto const err{deserialize_to_next_log_event<encoded_variable_t>(ir_buf, deserializer)};
+            IRErrorCode::IRErrorCode_Success != err)
+        {
+            return err;
         }
-        if (Eof == tag) {
-            return static_cast<int>(IRErrorCode::IRErrorCode_Eof);
-        }
-
-        epoch_time_ms_t timestamp{};
-        if constexpr (std::is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>) {
-            err = clp::ffi::ir_stream::eight_byte_encoding::deserialize_log_event(
-                    ir_buf,
-                    tag,
-                    deserializer->m_log_event.m_log_message,
-                    timestamp
-            );
-        } else if constexpr (std::is_same_v<encoded_variable_t, four_byte_encoded_variable_t>) {
-            epoch_time_ms_t timestamp_delta{};
-            err = clp::ffi::ir_stream::four_byte_encoding::deserialize_log_event(
-                    ir_buf,
-                    tag,
-                    deserializer->m_log_event.m_log_message,
-                    timestamp_delta
-            );
-            timestamp = deserializer->m_timestamp + timestamp_delta;
-        } else {
-            static_assert(cAlwaysFalse<encoded_variable_t>, "Invalid/unhandled encoding type");
-        }
-        if (IRErrorCode::IRErrorCode_Success != err) {
-            return static_cast<int>(err);
-        }
-        deserializer->m_timestamp = timestamp;
 
         if (time_interval.m_upper <= deserializer->m_timestamp) {
             // TODO this is an extremely fragile hack until the CLP ffi ir
@@ -231,9 +186,77 @@ auto deserialize_wildcard_match(
         log_event->m_log_message.m_data = deserializer->m_log_event.m_log_message.data();
         log_event->m_log_message.m_size = deserializer->m_log_event.m_log_message.size();
         log_event->m_timestamp = deserializer->m_timestamp;
+        log_event->m_utc_offset = static_cast<epoch_time_ms_t>(deserializer->m_utc_offset.count());
         *matching_query = matching_query_idx;
         return static_cast<int>(IRErrorCode::IRErrorCode_Success);
     }
+}
+
+template <class encoded_variable_t>
+auto deserialize_to_next_log_event(BufferReader& ir_buf, Deserializer* deserializer)
+        -> IRErrorCode {
+    static_assert(
+            (std::is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>
+             || std::is_same_v<encoded_variable_t, four_byte_encoded_variable_t>)
+    );
+
+    clp::ffi::ir_stream::encoded_tag_t tag{};
+    std::optional<clp::UtcOffset> utc_offset;
+
+    while (true) {
+        if (IRErrorCode const err{clp::ffi::ir_stream::deserialize_tag(ir_buf, tag)};
+            IRErrorCode::IRErrorCode_Success != err)
+        {
+            return err;
+        }
+        if (clp::ffi::ir_stream::cProtocol::Payload::UtcOffsetChange != tag) {
+            break;
+        }
+        clp::UtcOffset deserialized_utc_offset{0};
+        if (IRErrorCode const err{clp::ffi::ir_stream::deserialize_utc_offset_change(
+                    ir_buf,
+                    deserialized_utc_offset
+            )};
+            IRErrorCode::IRErrorCode_Success != err)
+        {
+            return err;
+        }
+        utc_offset.emplace(deserialized_utc_offset);
+    }
+
+    if (clp::ffi::ir_stream::cProtocol::Eof == tag) {
+        return IRErrorCode::IRErrorCode_Eof;
+    }
+
+    IRErrorCode err{};
+    epoch_time_ms_t timestamp{};
+    if constexpr (std::is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>) {
+        err = clp::ffi::ir_stream::eight_byte_encoding::deserialize_log_event(
+                ir_buf,
+                tag,
+                deserializer->m_log_event.m_log_message,
+                timestamp
+        );
+    } else {
+        epoch_time_ms_t timestamp_delta{};
+        err = clp::ffi::ir_stream::four_byte_encoding::deserialize_log_event(
+                ir_buf,
+                tag,
+                deserializer->m_log_event.m_log_message,
+                timestamp_delta
+        );
+        timestamp = deserializer->m_timestamp + timestamp_delta;
+    }
+
+    if (IRErrorCode::IRErrorCode_Success != err) {
+        return err;
+    }
+
+    deserializer->m_timestamp = timestamp;
+    if (utc_offset.has_value()) {
+        deserializer->m_utc_offset = utc_offset.value();
+    }
+    return IRErrorCode::IRErrorCode_Success;
 }
 }  // namespace
 
@@ -261,16 +284,19 @@ CLP_FFI_GO_METHOD auto ir_deserializer_new_deserializer_with_preamble(
     BufferReader ir_buf{static_cast<char const*>(ir_view.m_data), ir_view.m_size};
 
     bool four_byte_encoding{};
-    if (IRErrorCode const err{get_encoding_type(ir_buf, four_byte_encoding)};
+    if (IRErrorCode const err{clp::ffi::ir_stream::get_encoding_type(ir_buf, four_byte_encoding)};
         IRErrorCode::IRErrorCode_Success != err)
     {
         return static_cast<int>(err);
     }
     *ir_encoding = four_byte_encoding ? 1 : 0;
 
-    if (IRErrorCode const err{
-                deserialize_preamble(ir_buf, *metadata_type, *metadata_pos, *metadata_size)
-        };
+    if (IRErrorCode const err{clp::ffi::ir_stream::deserialize_preamble(
+                ir_buf,
+                *metadata_type,
+                *metadata_pos,
+                *metadata_size
+        )};
         IRErrorCode::IRErrorCode_Success != err)
     {
         return static_cast<int>(err);

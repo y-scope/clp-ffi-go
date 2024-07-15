@@ -16,19 +16,39 @@ func testWriteReadLogMessages(
 	ioWriter := openIoWriter(t, args)
 	irWriter := openIrWriter(t, args, ioWriter)
 
+	utcOffsetToronto := ffi.EpochTimeMs(-4 * 60 * 60 * 1000)
+	utcOffsetTokyo := ffi.EpochTimeMs(9 * 60 * 60 * 100)
+
+	_, err := irWriter.WriteUtcOffsetChange(utcOffsetTokyo)
+	if nil != err {
+		t.Fatalf("ir.Writer.WriteUtcOffsetChange failed: %v", err)
+	}
+
+	// Overwrite the previous UTC offset
+	_, err = irWriter.WriteUtcOffsetChange(utcOffsetToronto)
+	if nil != err {
+		t.Fatalf("ir.Writer.WriteUtcOffsetChange failed: %v", err)
+	}
+
+	// Serialize the same UTC offset again
+	_, err = irWriter.WriteUtcOffsetChange(utcOffsetToronto)
+	if nil != err {
+		t.Fatalf("ir.Writer.WriteUtcOffsetChange failed: %v", err)
+	}
+
 	var events []ffi.LogEvent
 	for _, msg := range messages {
 		event := ffi.LogEvent{
 			LogMessage: msg,
 			Timestamp:  ffi.EpochTimeMs(time.Now().UnixMilli()),
 		}
-		_, err := irWriter.Write(event)
+		_, err := irWriter.WriteLogEvent(event)
 		if nil != err {
-			t.Fatalf("ir.Writer.Write failed: %v", err)
+			t.Fatalf("ir.Writer.WriteLogEvent failed: %v", err)
 		}
 		events = append(events, event)
 	}
-	_, err := irWriter.CloseTo(ioWriter)
+	_, err = irWriter.CloseTo(ioWriter)
 	if nil != err {
 		t.Fatalf("ir.Writer.CloseTo failed: %v", err)
 	}
@@ -43,7 +63,7 @@ func testWriteReadLogMessages(
 	defer irReader.Close()
 
 	for _, event := range events {
-		assertIrLogEvent(t, ioReader, irReader, event)
+		assertIrLogEvent(t, ioReader, irReader, event, utcOffsetToronto)
 	}
 	assertEndOfIr(t, ioReader, irReader)
 }
@@ -57,9 +77,9 @@ func openIrWriter(
 	var err error
 	switch args.encoding {
 	case eightByteEncoding:
-		irWriter, err = NewWriterSize[EightByteEncoding](1024*1024, defaultTimeZoneId)
+		irWriter, err = NewWriterSize[EightByteEncoding](1024 * 1024)
 	case fourByteEncoding:
-		irWriter, err = NewWriterSize[FourByteEncoding](1024*1024, defaultTimeZoneId)
+		irWriter, err = NewWriterSize[FourByteEncoding](1024 * 1024)
 	default:
 		t.Fatalf("unsupported encoding: %v", args.encoding)
 	}

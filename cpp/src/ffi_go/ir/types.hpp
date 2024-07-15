@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <clp/ir/types.hpp>
+#include <clp/time_types.hpp>
 
 #include "ffi_go/types.hpp"
 
@@ -52,6 +53,7 @@ struct Encoder {
 struct Deserializer {
     ffi_go::LogEventStorage m_log_event;
     clp::ir::epoch_time_ms_t m_timestamp{};
+    clp::UtcOffset m_utc_offset{0};
 };
 
 /**

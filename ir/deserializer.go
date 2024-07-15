@@ -20,7 +20,6 @@ const (
 	metadataReferenceTimestampKey     = "REFERENCE_TIMESTAMP"
 	metadataTimestampPatternKey       = "TIMESTAMP_PATTERN"
 	metadataTimestampPatternSyntaxKey = "TIMESTAMP_PATTERN_SYNTAX"
-	metadataTzIdKey                   = "TZ_ID"
 )
 
 // A Deserializer exports functions to deserialize log events from a CLP IR byte
@@ -43,7 +42,7 @@ type Deserializer interface {
 }
 
 // DeserializePreamble attempts to read an IR stream preamble from irBuf,
-// returning an Deserializer (of the correct stream encoding size), the position
+// returning a Deserializer (of the correct stream encoding size), the position
 // read to in irBuf (the end of the preamble), and an error. Note the metadata
 // stored in the preamble is sparse and certain fields in TimestampInfo may be 0
 // value. On error returns:
@@ -97,9 +96,6 @@ func DeserializePreamble(irBuf []byte) (Deserializer, int, error) {
 	}
 	if tsSyn, ok := metadata[metadataTimestampPatternSyntaxKey].(string); ok {
 		tsInfo.PatternSyntax = tsSyn
-	}
-	if tzid, ok := metadata[metadataTzIdKey].(string); ok {
-		tsInfo.TimeZoneId = tzid
 	}
 
 	var deserializer Deserializer
@@ -256,6 +252,7 @@ func deserializeLogEvent(
 				event.m_log_message.m_size,
 			),
 			Timestamp: ffi.EpochTimeMs(event.m_timestamp),
+			UtcOffset: ffi.EpochTimeMs(event.m_utc_offset),
 		},
 		int(pos),
 		nil
@@ -307,6 +304,7 @@ func deserializeWildcardMatch(
 				event.m_log_message.m_size,
 			),
 			Timestamp: ffi.EpochTimeMs(event.m_timestamp),
+			UtcOffset: ffi.EpochTimeMs(event.m_utc_offset),
 		},
 		int(pos),
 		int(match),

@@ -26,7 +26,6 @@ type (
 type TimestampInfo struct {
 	Pattern       string
 	PatternSyntax string
-	TimeZoneId    string
 }
 
 // ir.BufView represents a slice of CLP IR, utilizing memory allocated by C++

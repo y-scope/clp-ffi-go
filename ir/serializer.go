@@ -21,6 +21,7 @@ import (
 // so will result in a memory leak.
 type Serializer interface {
 	SerializeLogEvent(event ffi.LogEvent) (BufView, error)
+	SerializeUtcOffsetChange(utcOffset ffi.EpochTimeMs) BufView
 	TimestampInfo() TimestampInfo
 	Close() error
 }
@@ -34,16 +35,14 @@ type Serializer interface {
 func EightByteSerializer(
 	tsPattern string,
 	tsPatternSyntax string,
-	timeZoneId string,
 ) (Serializer, BufView, error) {
 	var irView C.ByteSpan
 	irs := eightByteSerializer{
-		commonSerializer{TimestampInfo{tsPattern, tsPatternSyntax, timeZoneId}, nil},
+		commonSerializer{TimestampInfo{tsPattern, tsPatternSyntax}, nil},
 	}
 	if err := IrError(C.ir_serializer_new_eight_byte_serializer_with_preamble(
 		newCStringView(tsPattern),
 		newCStringView(tsPatternSyntax),
-		newCStringView(timeZoneId),
 		&irs.cptr,
 		&irView,
 	)); Success != err {
@@ -61,18 +60,16 @@ func EightByteSerializer(
 func FourByteSerializer(
 	tsPattern string,
 	tsPatternSyntax string,
-	timeZoneId string,
 	referenceTs ffi.EpochTimeMs,
 ) (Serializer, BufView, error) {
 	var irView C.ByteSpan
 	irs := fourByteSerializer{
-		commonSerializer{TimestampInfo{tsPattern, tsPatternSyntax, timeZoneId}, nil},
+		commonSerializer{TimestampInfo{tsPattern, tsPatternSyntax}, nil},
 		referenceTs,
 	}
 	if err := IrError(C.ir_serializer_new_four_byte_serializer_with_preamble(
 		newCStringView(tsPattern),
 		newCStringView(tsPatternSyntax),
-		newCStringView(timeZoneId),
 		C.int64_t(referenceTs),
 		&irs.cptr,
 		&irView,
@@ -92,7 +89,15 @@ type commonSerializer struct {
 	cptr   unsafe.Pointer
 }
 
-// Closes the serializer by releasing the underlying C++ allocated memory.
+// SerializeUtcOffsetChange serializes the UTC offset change, utcOffset, into an IR stream. It
+// returns a view of the encoded IR bytes.
+func (serializer *commonSerializer) SerializeUtcOffsetChange(utcOffset ffi.EpochTimeMs) BufView {
+	var irView C.ByteSpan
+	C.ir_serializer_serialize_utc_offset_change(C.int64_t(utcOffset), serializer.cptr, &irView)
+	return unsafe.Slice((*byte)(irView.m_data), irView.m_size)
+}
+
+// Close attempts to close the serializer by releasing the underlying C++ allocated memory.
 // Failure to call Close will result in a memory leak.
 func (serializer *commonSerializer) Close() error {
 	if nil != serializer.cptr {
