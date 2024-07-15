@@ -237,7 +237,7 @@ auto deserialize_to_next_log_event(BufferReader& ir_buf, Deserializer* deseriali
                 deserializer->m_log_event.m_log_message,
                 timestamp
         );
-    } else if constexpr (std::is_same_v<encoded_variable_t, four_byte_encoded_variable_t>) {
+    } else {
         epoch_time_ms_t timestamp_delta{};
         err = clp::ffi::ir_stream::four_byte_encoding::deserialize_log_event(
                 ir_buf,
@@ -246,8 +246,6 @@ auto deserialize_to_next_log_event(BufferReader& ir_buf, Deserializer* deseriali
                 timestamp_delta
         );
         timestamp = deserializer->m_timestamp + timestamp_delta;
-    } else {
-        static_assert(cAlwaysFalse<encoded_variable_t>, "Invalid/unhandled encoding type");
     }
 
     if (IRErrorCode::IRErrorCode_Success != err) {
