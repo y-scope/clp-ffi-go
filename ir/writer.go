@@ -105,8 +105,8 @@ func (writer *Writer) WriteLogEvent(event ffi.LogEvent) (int, error) {
 	if nil != err {
 		return 0, err
 	}
-	// bytes.Buffer.WriteLogEvent will always return nil for err. Ref:
-	// (https://pkg.go.dev/bytes#Buffer.Write)
+	// bytes.Buffer.WriteLogEvent will always return nil for err.
+	// Ref: https://pkg.go.dev/bytes#Buffer.Write
 	// However, err is still propagated to correctly alert the user in case this ever changes. If
 	// WriteLogEvent can fail in the future, we should either:
 	//   1. fix the issue and retry the write

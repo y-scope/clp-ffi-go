@@ -47,7 +47,7 @@ func testSerDerLogMessages(
 	irView := irSerializer.SerializeUtcOffsetChange(utcOffsetToronto)
 	_, err := ioWriter.Write(irView)
 	if nil != err {
-		t.Fatalf("io.Writer.WriteLogEvent message: %v", err)
+		t.Fatalf("io.Writer.Write message: %v", err)
 	}
 
 	var events []ffi.LogEvent
@@ -62,14 +62,14 @@ func testSerDerLogMessages(
 		}
 		_, err = ioWriter.Write(irView)
 		if nil != err {
-			t.Fatalf("io.Writer.WriteLogEvent message: %v", err)
+			t.Fatalf("io.Writer.Write message: %v", err)
 		}
 		events = append(events, event)
 	}
 	irSerializer.Close()
 	_, err = ioWriter.Write([]byte{0x0})
 	if nil != err {
-		t.Fatalf("io.Writer.WriteLogEvent message: %v", err)
+		t.Fatalf("io.Writer.Write message: %v", err)
 	}
 	ioWriter.Close()
 
@@ -116,7 +116,7 @@ func serializeIrPreamble(
 		t.Fatalf("short write for preamble: %v/%v", n, len(preambleIr))
 	}
 	if nil != err {
-		t.Fatalf("io.Writer.WriteLogEvent preamble: %v", err)
+		t.Fatalf("io.Writer.Write preamble: %v", err)
 	}
 	return serializer
 }

@@ -89,8 +89,8 @@ type commonSerializer struct {
 	cptr   unsafe.Pointer
 }
 
-// SerializeUtcOffsetChange attempts to serialize the UTC offset change, utcOffset, into an IR
-// stream. It returns a view of the encoded IR bytes (could be an empty view).
+// SerializeUtcOffsetChange serializes the UTC offset change, utcOffset, into an IR stream. It
+// returns a view of the encoded IR bytes.
 func (serializer *commonSerializer) SerializeUtcOffsetChange(utcOffset ffi.EpochTimeMs) BufView {
 	var irView C.ByteSpan
 	C.ir_serializer_serialize_utc_offset_change(C.int64_t(utcOffset), serializer.cptr, &irView)
