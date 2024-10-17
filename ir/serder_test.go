@@ -9,45 +9,36 @@ import (
 )
 
 func TestPreamble(t *testing.T) {
-	preamble := preambleFields{
-		TimestampInfo{defaultTimestampPattern, defaultTimestampPatternSyntax, defaultTimeZoneId},
-		ffi.EpochTimeMs(time.Now().UnixMilli()),
-	}
 	for _, args := range generateTestArgs(t, t.Name()) {
 		args := args // capture range variable for func literal
-		t.Run(args.name, func(t *testing.T) { t.Parallel(); testPreamble(t, args, preamble) })
+		t.Run(args.name, func(t *testing.T) { t.Parallel(); testPreamble(t, args) })
 	}
 }
 
-func testPreamble(t *testing.T, args testArgs, preamble preambleFields) {
+func testPreamble(t *testing.T, args testArgs) {
 	writer := openIoWriter(t, args)
-	irSerializer := serializeIrPreamble(t, args, preamble, writer)
+	irSerializer := serializeIrPreamble(t, args, writer)
 
 	writer.Close()
 	irSerializer.Close()
 
 	reader := openIoReader(t, args)
-	assertIrPreamble(t, args, reader, preamble)
+	assertIrPreamble(t, args, reader)
 }
 
 func testSerDerLogMessages(
 	t *testing.T,
 	args testArgs,
-	logMessages []ffi.LogMessage,
+	logMessages []string,
 ) {
 	ioWriter := openIoWriter(t, args)
-
-	preamble := preambleFields{
-		TimestampInfo{defaultTimestampPattern, defaultTimestampPatternSyntax, defaultTimeZoneId},
-		ffi.EpochTimeMs(time.Now().UnixMilli()),
-	}
-	irSerializer := serializeIrPreamble(t, args, preamble, ioWriter)
+	irSerializer := serializeIrPreamble(t, args, ioWriter)
 
 	var events []ffi.LogEvent
 	for _, msg := range logMessages {
 		event := ffi.LogEvent{
-			LogMessage: msg,
-			Timestamp:  ffi.EpochTimeMs(time.Now().UnixMilli()),
+			"LogMessage": msg,
+			"Timestamp":  time.Now().UnixMilli(),
 		}
 		irView, err := irSerializer.SerializeLogEvent(event)
 		if nil != err {
@@ -68,7 +59,7 @@ func testSerDerLogMessages(
 
 	ioReader := openIoReader(t, args)
 	defer ioReader.Close()
-	irReader := assertIrPreamble(t, args, ioReader, preamble)
+	irReader := assertIrPreamble(t, args, ioReader)
 	defer irReader.Close()
 
 	for _, event := range events {
@@ -80,7 +71,6 @@ func testSerDerLogMessages(
 func serializeIrPreamble(
 	t *testing.T,
 	args testArgs,
-	preamble preambleFields,
 	writer io.Writer,
 ) Serializer {
 	var err error
@@ -88,18 +78,9 @@ func serializeIrPreamble(
 	var preambleIr BufView
 	switch args.encoding {
 	case eightByteEncoding:
-		serializer, preambleIr, err = EightByteSerializer(
-			preamble.Pattern,
-			preamble.PatternSyntax,
-			preamble.TimeZoneId,
-		)
+		serializer, preambleIr, err = EightByteSerializer()
 	case fourByteEncoding:
-		serializer, preambleIr, err = FourByteSerializer(
-			preamble.Pattern,
-			preamble.PatternSyntax,
-			preamble.TimeZoneId,
-			preamble.prevTimestamp,
-		)
+		serializer, preambleIr, err = FourByteSerializer()
 	default:
 		t.Fatalf("unsupported encoding: %v", args.encoding)
 	}
@@ -120,45 +101,10 @@ func assertIrPreamble(
 	t *testing.T,
 	args testArgs,
 	reader io.Reader,
-	preamble preambleFields,
 ) *Reader {
 	irreader, err := NewReaderSize(reader, 4096)
 	if nil != err {
 		t.Fatalf("NewReader failed: %v", err)
-	}
-	if irreader.TimestampInfo().Pattern != preamble.Pattern {
-		t.Fatalf(
-			"NewReader wrong pattern: '%v' != '%v'",
-			irreader.TimestampInfo().Pattern,
-			preamble.Pattern,
-		)
-	}
-	if irreader.TimestampInfo().PatternSyntax != preamble.PatternSyntax {
-		t.Fatalf(
-			"NewReader wrong pattern syntax: '%v' != '%v'",
-			irreader.TimestampInfo().PatternSyntax,
-			preamble.PatternSyntax,
-		)
-	}
-	if irreader.TimestampInfo().TimeZoneId != preamble.TimeZoneId {
-		t.Fatalf(
-			"NewReader wrong time zone id: '%v' != '%v'",
-			irreader.TimestampInfo().TimeZoneId,
-			preamble.TimeZoneId,
-		)
-	}
-	if fourByteEncoding == args.encoding {
-		deserializer, ok := irreader.Deserializer.(*fourByteDeserializer)
-		if false == ok {
-			t.Fatalf("casting Deserializer to *fourByteDeserializer failed for fourByteEncoding.")
-		}
-		if deserializer.prevTimestamp != preamble.prevTimestamp {
-			t.Fatalf(
-				"NewReader wrong reference timestamp: '%v' != '%v'",
-				deserializer.prevTimestamp,
-				preamble.prevTimestamp,
-			)
-		}
 	}
 	return irreader
 }

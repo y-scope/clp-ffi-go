@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"time"
 
 	"github.com/y-scope/clp-ffi-go/ffi"
 )
@@ -17,26 +16,24 @@ import (
 type Writer struct {
 	Serializer
 	buf bytes.Buffer
+	ioWriter io.Writer
 }
 
-// Returns [NewWriterSize] with a FourByteEncoding Serializer using the local
-// time zone, and a buffer size of 1MB.
-func NewWriter() (*Writer, error) {
-	return NewWriterSize[FourByteEncoding](1024*1024, time.Local.String())
+// Returns [NewWriterSize] with a FourByteEncoding Serializer using  a buffer size of 1MB.
+func NewWriter(ioWriter io.Writer) (*Writer, error) {
+	return NewWriterSize[FourByteEncoding](ioWriter, 1024*1024)
 }
 
 // NewWriterSize creates a new [Writer] with a [Serializer] based on T, and
 // writes a CLP IR preamble. The preamble is stored inside the Writer's internal
 // buffer to be written out later. The size parameter denotes the initial buffer
-// size to use and timeZoneId denotes the time zone of the source producing the
-// log events, so that local times (any time that is not a unix timestamp) are
-// handled correctly.
+// size to use.
 //   - success: valid [*Writer], nil
 //   - error: nil [*Writer], invalid type error or an error propagated from
 //     [FourByteSerializer], [EightByteSerializer], or [bytes.Buffer.Write]
 func NewWriterSize[T EightByteEncoding | FourByteEncoding](
+	ioWriter io.Writer,
 	size int,
-	timeZoneId string,
 ) (*Writer, error) {
 	var irw Writer
 	irw.buf.Grow(size)
@@ -46,18 +43,9 @@ func NewWriterSize[T EightByteEncoding | FourByteEncoding](
 	var t T
 	switch any(t).(type) {
 	case EightByteEncoding:
-		irw.Serializer, irView, err = EightByteSerializer(
-			"",
-			"",
-			timeZoneId,
-		)
+		irw.Serializer, irView, err = EightByteSerializer()
 	case FourByteEncoding:
-		irw.Serializer, irView, err = FourByteSerializer(
-			"",
-			"",
-			timeZoneId,
-			ffi.EpochTimeMs(time.Now().UnixMilli()),
-		)
+		irw.Serializer, irView, err = FourByteSerializer()
 	default:
 		err = fmt.Errorf("invalid type: %T", t)
 	}
@@ -108,8 +96,8 @@ func (writer *Writer) Reset() {
 //   - success: number of bytes written, nil
 //   - error: number of bytes written (can be 0), error propagated from
 //     [SerializeLogEvent] or [bytes.Buffer.Write]
-func (writer *Writer) Write(event ffi.LogEvent) (int, error) {
-	irView, err := writer.SerializeLogEvent(event)
+func (writer *Writer) Write(logEvent ffi.LogEvent) (int, error) {
+	irView, err := writer.SerializeLogEvent(logEvent)
 	if nil != err {
 		return 0, err
 	}

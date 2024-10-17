@@ -11,7 +11,8 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//ffi",
-        "//search",
+        "@com_github_klauspost_compress//zstd",
+        "@com_github_vmihailenco_msgpack_v5//:msgpack",
     ],
 )
 

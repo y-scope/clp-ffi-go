@@ -1,10 +1,11 @@
 #include "serializer.h"
 
-#include <string_view>
-#include <vector>
+#include <memory>
+#include <lint/msgpack.hpp>
+#include <boost/outcome.hpp>
+#include <system_error>
 
-#include <clp/ffi/ir_stream/decoding_methods.hpp>
-#include <clp/ffi/ir_stream/encoding_methods.hpp>
+#include <clp/ffi/ir_stream/Serializer.hpp>
 #include <clp/ir/types.hpp>
 
 #include "ffi_go/api_decoration.h"
@@ -12,21 +13,22 @@
 #include "ffi_go/ir/types.hpp"
 
 namespace ffi_go::ir {
-using clp::ffi::ir_stream::IRErrorCode;
 using clp::ir::eight_byte_encoded_variable_t;
 using clp::ir::four_byte_encoded_variable_t;
 
 namespace {
 /**
+ * Generic helper for ir_serializer_*_close functions.
+ */
+template <class encoded_variable_t>
+auto serializer_close(void* ir_serializer) -> void;
+
+/**
  * Generic helper for ir_serializer_new_*_serializer_with_preamble functions.
  */
 template <class encoded_variable_t>
-[[nodiscard]] auto new_serializer_with_preamble(
-        StringView ts_pattern,
-        StringView ts_pattern_syntax,
-        StringView time_zone_id,
-        [[maybe_unused]] epoch_time_ms_t reference_ts,
-        void** ir_serializer_ptr,
+[[nodiscard]] auto serializer_create(
+        void*& ir_serializer_ptr,
         ByteSpan* ir_view
 ) -> int;
 
@@ -34,165 +36,107 @@ template <class encoded_variable_t>
  * Generic helper for ir_serializer_serialize_*_log_event functions.
  */
 template <class encoded_variable_t>
-[[nodiscard]] auto serialize_log_event(
-        StringView log_message,
-        epoch_time_ms_t timestamp_or_delta,
-        void* ir_serializer,
-        ByteSpan* ir_view
-) -> int;
+[[nodiscard]] auto
+serialize_log_event(void* ir_serializer, ByteSpan msgpack_bytes, ByteSpan* ir_view) -> int;
 
 template <class encoded_variable_t>
-auto new_serializer_with_preamble(
-        StringView ts_pattern,
-        StringView ts_pattern_syntax,
-        StringView time_zone_id,
-        [[maybe_unused]] epoch_time_ms_t reference_ts,
-        void** ir_serializer_ptr,
+auto serializer_close(void* ir_serializer) -> void {
+    std::unique_ptr<clp::ffi::ir_stream::Serializer<encoded_variable_t>>(static_cast<clp::ffi::ir_stream::Serializer<encoded_variable_t>*>(ir_serializer));
+}
+
+template <class encoded_variable_t>
+auto serializer_create(
+        void*& ir_serializer_ptr,
         ByteSpan* ir_view
 ) -> int {
     if (nullptr == ir_serializer_ptr || nullptr == ir_view) {
-        return static_cast<int>(IRErrorCode::IRErrorCode_Corrupted_IR);
+        return static_cast<int>(std::errc::protocol_error);
     }
-    Serializer* serializer{new Serializer{}};
-    if (nullptr == serializer) {
-        return static_cast<int>(IRErrorCode::IRErrorCode_Corrupted_IR);
+    auto result{clp::ffi::ir_stream::Serializer<encoded_variable_t>::create()};
+    if (result.has_failure()) {
+        return result.error().value();
     }
-    *ir_serializer_ptr = serializer;
-
-    bool success{false};
-    if constexpr (std::is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>) {
-        success = clp::ffi::ir_stream::eight_byte_encoding::serialize_preamble(
-                std::string_view{ts_pattern.m_data, ts_pattern.m_size},
-                std::string_view{ts_pattern_syntax.m_data, ts_pattern_syntax.m_size},
-                std::string_view{time_zone_id.m_data, time_zone_id.m_size},
-                serializer->m_ir_buf
-        );
-    } else if constexpr (std::is_same_v<encoded_variable_t, four_byte_encoded_variable_t>) {
-        success = clp::ffi::ir_stream::four_byte_encoding::serialize_preamble(
-                std::string_view{ts_pattern.m_data, ts_pattern.m_size},
-                std::string_view{ts_pattern_syntax.m_data, ts_pattern_syntax.m_size},
-                std::string_view{time_zone_id.m_data, time_zone_id.m_size},
-                reference_ts,
-                serializer->m_ir_buf
-        );
-    } else {
-        static_assert(cAlwaysFalse<encoded_variable_t>, "Invalid/unhandled encoding type");
-    }
-    if (false == success) {
-        return static_cast<int>(IRErrorCode::IRErrorCode_Corrupted_IR);
-    }
-
-    ir_view->m_data = serializer->m_ir_buf.data();
-    ir_view->m_size = serializer->m_ir_buf.size();
-    return static_cast<int>(IRErrorCode::IRErrorCode_Success);
+    auto ir_buf_view{result.value().get_ir_buf_view()};
+    ir_view->m_data = ir_buf_view.data();
+    ir_view->m_size = ir_buf_view.size();
+    auto s = std::make_unique<clp::ffi::ir_stream::Serializer<encoded_variable_t>>(
+            std::move(result.value())
+    );
+    ir_serializer_ptr = s.release();
+    return 0;
 }
 
 template <class encoded_variable_t>
-auto serialize_log_event(
-        StringView log_message,
-        epoch_time_ms_t timestamp_or_delta,
-        void* ir_serializer,
-        ByteSpan* ir_view
-) -> int {
+auto serialize_log_event(void* ir_serializer, ByteSpan msgpack_bytes, ByteSpan* ir_view) -> int {
     if (nullptr == ir_serializer || nullptr == ir_view) {
-        return static_cast<int>(IRErrorCode::IRErrorCode_Corrupted_IR);
+        return static_cast<int>(std::errc::protocol_error);
     }
-    Serializer* serializer{static_cast<Serializer*>(ir_serializer)};
-    serializer->m_ir_buf.clear();
-    serializer->reserve(log_message.m_size);
+    auto* serializer{static_cast<clp::ffi::ir_stream::Serializer<encoded_variable_t>*>(ir_serializer
+    )};
 
-    bool success{false};
-    if constexpr (std::is_same_v<encoded_variable_t, eight_byte_encoded_variable_t>) {
-        success = clp::ffi::ir_stream::eight_byte_encoding::serialize_log_event(
-                timestamp_or_delta,
-                std::string_view{log_message.m_data, log_message.m_size},
-                serializer->m_logtype,
-                serializer->m_ir_buf
-        );
-    } else if constexpr (std::is_same_v<encoded_variable_t, four_byte_encoded_variable_t>) {
-        success = clp::ffi::ir_stream::four_byte_encoding::serialize_log_event(
-                timestamp_or_delta,
-                std::string_view{log_message.m_data, log_message.m_size},
-                serializer->m_logtype,
-                serializer->m_ir_buf
-        );
-    } else {
-        static_assert(cAlwaysFalse<encoded_variable_t>, "Invalid/unhandled encoding type");
-    }
-    if (false == success) {
-        return static_cast<int>(IRErrorCode::IRErrorCode_Corrupted_IR);
+    auto const mp_handle{
+            msgpack::unpack(static_cast<char const*>(msgpack_bytes.m_data), msgpack_bytes.m_size)
+    };
+    /* if (serializer->serialize_msgpack_map(mp_handle.get())) { */
+    if (serializer->serialize_msgpack_map(mp_handle.get().via.map)) {
+        return static_cast<int>(std::errc::protocol_error);
     }
 
-    ir_view->m_data = serializer->m_ir_buf.data();
-    ir_view->m_size = serializer->m_ir_buf.size();
-    return static_cast<int>(IRErrorCode::IRErrorCode_Success);
+    auto ir_buf_view{serializer->get_ir_buf_view()};
+    ir_view->m_data = ir_buf_view.data();
+    ir_view->m_size = ir_buf_view.size();
+    return 0;
 }
 }  // namespace
 
-CLP_FFI_GO_METHOD auto ir_serializer_close(void* ir_serializer) -> void {
-    // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
-    delete static_cast<Serializer*>(ir_serializer);
+CLP_FFI_GO_METHOD auto ir_serializer_eight_byte_close(void* ir_serializer) -> void {
+    serializer_close<eight_byte_encoded_variable_t>(ir_serializer);
 }
 
-CLP_FFI_GO_METHOD auto ir_serializer_new_eight_byte_serializer_with_preamble(
-        StringView ts_pattern,
-        StringView ts_pattern_syntax,
-        StringView time_zone_id,
+CLP_FFI_GO_METHOD auto ir_serializer_four_byte_close(void* ir_serializer) -> void {
+    serializer_close<four_byte_encoded_variable_t>(ir_serializer);
+}
+
+CLP_FFI_GO_METHOD auto ir_serializer_eight_byte_create(
         void** ir_serializer_ptr,
         ByteSpan* ir_view
 ) -> int {
-    return new_serializer_with_preamble<eight_byte_encoded_variable_t>(
-            ts_pattern,
-            ts_pattern_syntax,
-            time_zone_id,
-            0,
-            ir_serializer_ptr,
+    return serializer_create<eight_byte_encoded_variable_t>(
+            *ir_serializer_ptr,
             ir_view
     );
 }
 
-CLP_FFI_GO_METHOD auto ir_serializer_new_four_byte_serializer_with_preamble(
-        StringView ts_pattern,
-        StringView ts_pattern_syntax,
-        StringView time_zone_id,
-        epoch_time_ms_t reference_ts,
+CLP_FFI_GO_METHOD auto ir_serializer_four_byte_create(
         void** ir_serializer_ptr,
         ByteSpan* ir_view
 ) -> int {
-    return new_serializer_with_preamble<four_byte_encoded_variable_t>(
-            ts_pattern,
-            ts_pattern_syntax,
-            time_zone_id,
-            reference_ts,
-            ir_serializer_ptr,
+    return serializer_create<four_byte_encoded_variable_t>(
+            *ir_serializer_ptr,
             ir_view
     );
 }
 
-CLP_FFI_GO_METHOD auto ir_serializer_serialize_eight_byte_log_event(
-        StringView log_message,
-        epoch_time_ms_t timestamp,
+CLP_FFI_GO_METHOD auto ir_serializer_eight_byte_serialize_log_event(
         void* ir_serializer,
+        ByteSpan msgpack_bytes,
         ByteSpan* ir_view
 ) -> int {
     return serialize_log_event<eight_byte_encoded_variable_t>(
-            log_message,
-            timestamp,
             ir_serializer,
+            msgpack_bytes,
             ir_view
     );
 }
 
-CLP_FFI_GO_METHOD auto ir_serializer_serialize_four_byte_log_event(
-        StringView log_message,
-        epoch_time_ms_t timestamp_delta,
+CLP_FFI_GO_METHOD auto ir_serializer_four_byte_serialize_log_event(
         void* ir_serializer,
+        ByteSpan msgpack_bytes,
         ByteSpan* ir_view
 ) -> int {
     return serialize_log_event<four_byte_encoded_variable_t>(
-            log_message,
-            timestamp_delta,
             ir_serializer,
+            msgpack_bytes,
             ir_view
     );
 }

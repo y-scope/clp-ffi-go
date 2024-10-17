@@ -1,5 +1,8 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.30)
 include(FetchContent)
+
+# Turn on verbose output
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 project(clp_ffi
     LANGUAGES CXX C
@@ -21,26 +24,29 @@ endif()
 # Build/package static by default to simplify compatibility in other systems
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 
-# Setup library name based on Go environment variables set by `go generate`
-set(LIB_NAME "clp_ffi" CACHE STRING "Library name containing os and arch.")
-if (DEFINED ENV{GOOS})
-    string(APPEND LIB_NAME "_$ENV{GOOS}")
-endif()
-if (DEFINED ENV{GOARCH})
-    string(APPEND LIB_NAME "_$ENV{GOARCH}")
-endif()
+# Setup library name optionally suffixed with the OS and architecture.
+set(LIB_NAME "clp_ffi" CACHE STRING "Library name optionally containing OS and architecture.")
+set(OS_SUFFIX"" CACHE STRING "OS suffix to add to the library name.")
+string(APPEND LIB_NAME "${OS_SUFFIX}")
+set(ARCH_SUFFIX "" CACHE STRING "Architecture suffix to add to the library name.")
+string(APPEND LIB_NAME "${ARCH_SUFFIX}")
 
-set(CLP_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/clp" CACHE STRING
-    "Directory containing CLP source, fetched from github if non existant.")
-if (NOT EXISTS ${CLP_SRC_DIR})
-    FetchContent_Declare(
-        clp-core
-        GIT_REPOSITORY https://github.com/y-scope/clp.git
-        GIT_TAG 3c1f0ad1c44b53d6c17fd7c1d578ec61616b5661
-        SOURCE_DIR ${CLP_SRC_DIR}
-    )
-    message(STATUS "Fetching CLP from github.")
-    FetchContent_MakeAvailable(clp-core)
+set(clp_SOURCE_DIR "../build/deps/clp" CACHE STRING "Path to CLP source directory.")
+set(outcome_SOURCE_DIR "../build/deps/outcome" CACHE STRING "Path to outcome source directory.")
+# set(nlohmann_json_ROOT "../build/deps/json-install")
+set(nlohmann_json_DIR "../build/deps/json-install/share/cmake/nlohmann_json")
+find_package(nlohmann_json 3.11.3 REQUIRED)
+if(nlohmann_json_FOUND)
+    message(STATUS "Found nlohmann_json ${nlohmann_json_VERSION}")
+else()
+    message(FATAL_ERROR "Could not find nlohmann_json")
+endif()
+set(msgpack-cxx_DIR "../build/deps/msgpack-install/lib/cmake/msgpack-cxx")
+find_package(msgpack-cxx 6.2.0 REQUIRED)
+if(msgpack-cxx_FOUND)
+    message(STATUS "Found msgpack-cxx ${msgpack-cxx_VERSION}")
+else()
+    message(FATAL_ERROR "Could not find msgpack-cxx")
 endif()
 
 add_library(${LIB_NAME})
@@ -70,74 +76,81 @@ target_compile_options(${LIB_NAME}
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
 )
 
+target_include_directories(${LIB_NAME}
+    PRIVATE
+    src
+)
+
+target_link_libraries(${LIB_NAME}
+    PRIVATE
+    nlohmann_json::nlohmann_json
+    msgpack-cxx
+)
+
 # Mark below headers as system headers so that the compiler (including clang-tidy) doesn't generate
 # warnings from them.
 target_include_directories(${LIB_NAME}
     SYSTEM PRIVATE
-    ${CLP_SRC_DIR}/components/core/submodules
-    ${CLP_SRC_DIR}/components/core/src
-)
+    ${clp_SOURCE_DIR}/components/core/src
 
-target_include_directories(${LIB_NAME}
-    PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CLP_SRC_DIR}/components/core/src
-    # CLP source expects string_utils to be included as a library <string_utils/...>, but we
+    # CLP source code expects string_utils to be included as a library <string_utils/...>, but we
     # directly bundle string_utils source files so we must add it to the include path.
-    ${CLP_SRC_DIR}/components/core/src/clp
+    ${clp_SOURCE_DIR}/components/core/src/clp
+
+    # CLP puts its submodule dir on its include path and includes json and outcome libraries from
+    # their root dir. To replicate this we need to put the build path on the include path.
+    ${nlohmann_json_INCLUDE_DIRS}
+    ${msgpack-cxx_INCLUDE_DIRS}
+    ${outcome_SOURCE_DIR}
 )
 
-target_sources(${LIB_NAME} PUBLIC
+target_sources(${LIB_NAME}
     PUBLIC
     FILE_SET HEADERS
         BASE_DIRS src/
         FILES
         src/ffi_go/api_decoration.h
         src/ffi_go/defs.h
-        src/ffi_go/ir/decoder.h
         src/ffi_go/ir/deserializer.h
-        src/ffi_go/ir/encoder.h
         src/ffi_go/ir/serializer.h
-        src/ffi_go/search/wildcard_query.h
     PRIVATE
-    ${CLP_SRC_DIR}/components/core/src/clp/BufferReader.cpp
-    ${CLP_SRC_DIR}/components/core/src/clp/BufferReader.hpp
-    ${CLP_SRC_DIR}/components/core/src/clp/Defs.h
-    ${CLP_SRC_DIR}/components/core/src/clp/ErrorCode.hpp
-    ${CLP_SRC_DIR}/components/core/src/clp/ffi/encoding_methods.cpp
-    ${CLP_SRC_DIR}/components/core/src/clp/ffi/encoding_methods.hpp
-    ${CLP_SRC_DIR}/components/core/src/clp/ffi/encoding_methods.inc
-    ${CLP_SRC_DIR}/components/core/src/clp/ffi/ir_stream/byteswap.hpp
-    ${CLP_SRC_DIR}/components/core/src/clp/ffi/ir_stream/encoding_methods.cpp
-    ${CLP_SRC_DIR}/components/core/src/clp/ffi/ir_stream/encoding_methods.hpp
-    ${CLP_SRC_DIR}/components/core/src/clp/ffi/ir_stream/decoding_methods.cpp
-    ${CLP_SRC_DIR}/components/core/src/clp/ffi/ir_stream/decoding_methods.hpp
-    ${CLP_SRC_DIR}/components/core/src/clp/ffi/ir_stream/decoding_methods.inc
-    ${CLP_SRC_DIR}/components/core/src/clp/ffi/ir_stream/protocol_constants.hpp
-    ${CLP_SRC_DIR}/components/core/src/clp/ffi/ir_stream/utils.cpp
-    ${CLP_SRC_DIR}/components/core/src/clp/ffi/ir_stream/utils.hpp
-    ${CLP_SRC_DIR}/components/core/src/clp/ir/parsing.cpp
-    ${CLP_SRC_DIR}/components/core/src/clp/ir/parsing.hpp
-    ${CLP_SRC_DIR}/components/core/src/clp/ir/parsing.inc
-    ${CLP_SRC_DIR}/components/core/src/clp/ir/types.hpp
-    ${CLP_SRC_DIR}/components/core/src/clp/ReaderInterface.cpp
-    ${CLP_SRC_DIR}/components/core/src/clp/ReaderInterface.hpp
-    ${CLP_SRC_DIR}/components/core/src/clp/string_utils/string_utils.cpp
-    ${CLP_SRC_DIR}/components/core/src/clp/string_utils/string_utils.hpp
-    ${CLP_SRC_DIR}/components/core/src/clp/TraceableException.hpp
-    ${CLP_SRC_DIR}/components/core/src/clp/time_types.hpp
-    ${CLP_SRC_DIR}/components/core/src/clp/type_utils.hpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/BufferReader.cpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/BufferReader.hpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/Defs.h
+    ${clp_SOURCE_DIR}/components/core/src/clp/ErrorCode.hpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/encoding_methods.cpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/encoding_methods.hpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/encoding_methods.inc
+    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/byteswap.hpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/Deserializer.hpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/encoding_methods.cpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/encoding_methods.hpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/decoding_methods.cpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/decoding_methods.hpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/decoding_methods.inc
+    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/protocol_constants.hpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/Serializer.cpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/Serializer.hpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/utils.cpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/utils.hpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/ir/parsing.cpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/ir/parsing.hpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/ir/parsing.inc
+    ${clp_SOURCE_DIR}/components/core/src/clp/ir/types.hpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/ReaderInterface.cpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/ReaderInterface.hpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/string_utils/string_utils.cpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/string_utils/string_utils.hpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/TraceableException.hpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/time_types.hpp
+    ${clp_SOURCE_DIR}/components/core/src/clp/type_utils.hpp
     src/ffi_go/types.hpp
-    src/ffi_go/ir/decoder.cpp
     src/ffi_go/ir/deserializer.cpp
-    src/ffi_go/ir/encoder.cpp
     src/ffi_go/ir/types.hpp
     src/ffi_go/ir/serializer.cpp
-    src/ffi_go/search/wildcard_query.cpp
+    src/lint/msgpack.hpp
 )
 
-include(GNUInstallDirs)
 install(TARGETS ${LIB_NAME}
-    ARCHIVE
     FILE_SET HEADERS
 )
