@@ -56,7 +56,6 @@ cc_library(
         "clp/components/core/src/clp/ffi/ir_stream/Serializer.hpp",
         "clp/components/core/src/clp/ffi/ir_stream/utils.hpp",
         "clp/components/core/src/clp/ffi/SchemaTree.hpp",
-        "clp/components/core/src/clp/ffi/SchemaTreeNode.hpp",
         "clp/components/core/src/clp/ffi/Value.hpp",
         "clp/components/core/src/clp/ir/EncodedTextAst.hpp",
         "clp/components/core/src/clp/ir/parsing.inc",
@@ -89,8 +88,8 @@ cc_library(
 """
 
 def com_github_y_scope_clp():
-    ref = "1c679083a54f9ea54b7107768cb1daebd3b655f1"
-    ref_sha256 = "8d7711339d03590307de9cf1943352977ab37c8e26ce62c86bc80dc1c8961b1a"
+    ref = "e21672b906641c4724a25ea74f13857afdebe0e8"
+    ref_sha256 = "b7ab19af62fb0601d858047452e2f330489070caccd4aaf1e09709f6ca6324ab"
     http_archive(
         name = "com_github_y_scope_clp",
         sha256 = ref_sha256,
