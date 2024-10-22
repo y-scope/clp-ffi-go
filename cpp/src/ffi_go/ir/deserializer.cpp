@@ -40,8 +40,7 @@ namespace {
 class IrUnitHandler {
 public:
     // Implements `clp::ffi::ir_stream::IrUnitHandlerInterface` interface
-    [[nodiscard]] auto handle_log_event(clp::ffi::KeyValuePairLogEvent&& log_event) -> IRErrorCode {
-        /* m_deserialized_log_events.emplace_back(std::move(log_event)); */
+    [[nodiscard]] auto handle_log_event([[maybe_unused]] clp::ffi::KeyValuePairLogEvent&& log_event) -> IRErrorCode {
         return IRErrorCode::IRErrorCode_Success;
     }
 
@@ -222,10 +221,10 @@ CLP_FFI_GO_METHOD auto ir_deserializer_create(
 /* } */
 
 CLP_FFI_GO_METHOD auto ir_deserializer_deserialize_log_event(
-        ByteSpan ir_view,
-        void* ir_deserializer,
-        size_t* ir_pos,
-        ByteSpan* msgpack_log_event_view
+        [[maybe_unused]] ByteSpan ir_view,
+        [[maybe_unused]] void* ir_deserializer,
+        [[maybe_unused]] size_t* ir_pos,
+        [[maybe_unused]] ByteSpan* msgpack_log_event_view
 ) -> int {
     return 0;
 }

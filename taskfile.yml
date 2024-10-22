@@ -7,138 +7,121 @@ includes:
 vars:
   G_BUILD_DIR: "{{.TASKFILE_DIR}}/build"
   G_DEPS_DIR: "{{.G_BUILD_DIR}}/deps"
-  G_INSTALL_DIR: "{{.TASKFILE_DIR}}"
   G_LINT_VENV_DIR: "{{.G_BUILD_DIR}}/lint-venv"
-  G_CLP_SRC_DIR: "{{.G_DEPS_DIR}}/clp"
-  G_JSON_SRC_DIR: "{{.G_DEPS_DIR}}/json"
-  G_MSGPACK_SRC_DIR: "{{.G_DEPS_DIR}}/msgpack"
-  G_OUTCOME_SRC_DIR: "{{.G_DEPS_DIR}}/outcome"
+  G_INSTALL_PREFIX: "{{.TASKFILE_DIR}}"
 
 tasks:
   bazel:
-    # deps:
-    #   - "install-deps-bazel"
     cmds:
       - "bazel build //..."
 
   build:
-    deps:
-      - "install-deps-cpp"
-      - "install-deps-go"
     cmds:
       - task: "build-cpp"
       - task: "build-go"
 
   build-cpp:
     vars:
-      BUILD_TYPE: "Release"
+      BUILD_TYPE: '{{default "Release" .BUILD_TYPE}}'
       BUILD_DIR: "{{.G_BUILD_DIR}}/{{.BUILD_TYPE}}"
     deps:
-      - "install-deps-cpp"
+      - "install-deps-cpp-clp"
+      - "install-deps-cpp-outcome"
+      - "install-deps-cpp-msgpack"
     cmds:
       - task: "cmake_build"
         vars:
-          SRC_DIR: "{{.TASKFILE_DIR}}/cpp"
+          SOURCE_DIR: "{{.TASKFILE_DIR}}/cpp"
           BUILD_DIR: "{{.BUILD_DIR}}"
           CMAKE_ARGS: >-
             -DCMAKE_BUILD_TYPE="{{.BUILD_TYPE}}"
             -DOS_SUFFIX="{{OS}}"
             -DARCH_SUFFIX="{{ARCH}}"
-            # -Dnlohmann_json_ROOT="{{.G_JSON_SRC_DIR}}-install"
-            # -Dnlohmann_json_DIR="{{.G_JSON_SRC_DIR}}-install/share/cmake/nlohmann_json"
-            -Dmsgpack-cxx_ROOT="{{.G_MSGPACK_SRC_DIR}}-install"
-            -Dclp_SOURCE_DIR="{{.G_CLP_SRC_DIR}}"
-            -Doutcome_SOURCE_DIR="{{.G_OUTCOME_SRC_DIR}}"
+            -DDEPS_DIR="{{.G_DEPS_DIR}}"
+            -Dmsgpack-cxx_ROOT="{{.G_DEPS_DIR}}/msgpack-install"
+            -Doutcome_SOURCE_DIR="{{.G_DEPS_DIR}}/outcome-src"
       - task: "cmake_install"
         vars:
-          SRC_DIR: "{{.SRC_DIR}}"
           BUILD_DIR: "{{.BUILD_DIR}}"
-          INSTALL_DIR: "{{.G_INSTALL_DIR}}"
+          INSTALL_PREFIX: "{{.G_INSTALL_PREFIX}}"
 
   build-go:
     deps:
       - "install-deps-go"
     cmds:
-      - "go generate ./..."
-      - "go build ./..."
+      - |-
+        go generate {{.TASKFILE_DIR}}/...
+        go build {{.TASKFILE_DIR}}/...
 
   clean:
+    vars:
+      BUILD_TYPE: '{{default "Release" .BUILD_TYPE}}'
     cmds:
-      - |
-        rm ./lib/*
-        rm ./**/*_string.go
-        rm -r cpp/build
+      - |-
+        rm -f {{.G_INSTALL_PREFIX}}/lib/{{printf "libclp_ffi_%s_%s.a" OS ARCH}}
+        rm -f {{.G_INSTALL_PREFIX}}/include/*
+        rm -fr {{.G_BUILD_DIR}}/{{.BUILD_TYPE}}
         go clean -cache
 
-  install-deps-cpp:
+  clean-all:
     deps:
-      - "install-deps-cpp-clp"
-      - "install-deps-cpp-json"
-      - "install-deps-cpp-msgpack"
-      - "install-deps-cpp-outcome"
+      - "clean-deps"
+      - "clean"
+
+  clean-deps:
+    cmds:
+      - rm -fr "{{.G_DEPS_DIR}}"
 
   install-deps-cpp-clp:
     vars:
-      DIR: "{{.G_DEPS_DIR}}"
-      SRC_DIR: "{{.DIR}}/clp"
-    dir: "{{.DIR}}"
+      SOURCE_DIR: '{{default (printf "%s/clp-src/clp" .G_DEPS_DIR) .SOURCE_DIR}}'
+    deps:
+      - "install-deps-cpp-clp-json"
     cmds:
       - task: "fetch_src"
         vars:
-          OUTPUT_DIR: "{{.SRC_DIR}}"
-          URL: "https://github.com/y-scope/clp/archive/54962a0708daa443c9bdfb3462ed464b65b62886.tar.gz"
-          URL_SHA256: "67e19782b2b5a076e30f5025ec05b9db63f19bb07702418476776e6a995a79bb"
+          OUTPUT_DIR: "{{.SOURCE_DIR}}"
+          URL: "https://github.com/y-scope/clp/archive/e21672b906641c4724a25ea74f13857afdebe0e8.tar.gz"
+          URL_SHA256: "b7ab19af62fb0601d858047452e2f330489070caccd4aaf1e09709f6ca6324ab"
 
-  install-deps-cpp-json:
-    vars:
-      DIR: "{{.G_DEPS_DIR}}"
-      SRC_DIR: "{{.DIR}}/json"
-    dir: "{{.DIR}}"
+  install-deps-cpp-clp-json:
     cmds:
-      - task: "fetch_src"
+      - task: "curl"
         vars:
-          OUTPUT_DIR: "{{.SRC_DIR}}"
-          URL: "https://github.com/nlohmann/json/archive/v3.11.3.tar.gz"
-          URL_SHA256: "0d8ef5af7f9794e3263480193c491549b2ba6cc74bb018906202ada498a79406"
-      - task: "cmake_build"
-        vars:
-          SRC_DIR: "{{.SRC_DIR}}"
-          CMAKE_ARGS: "-DJSON_BuildTests=OFF"
-      - task: "cmake_install"
-        vars:
-          SRC_DIR: "{{.SRC_DIR}}"
+          OUTPUT_FILE: "{{.G_DEPS_DIR}}/json-src/json/single_include/nlohmann/json.hpp"
+          URL: "https://github.com/nlohmann/json/releases/download/v3.11.3/json.hpp"
+          URL_SHA256: "9bea4c8066ef4a1c206b2be5a36302f8926f7fdc6087af5d20b417d0cf103ea6"
 
   install-deps-cpp-msgpack:
     vars:
-      DIR: "{{.G_DEPS_DIR}}"
-      SRC_DIR: "{{.DIR}}/msgpack"
-    dir: "{{.DIR}}"
+      BUILD_DIR: '{{default (printf "%s/msgpack-build" .G_DEPS_DIR) .BUILD_DIR}}'
+      SOURCE_DIR: '{{default (printf "%s/msgpack-src" .G_DEPS_DIR) .SOURCE_DIR}}'
+      INSTALL_PREFIX: '{{default (printf "%s/msgpack-install" .G_DEPS_DIR) .INSTALL_PREFIX}}'
     cmds:
       - task: "fetch_src"
         vars:
-          OUTPUT_DIR: "{{.SRC_DIR}}"
+          OUTPUT_DIR: "{{.SOURCE_DIR}}"
           URL: "https://github.com/msgpack/msgpack-c/archive/cpp-6.1.0.tar.gz"
           URL_SHA256: "5e63e4d9b12ab528fccf197f7e6908031039b1fc89cd8da0e97fbcbf5a6c6d3a"
       - task: "cmake_build"
         vars:
-          SRC_DIR: "{{.SRC_DIR}}"
+          BUILD_DIR: "{{.BUILD_DIR}}"
+          SOURCE_DIR: "{{.SOURCE_DIR}}"
           CMAKE_ARGS: >-
-            "-DMSGPACK_CXX20=ON"
-            "-DMSGPACK_USE_BOOST=OFF"
+            -DMSGPACK_CXX20="ON"
+            -DMSGPACK_USE_BOOST="OFF"
       - task: "cmake_install"
         vars:
-          SRC_DIR: "{{.SRC_DIR}}"
+          BUILD_DIR: "{{.BUILD_DIR}}"
+          INSTALL_PREFIX: "{{.INSTALL_PREFIX}}"
 
   install-deps-cpp-outcome:
     vars:
-      DIR: "{{.G_DEPS_DIR}}"
-      SRC_DIR: "{{.DIR}}/outcome"
-    dir: "{{.DIR}}"
+      SOURCE_DIR: '{{default (printf "%s/outcome-src/outcome/single-header" .G_DEPS_DIR) .SOURCE_DIR}}'
     cmds:
-      - "mkdir -p {{.SRC_DIR}}/single-header"
       - task: "curl"
         vars:
-          OUTPUT_FILE: "{{.SRC_DIR}}/single-header/outcome.hpp"
+          OUTPUT_FILE: "{{.SOURCE_DIR}}/outcome.hpp"
           URL: "https://github.com/ned14/outcome/raw/v2.2.10/single-header/outcome.hpp"
           URL_SHA256: "eb85647590db22a4b0cab5a43bfe812d57534777eeafb8b9198d065b02085861"
 
@@ -162,7 +145,7 @@ tasks:
   #   cmds:
   #     # curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh |
   #     # sh -s -- -b $(go env GOPATH)/bin v1.59.0
-  #     - |
+  #     - |-
   #       golangci-lint run
 
   # lint-yml:
@@ -186,22 +169,22 @@ tasks:
   test-go:
     deps: [build-go]
 
-  test-baze:
+  test-bazel:
     cmds:
       - bazel test //ir:ir_test
 
 
 ## MOVE TO UTILS
 
+
   cmake_build:
     internal: true
     vars:
-      BUILD_DIR: "{{default (printf \"%s-build\" .SRC_DIR) .BUILD_DIR}}"
-      CHECKSUM_FILE: "{{default (printf \"%s.md5\" .BUILD_DIR) .CHECKSUM_FILE}}"
+      CHECKSUM_FILE: '{{default (printf "%s.md5" .BUILD_DIR) .CHECKSUM_FILE}}'
       CMAKE_ARGS: "{{default nil .CMAKE_ARGS}}"
     requires:
-      vars: ["SRC_DIR"]
-    sources: ["{{.SRC_DIR}}/**/*"]
+      vars: ["BUILD_DIR", "SOURCE_DIR"]
+    sources: ["{{.SOURCE_DIR}}/**/*"]
     generates: ["{{.CHECKSUM_FILE}}"]
     deps:
       - task: "utils:validate-checksum"
@@ -211,9 +194,9 @@ tasks:
     cmds:
       - >-
         cmake
-        -S "{{.SRC_DIR}}"
+        -S "{{.SOURCE_DIR}}"
         -B "{{.BUILD_DIR}}"
-        "{{.CMAKE_ARGS}}"
+        {{.CMAKE_ARGS}}
       - >-
         cmake
         --build "{{.BUILD_DIR}}"
@@ -227,27 +210,25 @@ tasks:
   cmake_install:
     internal: true
     vars:
-      BUILD_DIR: "{{default (printf \"%s-build\" .SRC_DIR) .BUILD_DIR}}"
-      INSTALL_DIR: "{{default (printf \"%s-install\" .SRC_DIR) .INSTALL_DIR}}"
-      CHECKSUM_FILE: "{{default (printf \"%s.md5\" .INSTALL_DIR) .CHECKSUM_FILE}}"
+      CHECKSUM_FILE: '{{default (printf "%s.md5" .INSTALL_PREFIX) .CHECKSUM_FILE}}'
     requires:
-      vars: ["SRC_DIR"]
-    sources: ["{{.BUILD_DIR}}/**/*", "{{.SRC_DIR}}/**/*"]
+      vars: ["BUILD_DIR", "INSTALL_PREFIX"]
+    sources: ["{{.BUILD_DIR}}/**/*"]
     generates: ["{{.CHECKSUM_FILE}}"]
     deps:
       - task: "utils:validate-checksum"
         vars:
           CHECKSUM_FILE: "{{.CHECKSUM_FILE}}"
-          DATA_DIR: "{{.INSTALL_DIR}}"
+          DATA_DIR: "{{.INSTALL_PREFIX}}"
     cmds:
       - >-
         cmake
         --install "{{.BUILD_DIR}}"
-        --prefix "{{.INSTALL_DIR}}"
+        --prefix "{{.INSTALL_PREFIX}}"
       # This command must be last
       - task: "utils:compute-checksum"
         vars:
-          DATA_DIR: "{{.INSTALL_DIR}}"
+          DATA_DIR: "{{.INSTALL_PREFIX}}"
           OUTPUT_FILE: "{{.CHECKSUM_FILE}}"
 
   curl:
@@ -265,7 +246,9 @@ tasks:
         <(openssl dgst -sha256 "{{.OUTPUT_FILE}}"
         | awk '{print $2}')
     cmds:
-      - curl -L "{{.URL}}" -o "{{.OUTPUT_FILE}}"
+      - |-
+        mkdir -p "{{dir .OUTPUT_FILE}}"
+        curl -L "{{.URL}}" -o "{{.OUTPUT_FILE}}"
 
   # @param {string} OUTPUT_DIR
   # @param {string} URL
@@ -273,13 +256,11 @@ tasks:
   fetch_src:
     internal: true
     vars:
-      CHECKSUM_FILE: "{{default (printf \"%s.md5\" .OUTPUT_DIR) .CHECKSUM_FILE}}"
-      DIR: "{{dir .OUTPUT_DIR}}"
+      CHECKSUM_FILE: '{{default (printf "%s.md5" .OUTPUT_DIR) .CHECKSUM_FILE}}'
       STRIP: "{{default 1 .STRIP}}"
-      TAR_FILE: "{{default (printf \"%s.tar.gz\" .OUTPUT_DIR) .TAR_FILE}}"
+      TAR_FILE: '{{default (printf "%s.tar.gz" .OUTPUT_DIR) .TAR_FILE}}'
     requires:
       vars: ["OUTPUT_DIR", "URL", "URL_SHA256"]
-    dir: "{{.DIR}}"
     sources: ["{{.TASKFILE}}"]
     generates: ["{{.CHECKSUM_FILE}}", "{{.TAR_FILE}}"]
     deps:
@@ -295,7 +276,7 @@ tasks:
     cmds:
       - |-
         rm -rf "{{.OUTPUT_DIR}}"
-        mkdir "{{.OUTPUT_DIR}}"
+        mkdir -p "{{.OUTPUT_DIR}}"
         tar -x --strip-components="{{.STRIP}}" -C "{{.OUTPUT_DIR}}" -f "{{.TAR_FILE}}"
       # This command must be last
       - task: "utils:compute-checksum"

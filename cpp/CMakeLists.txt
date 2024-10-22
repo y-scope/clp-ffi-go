@@ -26,28 +26,30 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 
 # Setup library name optionally suffixed with the OS and architecture.
 set(LIB_NAME "clp_ffi" CACHE STRING "Library name optionally containing OS and architecture.")
-set(OS_SUFFIX"" CACHE STRING "OS suffix to add to the library name.")
-string(APPEND LIB_NAME "${OS_SUFFIX}")
-set(ARCH_SUFFIX "" CACHE STRING "Architecture suffix to add to the library name.")
-string(APPEND LIB_NAME "${ARCH_SUFFIX}")
-
-set(clp_SOURCE_DIR "../build/deps/clp" CACHE STRING "Path to CLP source directory.")
-set(outcome_SOURCE_DIR "../build/deps/outcome" CACHE STRING "Path to outcome source directory.")
-# set(nlohmann_json_ROOT "../build/deps/json-install")
-set(nlohmann_json_DIR "../build/deps/json-install/share/cmake/nlohmann_json")
-find_package(nlohmann_json 3.11.3 REQUIRED)
-if(nlohmann_json_FOUND)
-    message(STATUS "Found nlohmann_json ${nlohmann_json_VERSION}")
-else()
-    message(FATAL_ERROR "Could not find nlohmann_json")
+set(OS_SUFFIX "" CACHE STRING "OS suffix to add to the library name.")
+if (NOT OS_SUFFIX STREQUAL "")
+    string(APPEND LIB_NAME "_${OS_SUFFIX}")
 endif()
-set(msgpack-cxx_DIR "../build/deps/msgpack-install/lib/cmake/msgpack-cxx")
-find_package(msgpack-cxx 6.2.0 REQUIRED)
+set(ARCH_SUFFIX "" CACHE STRING "Architecture suffix to add to the library name.")
+if (NOT ARCH_SUFFIX STREQUAL "")
+    string(APPEND LIB_NAME "_${ARCH_SUFFIX}")
+endif()
+
+# TODO: remove deps_dir/clp/json once we can build and install clp-ffi-core as a library.
+set(DEPS_DIR "../build/deps" CACHE STRING "Path dependency directory.")
+set(clp_SOURCE_DIR
+    "${DEPS_DIR}/clp-src/clp/components/core/src"
+    CACHE STRING
+    "Path to CLP core source directory.")
+set(json_SOURCE_DIR "${DEPS_DIR}/json-src" CACHE STRING "Path to outcome source directory.")
+set(outcome_SOURCE_DIR "${DEPS_DIR}/outcome-src" CACHE STRING "Path to outcome source directory.")
+find_package(msgpack-cxx 6.1.0 REQUIRED)
 if(msgpack-cxx_FOUND)
     message(STATUS "Found msgpack-cxx ${msgpack-cxx_VERSION}")
 else()
     message(FATAL_ERROR "Could not find msgpack-cxx")
 endif()
+message(STATUS "bam ${DEPS_DIR}")
 
 add_library(${LIB_NAME})
 
@@ -83,7 +85,6 @@ target_include_directories(${LIB_NAME}
 
 target_link_libraries(${LIB_NAME}
     PRIVATE
-    nlohmann_json::nlohmann_json
     msgpack-cxx
 )
 
@@ -91,17 +92,18 @@ target_link_libraries(${LIB_NAME}
 # warnings from them.
 target_include_directories(${LIB_NAME}
     SYSTEM PRIVATE
-    ${clp_SOURCE_DIR}/components/core/src
+    ${outcome_SOURCE_DIR}
 
+    # Since we build CLP source as part of the project we need to put its source directory on the
+    # include path to make their include statements work.
+    ${clp_SOURCE_DIR}
     # CLP source code expects string_utils to be included as a library <string_utils/...>, but we
     # directly bundle string_utils source files so we must add it to the include path.
-    ${clp_SOURCE_DIR}/components/core/src/clp
-
+    ${clp_SOURCE_DIR}/clp
     # CLP puts its submodule dir on its include path and includes json and outcome libraries from
-    # their root dir. To replicate this we need to put the build path on the include path.
-    ${nlohmann_json_INCLUDE_DIRS}
-    ${msgpack-cxx_INCLUDE_DIRS}
-    ${outcome_SOURCE_DIR}
+    # their root dir. To replicate this we put the build directory on the include path and
+    # dependencies' root directory must be the name CLP expects/uses.
+    ${json_SOURCE_DIR}
 )
 
 target_sources(${LIB_NAME}
@@ -114,36 +116,36 @@ target_sources(${LIB_NAME}
         src/ffi_go/ir/deserializer.h
         src/ffi_go/ir/serializer.h
     PRIVATE
-    ${clp_SOURCE_DIR}/components/core/src/clp/BufferReader.cpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/BufferReader.hpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/Defs.h
-    ${clp_SOURCE_DIR}/components/core/src/clp/ErrorCode.hpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/encoding_methods.cpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/encoding_methods.hpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/encoding_methods.inc
-    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/byteswap.hpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/Deserializer.hpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/encoding_methods.cpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/encoding_methods.hpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/decoding_methods.cpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/decoding_methods.hpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/decoding_methods.inc
-    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/protocol_constants.hpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/Serializer.cpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/Serializer.hpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/utils.cpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/ffi/ir_stream/utils.hpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/ir/parsing.cpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/ir/parsing.hpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/ir/parsing.inc
-    ${clp_SOURCE_DIR}/components/core/src/clp/ir/types.hpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/ReaderInterface.cpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/ReaderInterface.hpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/string_utils/string_utils.cpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/string_utils/string_utils.hpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/TraceableException.hpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/time_types.hpp
-    ${clp_SOURCE_DIR}/components/core/src/clp/type_utils.hpp
+    ${clp_SOURCE_DIR}/clp/BufferReader.cpp
+    ${clp_SOURCE_DIR}/clp/BufferReader.hpp
+    ${clp_SOURCE_DIR}/clp/Defs.h
+    ${clp_SOURCE_DIR}/clp/ErrorCode.hpp
+    ${clp_SOURCE_DIR}/clp/ffi/encoding_methods.cpp
+    ${clp_SOURCE_DIR}/clp/ffi/encoding_methods.hpp
+    ${clp_SOURCE_DIR}/clp/ffi/encoding_methods.inc
+    ${clp_SOURCE_DIR}/clp/ffi/ir_stream/byteswap.hpp
+    ${clp_SOURCE_DIR}/clp/ffi/ir_stream/Deserializer.hpp
+    ${clp_SOURCE_DIR}/clp/ffi/ir_stream/encoding_methods.cpp
+    ${clp_SOURCE_DIR}/clp/ffi/ir_stream/encoding_methods.hpp
+    ${clp_SOURCE_DIR}/clp/ffi/ir_stream/decoding_methods.cpp
+    ${clp_SOURCE_DIR}/clp/ffi/ir_stream/decoding_methods.hpp
+    ${clp_SOURCE_DIR}/clp/ffi/ir_stream/decoding_methods.inc
+    ${clp_SOURCE_DIR}/clp/ffi/ir_stream/protocol_constants.hpp
+    ${clp_SOURCE_DIR}/clp/ffi/ir_stream/Serializer.cpp
+    ${clp_SOURCE_DIR}/clp/ffi/ir_stream/Serializer.hpp
+    ${clp_SOURCE_DIR}/clp/ffi/ir_stream/utils.cpp
+    ${clp_SOURCE_DIR}/clp/ffi/ir_stream/utils.hpp
+    ${clp_SOURCE_DIR}/clp/ir/parsing.cpp
+    ${clp_SOURCE_DIR}/clp/ir/parsing.hpp
+    ${clp_SOURCE_DIR}/clp/ir/parsing.inc
+    ${clp_SOURCE_DIR}/clp/ir/types.hpp
+    ${clp_SOURCE_DIR}/clp/ReaderInterface.cpp
+    ${clp_SOURCE_DIR}/clp/ReaderInterface.hpp
+    ${clp_SOURCE_DIR}/clp/string_utils/string_utils.cpp
+    ${clp_SOURCE_DIR}/clp/string_utils/string_utils.hpp
+    ${clp_SOURCE_DIR}/clp/TraceableException.hpp
+    ${clp_SOURCE_DIR}/clp/time_types.hpp
+    ${clp_SOURCE_DIR}/clp/type_utils.hpp
     src/ffi_go/types.hpp
     src/ffi_go/ir/deserializer.cpp
     src/ffi_go/ir/types.hpp
