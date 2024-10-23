@@ -49,7 +49,6 @@ if(msgpack-cxx_FOUND)
 else()
     message(FATAL_ERROR "Could not find msgpack-cxx")
 endif()
-message(STATUS "bam ${DEPS_DIR}")
 
 add_library(${LIB_NAME})
 

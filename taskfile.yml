@@ -47,26 +47,45 @@ tasks:
 
   build-go:
     deps:
-      - "install-deps-go"
+      - "build-go-generate"
+    sources:
+      - "{{.TASKFILE_DIR}}/go.mod"
+      - "{{.TASKFILE_DIR}}/ffi/**/*"
+      - "{{.TASKFILE_DIR}}/ir/**/*"
     cmds:
       - |-
-        go generate {{.TASKFILE_DIR}}/...
         go build {{.TASKFILE_DIR}}/...
+
+  build-go-generate:
+    sources:
+      - "{{.TASKFILE_DIR}}/go.mod"
+      - "{{.TASKFILE_DIR}}/ffi/**/*"
+      - "{{.TASKFILE_DIR}}/ir/**/*"
+      - exclude: "{{.TASKFILE_DIR}}/ir/irerror_string.go"
+    generates: ["{{.TASKFILE_DIR}}/ir/irerror_string.go"]
+    cmds:
+      - |-
+        go install "golang.org/x/tools/cmd/stringer@latest"
+        go generate "{{.TASKFILE_DIR}}/..."
 
   clean:
     vars:
       BUILD_TYPE: '{{default "Release" .BUILD_TYPE}}'
     cmds:
       - |-
-        rm -f {{.G_INSTALL_PREFIX}}/lib/{{printf "libclp_ffi_%s_%s.a" OS ARCH}}
-        rm -f {{.G_INSTALL_PREFIX}}/include/*
-        rm -fr {{.G_BUILD_DIR}}/{{.BUILD_TYPE}}
+        rm -f '{{.G_INSTALL_PREFIX}}/lib/{{printf "libclp_ffi_%s_%s.a" OS ARCH}}'
+        rm -fr "{{.G_INSTALL_PREFIX}}/include/*"
+        rm -fr "{{.G_BUILD_DIR}}/{{.BUILD_TYPE}}"
+        rm -f "{{.G_BUILD_DIR}}/{{.BUILD_TYPE}}.md5"
         go clean -cache
 
   clean-all:
     deps:
       - "clean-deps"
       - "clean"
+    cmds:
+      - |-
+        rm -fr "{{.G_BUILD_DIR}}"
 
   clean-deps:
     cmds:
@@ -123,11 +142,7 @@ tasks:
         vars:
           OUTPUT_FILE: "{{.SOURCE_DIR}}/outcome.hpp"
           URL: "https://github.com/ned14/outcome/raw/v2.2.10/single-header/outcome.hpp"
-          URL_SHA256: "eb85647590db22a4b0cab5a43bfe812d57534777eeafb8b9198d065b02085861"
-
-  install-deps-go:
-    cmds:
-      - "go install golang.org/x/tools/cmd/stringer@latest"
+          URL_SHA256: "ad624622dcb1613027d39bd1aac93a13f11f46df197aa494a3980bef3c044dad"
 
   # lint:
   #   deps:
@@ -178,6 +193,7 @@ tasks:
 
 
   cmake_build:
+    label: "cmake_build: {{.SOURCE_DIR}} {{.BUILD_DIR}}"
     internal: true
     vars:
       CHECKSUM_FILE: '{{default (printf "%s.md5" .BUILD_DIR) .CHECKSUM_FILE}}'
@@ -191,7 +207,10 @@ tasks:
         vars:
           CHECKSUM_FILE: "{{.CHECKSUM_FILE}}"
           DATA_DIR: "{{.BUILD_DIR}}"
+          EXCLUDE_PATHS: ["install_manifest.txt"]
     cmds:
+      # useful to check if validate failed
+      # - stat "{{.CHECKSUM_FILE}}" || true
       - >-
         cmake
         -S "{{.SOURCE_DIR}}"
@@ -206,14 +225,18 @@ tasks:
         vars:
           DATA_DIR: "{{.BUILD_DIR}}"
           OUTPUT_FILE: "{{.CHECKSUM_FILE}}"
+          EXCLUDE_PATHS: ["install_manifest.txt"]
 
   cmake_install:
+    label: "cmake_install: {{.BUILD_DIR}} {{.INSTALL_PREFIX}}"
     internal: true
     vars:
       CHECKSUM_FILE: '{{default (printf "%s.md5" .INSTALL_PREFIX) .CHECKSUM_FILE}}'
     requires:
       vars: ["BUILD_DIR", "INSTALL_PREFIX"]
-    sources: ["{{.BUILD_DIR}}/**/*"]
+    sources:
+      - "{{.BUILD_DIR}}/**/*"
+      - exclude: "{{.BUILD_DIR}}/install_manifest.txt"
     generates: ["{{.CHECKSUM_FILE}}"]
     deps:
       - task: "utils:validate-checksum"
@@ -232,6 +255,7 @@ tasks:
           OUTPUT_FILE: "{{.CHECKSUM_FILE}}"
 
   curl:
+    label: "curl: {{.OUTPUT_FILE}}"
     internal: true
     vars:
       OUTPUT_FILE: "{{default (base .URL) .OUTPUT_FILE}}"
@@ -240,8 +264,8 @@ tasks:
     generates:
       - "{{.OUTPUT_FILE}}"
     status:
-      - echo "{{.URL_SHA256}}"
-      - diff
+      - >-
+        diff
         <(echo "{{.URL_SHA256}}")
         <(openssl dgst -sha256 "{{.OUTPUT_FILE}}"
         | awk '{print $2}')
@@ -254,6 +278,7 @@ tasks:
   # @param {string} URL
   # @param {string} URL_SHA256
   fetch_src:
+    label: "fetch_src: {{.OUTPUT_DIR}}"
     internal: true
     vars:
       CHECKSUM_FILE: '{{default (printf "%s.md5" .OUTPUT_DIR) .CHECKSUM_FILE}}'
