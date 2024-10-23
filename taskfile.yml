@@ -25,7 +25,7 @@ tasks:
       - "install-deps-cpp-outcome"
       - "install-deps-cpp-msgpack"
     cmds:
-      - task: "cmake_build"
+      - task: "cmake-build"
         vars:
           BUILD_DIR: "{{.G_BUILD_DIR}}"
           SOURCE_DIR: "{{.TASKFILE_DIR}}/cpp"
@@ -64,7 +64,7 @@ tasks:
   install-cpp:
     deps: ["build-cpp"]
     cmds:
-      - task: "cmake_install"
+      - task: "cmake-install"
         vars:
           BUILD_DIR: "{{.G_BUILD_DIR}}"
           DATA_PATHS:
@@ -103,14 +103,14 @@ tasks:
           OUTPUT_DIR: "{{.SOURCE_DIR}}"
           URL: "https://github.com/msgpack/msgpack-c/archive/cpp-6.1.0.tar.gz"
           URL_SHA256: "5e63e4d9b12ab528fccf197f7e6908031039b1fc89cd8da0e97fbcbf5a6c6d3a"
-      - task: "cmake_build"
+      - task: "cmake-build"
         vars:
           BUILD_DIR: "{{.BUILD_DIR}}"
           SOURCE_DIR: "{{.SOURCE_DIR}}"
           CMAKE_ARGS: >-
             -DMSGPACK_CXX20="ON"
             -DMSGPACK_USE_BOOST="OFF"
-      - task: "cmake_install"
+      - task: "cmake-install"
         vars:
           BUILD_DIR: "{{.BUILD_DIR}}"
           INSTALL_PREFIX: "{{.INSTALL_PREFIX}}"
@@ -169,8 +169,8 @@ tasks:
 ## MOVE TO UTILS
 
 
-  cmake_build:
-    label: "cmake_build: {{.SOURCE_DIR}} {{.BUILD_DIR}}"
+  cmake-build:
+    label: "cmake-build: {{.SOURCE_DIR}} {{.BUILD_DIR}}"
     internal: true
     vars:
       CHECKSUM_FILE: '{{default (printf "%s.md5" .BUILD_DIR) .CHECKSUM_FILE}}'
@@ -209,8 +209,8 @@ tasks:
           OUTPUT_FILE: "{{.CHECKSUM_FILE}}"
           EXCLUDE_PATHS: ["install_manifest.txt"]
 
-  cmake_install:
-    label: "cmake_install: {{.BUILD_DIR}} {{.INSTALL_PREFIX}}"
+  cmake-install:
+    label: "cmake-install: {{.BUILD_DIR}} {{.INSTALL_PREFIX}}"
     internal: true
     vars:
       CHECKSUM_FILE: '{{default (printf "%s.md5" .INSTALL_PREFIX) .CHECKSUM_FILE}}'
