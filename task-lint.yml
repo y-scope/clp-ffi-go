@@ -1,0 +1,37 @@
+version: "3"
+
+vars:
+  G_LINT_VENV_DIR: "{{.G_BUILD_DIR}}/lint-venv"
+
+tasks:
+  lint:
+    deps:
+      - "lint-cpp"
+      - "lint-go"
+      - "lint-yml"
+
+  lint-cpp:
+    deps: ["lint-venv-cpp"]
+    # cmds:
+    #   - clang-tidy
+
+  lint-go:
+    # deps: ["venv"]
+    cmds:
+      # curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh |
+      # sh -s -- -b $(go env GOPATH)/bin v1.59.0
+      - |-
+        golangci-lint run
+
+  lint-yml:
+    # deps: ["venv"]
+    cmds:
+      - |-
+        # . "{{.G_LINT_VENV_DIR}}/bin/activate"
+        yamllint --strict \
+          .github \
+          .golangci.yml \
+          .yamllint.yml \
+          cpp/.clang-format \
+          cpp/.clang-tidy \
+          taskfile.yml

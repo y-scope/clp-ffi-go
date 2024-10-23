@@ -1,5 +1,4 @@
-cmake_minimum_required(VERSION 3.30)
-include(FetchContent)
+cmake_minimum_required(VERSION 3.22.1)
 
 # Turn on verbose output
 set(CMAKE_VERBOSE_MAKEFILE ON)

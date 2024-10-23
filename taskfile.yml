@@ -1,29 +1,25 @@
 version: "3"
 
 includes:
-  # lint: "lint-tasks.yml"
-  utils: "tools/yscope-dev-utils/taskfiles/utils.yml"
+  lint: "task-lint.yml"
+  # utils: "tools/yscope-dev-utils/taskfiles/utils.yml"
 
 vars:
-  G_BUILD_DIR: "{{.TASKFILE_DIR}}/build"
-  G_DEPS_DIR: "{{.G_BUILD_DIR}}/deps"
-  G_LINT_VENV_DIR: "{{.G_BUILD_DIR}}/lint-venv"
+  G_BUILD_BASE_DIR: "{{.TASKFILE_DIR}}/build"
+  G_BUILD_TYPE: "Release"
+  G_BUILD_DIR: "{{.G_BUILD_BASE_DIR}}/{{.G_BUILD_TYPE}}"
+  G_DEPS_DIR: "{{.G_BUILD_BASE_DIR}}/deps"
   G_INSTALL_PREFIX: "{{.TASKFILE_DIR}}"
+  G_INSTALL_INCLUDE_DIR: "{{.G_INSTALL_PREFIX}}/include/ffi_go"
+  G_INSTALL_LIB: '{{printf "%s/lib/libclp_ffi_%s_%s.a" .G_INSTALL_PREFIX OS ARCH}}'
+  G_INSTALL_CHECKSUM_FILE: "{{.G_BUILD_BASE_DIR}}/install.md5"
 
 tasks:
-  bazel:
+  default:
     cmds:
-      - "bazel build //..."
-
-  build:
-    cmds:
-      - task: "build-cpp"
-      - task: "build-go"
+      - task: "build"
 
   build-cpp:
-    vars:
-      BUILD_TYPE: '{{default "Release" .BUILD_TYPE}}'
-      BUILD_DIR: "{{.G_BUILD_DIR}}/{{.BUILD_TYPE}}"
     deps:
       - "install-deps-cpp-clp"
       - "install-deps-cpp-outcome"
@@ -31,30 +27,27 @@ tasks:
     cmds:
       - task: "cmake_build"
         vars:
+          BUILD_DIR: "{{.G_BUILD_DIR}}"
           SOURCE_DIR: "{{.TASKFILE_DIR}}/cpp"
-          BUILD_DIR: "{{.BUILD_DIR}}"
           CMAKE_ARGS: >-
-            -DCMAKE_BUILD_TYPE="{{.BUILD_TYPE}}"
+            -DCMAKE_BUILD_TYPE="{{.G_BUILD_TYPE}}"
             -DOS_SUFFIX="{{OS}}"
             -DARCH_SUFFIX="{{ARCH}}"
             -DDEPS_DIR="{{.G_DEPS_DIR}}"
             -Dmsgpack-cxx_ROOT="{{.G_DEPS_DIR}}/msgpack-install"
             -Doutcome_SOURCE_DIR="{{.G_DEPS_DIR}}/outcome-src"
-      - task: "cmake_install"
-        vars:
-          BUILD_DIR: "{{.BUILD_DIR}}"
-          INSTALL_PREFIX: "{{.G_INSTALL_PREFIX}}"
 
   build-go:
+    aliases: ["build"]
     deps:
       - "build-go-generate"
+      - "install-cpp"
     sources:
       - "{{.TASKFILE_DIR}}/go.mod"
       - "{{.TASKFILE_DIR}}/ffi/**/*"
       - "{{.TASKFILE_DIR}}/ir/**/*"
     cmds:
-      - |-
-        go build {{.TASKFILE_DIR}}/...
+      - "go build {{.TASKFILE_DIR}}/..."
 
   build-go-generate:
     sources:
@@ -68,34 +61,22 @@ tasks:
         go install "golang.org/x/tools/cmd/stringer@latest"
         go generate "{{.TASKFILE_DIR}}/..."
 
-  clean:
-    vars:
-      BUILD_TYPE: '{{default "Release" .BUILD_TYPE}}'
+  install-cpp:
+    deps: ["build-cpp"]
     cmds:
-      - |-
-        rm -f '{{.G_INSTALL_PREFIX}}/lib/{{printf "libclp_ffi_%s_%s.a" OS ARCH}}'
-        rm -fr "{{.G_INSTALL_PREFIX}}/include/*"
-        rm -fr "{{.G_BUILD_DIR}}/{{.BUILD_TYPE}}"
-        rm -f "{{.G_BUILD_DIR}}/{{.BUILD_TYPE}}.md5"
-        go clean -cache
-
-  clean-all:
-    deps:
-      - "clean-deps"
-      - "clean"
-    cmds:
-      - |-
-        rm -fr "{{.G_BUILD_DIR}}"
-
-  clean-deps:
-    cmds:
-      - rm -fr "{{.G_DEPS_DIR}}"
+      - task: "cmake_install"
+        vars:
+          BUILD_DIR: "{{.G_BUILD_DIR}}"
+          DATA_PATHS:
+            - "{{.G_INSTALL_INCLUDE_DIR}}"
+            - "{{.G_INSTALL_LIB}}"
+          INSTALL_PREFIX: "{{.G_INSTALL_PREFIX}}"
+          CHECKSUM_FILE: "{{.G_INSTALL_CHECKSUM_FILE}}"
 
   install-deps-cpp-clp:
     vars:
       SOURCE_DIR: '{{default (printf "%s/clp-src/clp" .G_DEPS_DIR) .SOURCE_DIR}}'
-    deps:
-      - "install-deps-cpp-clp-json"
+    deps: ["install-deps-cpp-clp-json"]
     cmds:
       - task: "fetch_src"
         vars:
@@ -144,49 +125,45 @@ tasks:
           URL: "https://github.com/ned14/outcome/raw/v2.2.10/single-header/outcome.hpp"
           URL_SHA256: "ad624622dcb1613027d39bd1aac93a13f11f46df197aa494a3980bef3c044dad"
 
-  # lint:
-  #   deps:
-  #     - "lint-cpp"
-  #     - "lint-go"
-  #     - "lint-yml"
+  clean:
+    cmds:
+      - |-
+        rm -fr "{{.G_INSTALL_INCLUDE_DIR}}"
+        rm -f "{{.G_INSTALL_LIB}}"
+        rm -fr "{{.G_BUILD_DIR}}"
+        rm -f "{{.G_BUILD_DIR}}.md5"
+        go clean -cache
 
-  # lint-cpp:
-  #   deps: ["lint-venv-cpp"]
-  #   # cmds:
-  #   #   - clang-tidy
+  clean-all:
+    deps:
+      - "clean-deps"
+      - "clean"
+    cmds:
+      - "rm -fr {{.G_BUILD_DIR}}"
 
-  # lint-go:
-  #   # deps: ["venv"]
-  #   cmds:
-  #     # curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh |
-  #     # sh -s -- -b $(go env GOPATH)/bin v1.59.0
-  #     - |-
-  #       golangci-lint run
+  clean-deps:
+    cmds:
+      - "rm -fr {{.G_DEPS_DIR}}"
 
-  # lint-yml:
-  #   # deps: ["venv"]
-  #   cmds:
-  #     - |-
-  #       # . "{{.G_LINT_VENV_DIR}}/bin/activate"
-  #       yamllint --strict \
-  #         .github \
-  #         .golangci.yml \
-  #         .yamllint.yml \
-  #         cpp/.clang-format \
-  #         cpp/.clang-tidy \
-  #         taskfile.yml
+  test-all:
+    deps:
+      - "test"
+      - "test-bazel"
 
   test:
-    deps:
-      - "test-bazel"
-      - "test-go"
+    deps: ["build-go"]
 
-  test-go:
-    deps: [build-go]
+  build-bazel:
+    cmds:
+      - "bazel build //..."
+
+  clean-bazel:
+    cmds:
+      - "bazel clean --expunge"
 
   test-bazel:
     cmds:
-      - bazel test //ir:ir_test
+      - "bazel test //ir:ir_test"
 
 
 ## MOVE TO UTILS
@@ -200,17 +177,22 @@ tasks:
       CMAKE_ARGS: "{{default nil .CMAKE_ARGS}}"
     requires:
       vars: ["BUILD_DIR", "SOURCE_DIR"]
-    sources: ["{{.SOURCE_DIR}}/**/*"]
+    sources:
+      - "{{.SOURCE_DIR}}/**/*"
+      - exclude: "{{.SOURCE_DIR}}/.cache/**/*"
+      - exclude: "{{.SOURCE_DIR}}/compile_commands.json"
     generates: ["{{.CHECKSUM_FILE}}"]
     deps:
       - task: "utils:validate-checksum"
         vars:
           CHECKSUM_FILE: "{{.CHECKSUM_FILE}}"
-          DATA_DIR: "{{.BUILD_DIR}}"
+          DATA_PATHS: ["{{.BUILD_DIR}}"]
           EXCLUDE_PATHS: ["install_manifest.txt"]
     cmds:
-      # useful to check if validate failed
-      # - stat "{{.CHECKSUM_FILE}}" || true
+      # TODO: remove debugging
+      - for: sources
+        cmd: echo "{{.ITEM}}"
+      - stat "{{.CHECKSUM_FILE}}" || true
       - >-
         cmake
         -S "{{.SOURCE_DIR}}"
@@ -223,7 +205,7 @@ tasks:
       # This command must be last
       - task: "utils:compute-checksum"
         vars:
-          DATA_DIR: "{{.BUILD_DIR}}"
+          DATA_PATHS: ["{{.BUILD_DIR}}"]
           OUTPUT_FILE: "{{.CHECKSUM_FILE}}"
           EXCLUDE_PATHS: ["install_manifest.txt"]
 
@@ -232,6 +214,9 @@ tasks:
     internal: true
     vars:
       CHECKSUM_FILE: '{{default (printf "%s.md5" .INSTALL_PREFIX) .CHECKSUM_FILE}}'
+      _INSTALL_PREFIX_ARRAY: ["{{.INSTALL_PREFIX}}"]
+      DATA_PATHS:
+        ref: "default ._INSTALL_PREFIX_ARRAY .DATA_PATHS"
     requires:
       vars: ["BUILD_DIR", "INSTALL_PREFIX"]
     sources:
@@ -242,8 +227,13 @@ tasks:
       - task: "utils:validate-checksum"
         vars:
           CHECKSUM_FILE: "{{.CHECKSUM_FILE}}"
-          DATA_DIR: "{{.INSTALL_PREFIX}}"
+          DATA_PATHS:
+            ref: ".DATA_PATHS"
     cmds:
+      # TODO: remove debugging
+      - for: sources
+        cmd: echo "{{.ITEM}}"
+      - stat "{{.CHECKSUM_FILE}}" || true
       - >-
         cmake
         --install "{{.BUILD_DIR}}"
@@ -251,7 +241,8 @@ tasks:
       # This command must be last
       - task: "utils:compute-checksum"
         vars:
-          DATA_DIR: "{{.INSTALL_PREFIX}}"
+          DATA_PATHS:
+            ref: ".DATA_PATHS"
           OUTPUT_FILE: "{{.CHECKSUM_FILE}}"
 
   curl:
@@ -297,7 +288,7 @@ tasks:
       - task: "utils:validate-checksum"
         vars:
           CHECKSUM_FILE: "{{.CHECKSUM_FILE}}"
-          DATA_DIR: "{{.OUTPUT_DIR}}"
+          DATA_PATHS: ["{{.OUTPUT_DIR}}"]
     cmds:
       - |-
         rm -rf "{{.OUTPUT_DIR}}"
@@ -306,5 +297,63 @@ tasks:
       # This command must be last
       - task: "utils:compute-checksum"
         vars:
-          DATA_DIR: "{{.OUTPUT_DIR}}"
+          DATA_PATHS: ["{{.OUTPUT_DIR}}"]
           OUTPUT_FILE: "{{.CHECKSUM_FILE}}"
+
+  ## PR AND REMOVE
+
+  utils:compute-checksum:
+    desc: "Tries to compute a checksum for the given directory and output it to a file."
+    internal: true
+    silent: true
+    requires:
+      vars: ["DATA_PATHS", "OUTPUT_FILE"]
+    cmds:
+      - >-
+        tar cf -
+        --group 0
+        --mtime "UTC 1970-01-01"
+        --numeric-owner
+        --owner 0
+        --sort name
+        {{- range .EXCLUDE_PATHS}}
+        --exclude="{{.}}"
+        {{- end}}
+        {{- range .DATA_PATHS}}
+        "{{.}}"
+        {{- end}}
+        2> /dev/null
+        | md5sum > {{.OUTPUT_FILE}}
+    # Ignore errors so that dependent tasks don't fail
+    ignore_error: true
+
+  # @param {[]string} [DATA_PATHS] A list of paths to validate the checksum for.
+  # @param {string} OUTPUT_FILE
+  # @param {[]string} [EXCLUDE_PATHS] A list of paths, relative to any `DATA_PATHS`, to exclude from
+  # the checksum.
+  utils:validate-checksum:
+    desc: "Validates the checksum of the given directory matches the checksum in the given file, or
+    deletes the checksum file otherwise."
+    internal: true
+    silent: true
+    vars:
+      TMP_CHECKSUM_FILE: "{{.CHECKSUM_FILE}}.tmp"
+    requires:
+      vars: ["CHECKSUM_FILE", "DATA_PATHS"]
+    cmds:
+      - task: "utils:compute-checksum"
+        vars:
+          DATA_PATHS:
+            ref: ".DATA_PATHS"
+          EXCLUDE_PATHS:
+            ref: ".EXCLUDE_PATHS"
+          OUTPUT_FILE: "{{.TMP_CHECKSUM_FILE}}"
+      - defer: "rm -f '{{.TMP_CHECKSUM_FILE}}'"
+      # Check that the directory exists and the checksum matches; otherwise delete the checksum file
+      - >-
+        (
+        {{- range .DATA_PATHS}}
+        test -e "{{.}}" &&
+        {{- end}}
+        diff -q '{{.TMP_CHECKSUM_FILE}}' '{{.CHECKSUM_FILE}}' 2> /dev/null
+        ) || rm -f '{{.CHECKSUM_FILE}}'
