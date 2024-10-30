@@ -22,6 +22,7 @@ import (
 // so will result in a memory leak.
 type Serializer interface {
 	SerializeLogEvent(logEvent ffi.LogEvent) (BufView, error)
+	SerializeMsgPackBytes(msgPackBytes []byte) (BufView, error)
 	Close() error
 }
 
@@ -95,6 +96,16 @@ func (serializer *eightByteSerializer) SerializeLogEvent(
 	return serializeLogEvent(serializer, LogEvent)
 }
 
+// SerializeMsgPackBytes attempts to serialize the log event, event, into a eight
+// byte encoded CLP IR byte stream. On error returns:
+//   - nil BufView
+//   - [IrError] based on the failure of the Cgo call
+func (serializer *eightByteSerializer) SerializeMsgPackBytes(
+	msgPackBytes []byte,
+) (BufView, error) {
+	return serializeMsgPackBytes(serializer, msgPackBytes)
+}
+
 // Create a distinct type so we know the type of the underlying serializer, but allows the use of
 // the same methods.
 type fourByteSerializer struct {
@@ -121,29 +132,45 @@ func (serializer *fourByteSerializer) SerializeLogEvent(
 	return serializeLogEvent(serializer, logEvent)
 }
 
+// SerializeMsgPackBytes attempts to serialize the log event, event, into a four
+// byte encoded CLP IR byte stream. On error returns:
+//   - nil BufView
+//   - [IrError] based on the failure of the Cgo call
+func (serializer *fourByteSerializer) SerializeMsgPackBytes(
+	msgPackBytes []byte,
+) (BufView, error) {
+	return serializeMsgPackBytes(serializer, msgPackBytes)
+}
+
 func serializeLogEvent(
 	serializer Serializer,
 	logEvent ffi.LogEvent,
 ) (BufView, error) {
-	var irView C.ByteSpan
-	var err error
-
-	msgpackBytes, err := msgpack.Marshal(&logEvent)
+	msgPackBytes, err := msgpack.Marshal(&logEvent)
 	if err != nil {
 		return nil, err
 	}
+	return serializeMsgPackBytes(serializer, msgPackBytes)
+}
+
+func serializeMsgPackBytes(
+	serializer Serializer,
+	msgPackBytes []byte,
+) (BufView, error) {
+	var irView C.ByteSpan
+	var err error
 
 	switch irs := serializer.(type) {
 	case *eightByteSerializer:
 		err = IrError(C.ir_serializer_eight_byte_serialize_log_event(
 			irs.cptr,
-			newCByteSpan(msgpackBytes),
+			newCByteSpan(msgPackBytes),
 			&irView,
 		))
 	case *fourByteSerializer:
 		err = IrError(C.ir_serializer_four_byte_serialize_log_event(
 			irs.cptr,
-			newCByteSpan(msgpackBytes),
+			newCByteSpan(msgPackBytes),
 			&irView,
 		))
 	}

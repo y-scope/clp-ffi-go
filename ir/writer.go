@@ -96,8 +96,30 @@ func (writer *Writer) Reset() {
 //   - success: number of bytes written, nil
 //   - error: number of bytes written (can be 0), error propagated from
 //     [SerializeLogEvent] or [bytes.Buffer.Write]
-func (writer *Writer) Write(logEvent ffi.LogEvent) (int, error) {
+func (writer *Writer) WriteLogEvent(logEvent ffi.LogEvent) (int, error) {
 	irView, err := writer.SerializeLogEvent(logEvent)
+	if nil != err {
+		return 0, err
+	}
+	// bytes.Buffer.Write will always return nil for err (https://pkg.go.dev/bytes#Buffer.Write)
+	// However, err is still propagated to correctly alert the user in case this ever changes. If
+	// Write can fail in the future, we should either:
+	//   1. fix the issue and retry the write
+	//   2. store irView and provide a retry API (allowing the user to fix the issue and retry)
+	n, err := writer.buf.Write(irView)
+	if nil != err {
+		return n, err
+	}
+	return n, nil
+}
+
+// Write uses [SerializeLogEvent] to serialize the provided log event to CLP IR
+// and then stores it in the internal buffer. Returns:
+//   - success: number of bytes written, nil
+//   - error: number of bytes written (can be 0), error propagated from
+//     [SerializeLogEvent] or [bytes.Buffer.Write]
+func (writer *Writer) WriteMsgPackBytes(msgPackBytes []byte) (int, error) {
+	irView, err := writer.SerializeMsgPackBytes(msgPackBytes)
 	if nil != err {
 		return 0, err
 	}

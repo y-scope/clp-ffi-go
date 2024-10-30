@@ -22,7 +22,7 @@ func testWriteReadLogMessages(
 			"LogMessage": msg,
 			"Timestamp":  time.Now().UnixMilli(),
 		}
-		_, err := irWriter.Write(event)
+		_, err := irWriter.WriteLogEvent(event)
 		if nil != err {
 			t.Fatalf("ir.Writer.Write failed: %v", err)
 		}
