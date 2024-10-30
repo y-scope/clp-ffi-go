@@ -26,7 +26,7 @@ tasks:
       - "install-deps-cpp-outcome"
       - "install-deps-cpp-msgpack"
     cmds:
-      - task: "cmake-build"
+      - task: "utils:cmake-build"
         vars:
           BUILD_DIR: "{{.G_BUILD_DIR}}"
           SOURCE_DIR: "{{.TASKFILE_DIR}}/cpp"
@@ -65,7 +65,7 @@ tasks:
   install-cpp:
     deps: ["build-cpp"]
     cmds:
-      - task: "cmake-install"
+      - task: "utils:cmake-install"
         vars:
           BUILD_DIR: "{{.G_BUILD_DIR}}"
           DATA_PATHS:
@@ -79,7 +79,7 @@ tasks:
       SOURCE_DIR: '{{default (printf "%s/clp-src/clp" .G_DEPS_DIR) .SOURCE_DIR}}'
     deps: ["install-deps-cpp-clp-json"]
     cmds:
-      - task: "fetch_src"
+      - task: "utils:fetch-src"
         vars:
           OUTPUT_DIR: "{{.SOURCE_DIR}}"
           URL: "https://github.com/y-scope/clp/archive/e21672b906641c4724a25ea74f13857afdebe0e8.tar.gz"
@@ -87,7 +87,7 @@ tasks:
 
   install-deps-cpp-clp-json:
     cmds:
-      - task: "curl"
+      - task: "utils:curl"
         vars:
           OUTPUT_FILE: "{{.G_DEPS_DIR}}/json-src/json/single_include/nlohmann/json.hpp"
           URL: "https://github.com/nlohmann/json/releases/download/v3.11.3/json.hpp"
@@ -99,19 +99,19 @@ tasks:
       SOURCE_DIR: '{{default (printf "%s/msgpack-src" .G_DEPS_DIR) .SOURCE_DIR}}'
       INSTALL_PREFIX: '{{default (printf "%s/msgpack-install" .G_DEPS_DIR) .INSTALL_PREFIX}}'
     cmds:
-      - task: "fetch_src"
+      - task: "utils:fetch-src"
         vars:
           OUTPUT_DIR: "{{.SOURCE_DIR}}"
           URL: "https://github.com/msgpack/msgpack-c/archive/cpp-6.1.0.tar.gz"
           URL_SHA256: "5e63e4d9b12ab528fccf197f7e6908031039b1fc89cd8da0e97fbcbf5a6c6d3a"
-      - task: "cmake-build"
+      - task: "utils:cmake-build"
         vars:
           BUILD_DIR: "{{.BUILD_DIR}}"
           SOURCE_DIR: "{{.SOURCE_DIR}}"
           CMAKE_ARGS: >-
             -DMSGPACK_CXX20="ON"
             -DMSGPACK_USE_BOOST="OFF"
-      - task: "cmake-install"
+      - task: "utils:cmake-install"
         vars:
           BUILD_DIR: "{{.BUILD_DIR}}"
           INSTALL_PREFIX: "{{.INSTALL_PREFIX}}"
@@ -120,7 +120,7 @@ tasks:
     vars:
       SOURCE_DIR: '{{default (printf "%s/outcome-src/outcome/single-header" .G_DEPS_DIR) .SOURCE_DIR}}'
     cmds:
-      - task: "curl"
+      - task: "utils:curl"
         vars:
           OUTPUT_FILE: "{{.SOURCE_DIR}}/outcome.hpp"
           URL: "https://github.com/ned14/outcome/raw/v2.2.10/single-header/outcome.hpp"

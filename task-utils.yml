@@ -92,8 +92,8 @@ tasks:
   # @param {string} OUTPUT_DIR
   # @param {string} URL
   # @param {string} URL_SHA256
-  fetch_src:
-    label: "fetch_src: {{.OUTPUT_DIR}}"
+  fetch-src:
+    label: "fetch-src: {{.OUTPUT_DIR}}"
     internal: true
     vars:
       CHECKSUM_FILE: '{{default (printf "%s.md5" .OUTPUT_DIR) .CHECKSUM_FILE}}'
