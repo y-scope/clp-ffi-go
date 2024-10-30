@@ -1,6 +1,6 @@
 cc_library(
     name = "libclp_ffi_go",
-    srcs = glob(["src/**"]),
+    srcs = glob(["src/**/*"]),
     hdrs = glob(["src/ffi_go/**/*.h"]),
     includes = [
         "src",

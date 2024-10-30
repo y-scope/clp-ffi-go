@@ -2,7 +2,7 @@
 
 #include <memory>
 #include <lint/msgpack.hpp>
-#include <boost/outcome.hpp>
+#include <outcome/single-header/outcome.hpp>
 #include <system_error>
 
 #include <clp/ffi/ir_stream/Serializer.hpp>
