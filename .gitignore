@@ -15,5 +15,4 @@ cpp/.cache/
 **/compile_commands.json
 
 # Submodules
-cpp/clp
 tools/yscope-dev-utils
