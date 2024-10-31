@@ -28,9 +28,9 @@ func testWriteReadLogMessages(
 		}
 		events = append(events, event)
 	}
-	_, err := irWriter.CloseTo(ioWriter)
+	err := irWriter.Close()
 	if nil != err {
-		t.Fatalf("ir.Writer.CloseTo failed: %v", err)
+		t.Fatalf("ir.Writer.Close failed: %v", err)
 	}
 	ioWriter.Close()
 
@@ -57,14 +57,14 @@ func openIrWriter(
 	var err error
 	switch args.encoding {
 	case eightByteEncoding:
-		irWriter, err = NewWriterSize[EightByteEncoding](writer, 1024*1024)
+		irWriter, err = NewWriter[EightByteEncoding](writer)
 	case fourByteEncoding:
-		irWriter, err = NewWriterSize[FourByteEncoding](writer, 1024*1024)
+		irWriter, err = NewWriter[FourByteEncoding](writer)
 	default:
 		t.Fatalf("unsupported encoding: %v", args.encoding)
 	}
 	if nil != err {
-		t.Fatalf("NewWriterSize failed: %v", err)
+		t.Fatalf("NewWriter failed: %v", err)
 	}
 	return irWriter
 }

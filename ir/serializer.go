@@ -7,6 +7,7 @@ package ir
 import "C"
 
 import (
+	"syscall"
 	"unsafe"
 
 	"github.com/y-scope/clp-ffi-go/ffi"
@@ -38,7 +39,7 @@ func EightByteSerializer() (Serializer, BufView, error) {
 	if err := IrError(C.ir_serializer_eight_byte_create(
 		&irs.cptr,
 		&irView,
-	)); Success != err {
+	)); FfiSuccess != err {
 		return nil, nil, err
 	}
 	return &irs, unsafe.Slice((*byte)(irView.m_data), irView.m_size), nil
@@ -56,7 +57,7 @@ func FourByteSerializer() (Serializer, BufView, error) {
 	if err := IrError(C.ir_serializer_four_byte_create(
 		&irs.cptr,
 		&irView,
-	)); Success != err {
+	)); FfiSuccess != err {
 		return nil, nil, err
 	}
 	return &irs, unsafe.Slice((*byte)(irView.m_data), irView.m_size), nil
@@ -158,23 +159,23 @@ func serializeMsgPackBytes(
 	msgPackBytes []byte,
 ) (BufView, error) {
 	var irView C.ByteSpan
-	var err error
+	var err syscall.Errno
 
 	switch irs := serializer.(type) {
 	case *eightByteSerializer:
-		err = IrError(C.ir_serializer_eight_byte_serialize_log_event(
+		err = syscall.Errno(C.ir_serializer_eight_byte_serialize_log_event(
 			irs.cptr,
 			newCByteSpan(msgPackBytes),
 			&irView,
 		))
 	case *fourByteSerializer:
-		err = IrError(C.ir_serializer_four_byte_serialize_log_event(
+		err = syscall.Errno(C.ir_serializer_four_byte_serialize_log_event(
 			irs.cptr,
 			newCByteSpan(msgPackBytes),
 			&irView,
 		))
 	}
-	if Success != err {
+	if FfiSuccess != err {
 		return nil, err
 	}
 	return unsafe.Slice((*byte)(irView.m_data), irView.m_size), nil

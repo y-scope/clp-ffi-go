@@ -43,3 +43,5 @@ type LogMessage[T EightByteEncoding | FourByteEncoding] struct {
 type LogMessageView[T EightByteEncoding | FourByteEncoding] struct {
 	LogMessage[T]
 }
+
+const FfiSuccess = 0
