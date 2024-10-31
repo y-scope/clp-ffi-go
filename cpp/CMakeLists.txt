@@ -114,13 +114,18 @@ target_sources(${LIB_NAME}
         src/ffi_go/ir/deserializer.h
         src/ffi_go/ir/serializer.h
     PRIVATE
+    ${clp_SOURCE_DIR}/clp/ffi/SchemaTree.cpp
+    ${clp_SOURCE_DIR}/clp/ir/parsing.cpp
+    ${clp_SOURCE_DIR}/clp/ReaderInterface.cpp
     ${clp_SOURCE_DIR}/clp/BufferReader.cpp
     ${clp_SOURCE_DIR}/clp/BufferReader.hpp
     ${clp_SOURCE_DIR}/clp/Defs.h
     ${clp_SOURCE_DIR}/clp/ErrorCode.hpp
+    ${clp_SOURCE_DIR}/clp/ReaderInterface.hpp
     ${clp_SOURCE_DIR}/clp/ffi/encoding_methods.cpp
     ${clp_SOURCE_DIR}/clp/ffi/encoding_methods.hpp
     ${clp_SOURCE_DIR}/clp/ffi/encoding_methods.inc
+    ${clp_SOURCE_DIR}/clp/ffi/KeyValuePairLogEvent.hpp
     ${clp_SOURCE_DIR}/clp/ffi/ir_stream/byteswap.hpp
     ${clp_SOURCE_DIR}/clp/ffi/ir_stream/Deserializer.hpp
     ${clp_SOURCE_DIR}/clp/ffi/ir_stream/encoding_methods.cpp
@@ -128,17 +133,20 @@ target_sources(${LIB_NAME}
     ${clp_SOURCE_DIR}/clp/ffi/ir_stream/decoding_methods.cpp
     ${clp_SOURCE_DIR}/clp/ffi/ir_stream/decoding_methods.hpp
     ${clp_SOURCE_DIR}/clp/ffi/ir_stream/decoding_methods.inc
+    ${clp_SOURCE_DIR}/clp/ffi/ir_stream/ir_unit_deserialization_methods.hpp
+    ${clp_SOURCE_DIR}/clp/ffi/ir_stream/IrUnitHandlerInterface.hpp
+    ${clp_SOURCE_DIR}/clp/ffi/ir_stream/IrUnitType.hpp
     ${clp_SOURCE_DIR}/clp/ffi/ir_stream/protocol_constants.hpp
     ${clp_SOURCE_DIR}/clp/ffi/ir_stream/Serializer.cpp
     ${clp_SOURCE_DIR}/clp/ffi/ir_stream/Serializer.hpp
     ${clp_SOURCE_DIR}/clp/ffi/ir_stream/utils.cpp
     ${clp_SOURCE_DIR}/clp/ffi/ir_stream/utils.hpp
-    ${clp_SOURCE_DIR}/clp/ir/parsing.cpp
-    ${clp_SOURCE_DIR}/clp/ir/parsing.hpp
+    ${clp_SOURCE_DIR}/clp/ffi/SchemaTree.hpp
+    ${clp_SOURCE_DIR}/clp/ffi/Value.hpp
+    ${clp_SOURCE_DIR}/clp/ir/EncodedTextAst.hpp
     ${clp_SOURCE_DIR}/clp/ir/parsing.inc
+    ${clp_SOURCE_DIR}/clp/ir/parsing.hpp
     ${clp_SOURCE_DIR}/clp/ir/types.hpp
-    ${clp_SOURCE_DIR}/clp/ReaderInterface.cpp
-    ${clp_SOURCE_DIR}/clp/ReaderInterface.hpp
     ${clp_SOURCE_DIR}/clp/string_utils/string_utils.cpp
     ${clp_SOURCE_DIR}/clp/string_utils/string_utils.hpp
     ${clp_SOURCE_DIR}/clp/TraceableException.hpp
