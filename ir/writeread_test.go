@@ -24,7 +24,7 @@ func testWriteReadLogMessages(
 		}
 		_, err := irWriter.WriteLogEvent(event)
 		if nil != err {
-			t.Fatalf("ir.Writer.Write failed: %v", err)
+			t.Fatalf("ir.Writer.WriteLogEvent failed: %v", err)
 		}
 		events = append(events, event)
 	}

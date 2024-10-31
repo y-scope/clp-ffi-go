@@ -49,7 +49,7 @@ auto serializer_create(
         void*& ir_serializer_ptr,
         ByteSpan* ir_view
 ) -> int {
-    if (nullptr == ir_serializer_ptr || nullptr == ir_view) {
+    if (nullptr != ir_serializer_ptr || nullptr == ir_view) {
         return static_cast<int>(std::errc::protocol_error);
     }
     auto result{clp::ffi::ir_stream::Serializer<encoded_variable_t>::create()};
@@ -66,6 +66,7 @@ auto serializer_create(
     return 0;
 }
 
+
 template <class encoded_variable_t>
 auto serialize_log_event(void* ir_serializer, ByteSpan msgpack_bytes, ByteSpan* ir_view) -> int {
     if (nullptr == ir_serializer || nullptr == ir_view) {
@@ -78,7 +79,7 @@ auto serialize_log_event(void* ir_serializer, ByteSpan msgpack_bytes, ByteSpan* 
             msgpack::unpack(static_cast<char const*>(msgpack_bytes.m_data), msgpack_bytes.m_size)
     };
     /* if (serializer->serialize_msgpack_map(mp_handle.get())) { */
-    if (serializer->serialize_msgpack_map(mp_handle.get().via.map)) {
+    if (false == serializer->serialize_msgpack_map(mp_handle.get().via.map)) {
         return static_cast<int>(std::errc::protocol_error);
     }
 
