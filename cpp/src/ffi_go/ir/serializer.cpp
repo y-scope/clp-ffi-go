@@ -74,6 +74,7 @@ auto serialize_log_event(void* ir_serializer, ByteSpan msgpack_bytes, ByteSpan* 
     }
     auto* serializer{static_cast<clp::ffi::ir_stream::Serializer<encoded_variable_t>*>(ir_serializer
     )};
+    serializer->clear_ir_buf();
 
     auto const mp_handle{
             msgpack::unpack(static_cast<char const*>(msgpack_bytes.m_data), msgpack_bytes.m_size)
