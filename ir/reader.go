@@ -21,6 +21,11 @@ type Reader struct {
 	end      int
 }
 
+// Returns [NewReaderSize] with a default buffer size of 1MB.
+func NewReader(r io.Reader) (*Reader, error) {
+	return NewReaderSize(r, 1024*1024)
+}
+
 // NewReaderSize creates a new [Reader] and uses [DeserializePreamble] to read a
 // CLP IR preamble from the [io.Reader], r. size denotes the initial size to use
 // for the Reader's buffer that the io.Reader is read into. This buffer will
@@ -49,11 +54,6 @@ func NewReaderSize(r io.Reader, size int) (*Reader, error) {
 	return irr, nil
 }
 
-// Returns [NewReaderSize] with a default buffer size of 1MB.
-func NewReader(r io.Reader) (*Reader, error) {
-	return NewReaderSize(r, 1024*1024)
-}
-
 // Close will delete the underlying C++ allocated memory used by the
 // deserializer. Failure to call Close will result in a memory leak.
 func (reader *Reader) Close() error {
@@ -64,7 +64,7 @@ func (reader *Reader) Close() error {
 // underlying buffer will grow if it is too small to contain the next log event. On error returns:
 //   - nil [ffi.LogEvent]
 //   - error propagated from [Deserializer].DeserializeLogEvent or [io.Reader.Read]
-func (reader *Reader) Read() (ffi.LogEvent, error) {
+func (reader *Reader) ReadLogEvent() (ffi.LogEvent, error) {
 	var event ffi.LogEvent
 	var pos int
 	var err error
@@ -90,7 +90,7 @@ func (reader *Reader) ReadToFunc(
 	f func(ffi.LogEvent) bool,
 ) (ffi.LogEvent, error) {
 	for {
-		event, err := reader.Read()
+		event, err := reader.ReadLogEvent()
 		if nil != err {
 			return event, err
 		}

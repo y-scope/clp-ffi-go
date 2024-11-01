@@ -7,6 +7,8 @@ package ir
 import "C"
 
 import (
+	"fmt"
+	"syscall"
 	"unsafe"
 
 	"github.com/y-scope/clp-ffi-go/ffi"
@@ -43,11 +45,12 @@ func DeserializePreamble(irBuf []byte) (*Deserializer, int, error) {
 
 	var pos C.size_t
 	var deserializerCptr unsafe.Pointer
-	if err := IrError(C.ir_deserializer_create(
+	if err := syscall.Errno(C.ir_deserializer_create(
 		newCByteSpan(irBuf),
 		&pos,
 		&deserializerCptr,
-	)); Success != err {
+	)); FfiSuccess != err {
+		fmt.Printf("%v\n", err)
 		return nil, int(pos), err
 	}
 

@@ -19,6 +19,7 @@
 #include <clp/ffi/ir_stream/protocol_constants.hpp>
 #include <clp/ir/types.hpp>
 #include <clp/string_utils/string_utils.hpp>
+#include <outcome/single-header/outcome.hpp>
 
 #include "ffi_go/api_decoration.h"
 #include "ffi_go/defs.h"
@@ -30,16 +31,13 @@ using clp::ffi::ir_stream::cProtocol::Eof;
 using clp::ffi::ir_stream::deserialize_tag;
 using clp::ffi::ir_stream::get_encoding_type;
 using clp::ffi::ir_stream::IRErrorCode;
-using clp::ir::eight_byte_encoded_variable_t;
-using clp::ir::four_byte_encoded_variable_t;
 
 namespace {
 /**
- * Class that implements `clp::ffi::ir_stream::IrUnitHandlerInterface` for testing purposes.
+ * Implements `clp::ffi::ir_stream::IrUnitHandlerInterface` interface
  */
 class IrUnitHandler {
 public:
-    // Implements `clp::ffi::ir_stream::IrUnitHandlerInterface` interface
     [[nodiscard]] auto handle_log_event([[maybe_unused]] clp::ffi::KeyValuePairLogEvent&& log_event) -> IRErrorCode {
         return IRErrorCode::IRErrorCode_Success;
     }
