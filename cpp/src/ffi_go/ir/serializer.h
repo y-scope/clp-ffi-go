@@ -21,36 +21,34 @@ CLP_FFI_GO_METHOD void ir_serializer_eight_byte_close(void* ir_serializer);
 CLP_FFI_GO_METHOD void ir_serializer_four_byte_close(void* ir_serializer);
 
 /**
- * Given the fields of a CLP IR preamble, serialize them into an IR byte stream with eight byte
- * encoding. A `clp::ffi::ir_stream::Serializer` will be allocated to use as the backing storage for
- * a Go `ir.Serializer` (i.e. subsequent calls to `ir_serializer_serialize_eight_byte_*`).
- * @param[out] ir_serializer_ptr Address of a new `clp::ffi::ir_stream::Serializer`.
+ * Create an eight byte `clp::ffi::ir_stream::Serializer` to use as the backing storage for a Go
+ * `ir.Serializer`. The serializer contains a preamble and is required for all subsequent calls to
+ * `ir_serializer_serialize_eight_byte_*`.
+ * @param[out] ir_serializer_ptr Address of a new `clp::ffi::ir_stream::Serializer` to store in Go.
  * @param[out] ir_view View of a IR buffer containing the serialized preamble.
  * @return 0 on success.
  * @return `std::errc::protocol_error` value on null arguments.
  * @return Forward's `clp::ffi::ir_stream::Serializer::create` return values.
  */
-CLP_FFI_GO_METHOD int
-ir_serializer_eight_byte_create(void** ir_serializer_ptr, ByteSpan* ir_view);
+CLP_FFI_GO_METHOD int ir_serializer_eight_byte_create(void** ir_serializer_ptr, ByteSpan* ir_view);
 
 /**
- * Given the fields of a CLP IR preamble, serialize them into an IR byte stream with four byte
- * encoding. A `clp::ffi::ir_stream::Serializer` will be allocated to use as the backing storage for
- * a Go `ir.Serializer` (i.e. subsequent calls to `ir_serializer_serialize_four_byte_*`).
- * @param[out] ir_serializer_ptr Address of a new `clp::ffi::ir_stream::Serializer`.
+ * Create an four byte `clp::ffi::ir_stream::Serializer` to use as the backing storage for a Go
+ * `ir.Serializer`. The serializer contains a preamble and is required for all subsequent calls to
+ * `ir_serializer_serialize_four_byte_*`.
+ * @param[out] ir_serializer_ptr Address of a new `clp::ffi::ir_stream::Serializer` to store in Go.
  * @param[out] ir_view View of a IR buffer containing the serialized preamble.
  * @return 0 on success.
  * @return `std::errc::protocol_error` value on null arguments.
  * @return Forward's `clp::ffi::ir_stream::Serializer::create` return values.
  */
-CLP_FFI_GO_METHOD int
-ir_serializer_four_byte_create(void** ir_serializer_ptr, ByteSpan* ir_view);
+CLP_FFI_GO_METHOD int ir_serializer_four_byte_create(void** ir_serializer_ptr, ByteSpan* ir_view);
 
 /**
  * Given a log event encoded as a msgpack map, serialize it into an IR byte stream with eight byte
  * encoding. A `clp::ffi::ir_stream::Serializer` must be provided to use as the backing storage for
  * the corresponding Go `ir.Serializer`.
- * @param[in] ir_serializer_ptr `clp::ffi::ir_stream::Serializer` object to be used as storage.
+ * @param[in] ir_serializer_ptr `clp::ffi::ir_stream::Serializer` object to be used.
  * @param[in] msgpack_bytes log event encoded as a msgpack map.
  * @param[out] ir_view View of a IR buffer containing the serialized log event.
  * @return 0 on success.
@@ -67,7 +65,7 @@ CLP_FFI_GO_METHOD int ir_serializer_eight_byte_serialize_log_event(
  * Given a log event encoded as a msgpack map, serialize it into an IR byte stream with four byte
  * encoding. A `clp::ffi::ir_stream::Serializer` must be provided to use as the backing storage for
  * the corresponding Go `ir.Serializer`.
- * @param[in] ir_serializer_ptr `clp::ffi::ir_stream::Serializer` object to be used as storage.
+ * @param[in] ir_serializer_ptr `clp::ffi::ir_stream::Serializer` object to be used.
  * @param[in] msgpack_bytes log event encoded as a msgpack map.
  * @param[out] ir_view View of a IR buffer containing the serialized log event.
  * @return 0 on success.

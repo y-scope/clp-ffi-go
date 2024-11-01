@@ -1,7 +1,7 @@
 #include "serializer.h"
 
-#include <memory>
 #include <lint/msgpack.hpp>
+#include <memory>
 #include <outcome/single-header/outcome.hpp>
 #include <system_error>
 
@@ -10,7 +10,6 @@
 
 #include "ffi_go/api_decoration.h"
 #include "ffi_go/defs.h"
-#include "ffi_go/ir/types.hpp"
 
 namespace ffi_go::ir {
 using clp::ir::eight_byte_encoded_variable_t;
@@ -27,10 +26,7 @@ auto serializer_close(void* ir_serializer) -> void;
  * Generic helper for ir_serializer_new_*_serializer_with_preamble functions.
  */
 template <class encoded_variable_t>
-[[nodiscard]] auto serializer_create(
-        void*& ir_serializer_ptr,
-        ByteSpan* ir_view
-) -> int;
+[[nodiscard]] auto serializer_create(void*& ir_serializer_ptr, ByteSpan* ir_view) -> int;
 
 /**
  * Generic helper for ir_serializer_serialize_*_log_event functions.
@@ -41,14 +37,13 @@ serialize_log_event(void* ir_serializer, ByteSpan msgpack_bytes, ByteSpan* ir_vi
 
 template <class encoded_variable_t>
 auto serializer_close(void* ir_serializer) -> void {
-    std::unique_ptr<clp::ffi::ir_stream::Serializer<encoded_variable_t>>(static_cast<clp::ffi::ir_stream::Serializer<encoded_variable_t>*>(ir_serializer));
+    std::unique_ptr<clp::ffi::ir_stream::Serializer<encoded_variable_t>>(
+            static_cast<clp::ffi::ir_stream::Serializer<encoded_variable_t>*>(ir_serializer)
+    );
 }
 
 template <class encoded_variable_t>
-auto serializer_create(
-        void*& ir_serializer_ptr,
-        ByteSpan* ir_view
-) -> int {
+auto serializer_create(void*& ir_serializer_ptr, ByteSpan* ir_view) -> int {
     if (nullptr != ir_serializer_ptr || nullptr == ir_view) {
         return static_cast<int>(std::errc::protocol_error);
     }
@@ -66,7 +61,6 @@ auto serializer_create(
     return 0;
 }
 
-
 template <class encoded_variable_t>
 auto serialize_log_event(void* ir_serializer, ByteSpan msgpack_bytes, ByteSpan* ir_view) -> int {
     if (nullptr == ir_serializer || nullptr == ir_view) {
@@ -79,7 +73,8 @@ auto serialize_log_event(void* ir_serializer, ByteSpan msgpack_bytes, ByteSpan* 
     auto const mp_handle{
             msgpack::unpack(static_cast<char const*>(msgpack_bytes.m_data), msgpack_bytes.m_size)
     };
-    /* if (serializer->serialize_msgpack_map(mp_handle.get())) { */
+    // Seems to requires fixing in ffi-core
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-union-access)
     if (false == serializer->serialize_msgpack_map(mp_handle.get().via.map)) {
         return static_cast<int>(std::errc::protocol_error);
     }
@@ -99,24 +94,14 @@ CLP_FFI_GO_METHOD auto ir_serializer_four_byte_close(void* ir_serializer) -> voi
     serializer_close<four_byte_encoded_variable_t>(ir_serializer);
 }
 
-CLP_FFI_GO_METHOD auto ir_serializer_eight_byte_create(
-        void** ir_serializer_ptr,
-        ByteSpan* ir_view
-) -> int {
-    return serializer_create<eight_byte_encoded_variable_t>(
-            *ir_serializer_ptr,
-            ir_view
-    );
+CLP_FFI_GO_METHOD auto
+ir_serializer_eight_byte_create(void** ir_serializer_ptr, ByteSpan* ir_view) -> int {
+    return serializer_create<eight_byte_encoded_variable_t>(*ir_serializer_ptr, ir_view);
 }
 
-CLP_FFI_GO_METHOD auto ir_serializer_four_byte_create(
-        void** ir_serializer_ptr,
-        ByteSpan* ir_view
-) -> int {
-    return serializer_create<four_byte_encoded_variable_t>(
-            *ir_serializer_ptr,
-            ir_view
-    );
+CLP_FFI_GO_METHOD auto
+ir_serializer_four_byte_create(void** ir_serializer_ptr, ByteSpan* ir_view) -> int {
+    return serializer_create<four_byte_encoded_variable_t>(*ir_serializer_ptr, ir_view);
 }
 
 CLP_FFI_GO_METHOD auto ir_serializer_eight_byte_serialize_log_event(
@@ -136,10 +121,6 @@ CLP_FFI_GO_METHOD auto ir_serializer_four_byte_serialize_log_event(
         ByteSpan msgpack_bytes,
         ByteSpan* ir_view
 ) -> int {
-    return serialize_log_event<four_byte_encoded_variable_t>(
-            ir_serializer,
-            msgpack_bytes,
-            ir_view
-    );
+    return serialize_log_event<four_byte_encoded_variable_t>(ir_serializer, msgpack_bytes, ir_view);
 }
 }  // namespace ffi_go::ir
