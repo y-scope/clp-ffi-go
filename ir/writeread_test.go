@@ -11,7 +11,7 @@ import (
 func testWriteReadLogMessages(
 	t *testing.T,
 	args testArgs,
-	messages []ffi.LogMessage,
+	messages []string,
 ) {
 	ioWriter := openIoWriter(t, args)
 	irWriter := openIrWriter(t, args, ioWriter)
@@ -19,18 +19,18 @@ func testWriteReadLogMessages(
 	var events []ffi.LogEvent
 	for _, msg := range messages {
 		event := ffi.LogEvent{
-			LogMessage: msg,
-			Timestamp:  ffi.EpochTimeMs(time.Now().UnixMilli()),
+			"LogMessage": msg,
+			"Timestamp":  uint64(time.Now().UnixMilli()),
 		}
-		_, err := irWriter.Write(event)
+		_, err := irWriter.WriteLogEvent(event)
 		if nil != err {
-			t.Fatalf("ir.Writer.Write failed: %v", err)
+			t.Fatalf("ir.Writer.WriteLogEvent failed: %v", err)
 		}
 		events = append(events, event)
 	}
-	_, err := irWriter.CloseTo(ioWriter)
+	err := irWriter.Close()
 	if nil != err {
-		t.Fatalf("ir.Writer.CloseTo failed: %v", err)
+		t.Fatalf("ir.Writer.Close failed: %v", err)
 	}
 	ioWriter.Close()
 
@@ -57,14 +57,14 @@ func openIrWriter(
 	var err error
 	switch args.encoding {
 	case eightByteEncoding:
-		irWriter, err = NewWriterSize[EightByteEncoding](1024*1024, defaultTimeZoneId)
+		irWriter, err = NewWriter[EightByteEncoding](writer)
 	case fourByteEncoding:
-		irWriter, err = NewWriterSize[FourByteEncoding](1024*1024, defaultTimeZoneId)
+		irWriter, err = NewWriter[FourByteEncoding](writer)
 	default:
 		t.Fatalf("unsupported encoding: %v", args.encoding)
 	}
 	if nil != err {
-		t.Fatalf("NewWriterSize failed: %v", err)
+		t.Fatalf("NewWriter failed: %v", err)
 	}
 	return irWriter
 }

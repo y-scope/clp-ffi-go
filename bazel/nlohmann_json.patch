@@ -1,0 +1,17 @@
+--- BUILD.bazel	2024-10-10 12:15:13.831316184 +0000
++++ BUILD.bazel	2024-10-10 18:31:11.621106075 +0000
+@@ -48,6 +48,7 @@
+         "include/nlohmann/thirdparty/hedley/hedley_undef.hpp",
+     ],
+     includes = ["include"],
++    include_prefix = "json",
+     visibility = ["//visibility:public"],
+     alwayslink = True,
+ )
+@@ -58,5 +59,6 @@
+         "single_include/nlohmann/json.hpp",
+     ],
+     includes = ["single_include"],
++    include_prefix = "json",
+     visibility = ["//visibility:public"],
+ )

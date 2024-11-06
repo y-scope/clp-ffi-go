@@ -14,12 +14,6 @@ import (
 	"github.com/y-scope/clp-ffi-go/ffi"
 )
 
-const (
-	defaultTimestampPattern       string = "yyyy-MM-dd HH:mm:ss,SSS"
-	defaultTimestampPatternSyntax string = "java::SimpleDateFormat"
-	defaultTimeZoneId             string = "America/Toronto"
-)
-
 type testArg int
 
 const (
@@ -43,13 +37,13 @@ type testArgs struct {
 	filePath    string
 }
 
-type preambleFields struct {
-	TimestampInfo
-	prevTimestamp ffi.EpochTimeMs
+var testKeys = []string{
+	"LogMessage",
+	"Timestamp",
 }
 
 func TestLogMessagesCombo(t *testing.T) {
-	messages := []ffi.LogMessage{
+	messages := []string{
 		"static text dict=var notint123 -1.234 4321.",
 		"static123 text321 dict=var0123 321.1234 -3210.",
 	}
@@ -57,7 +51,7 @@ func TestLogMessagesCombo(t *testing.T) {
 }
 
 func TestLogMessagesDict(t *testing.T) {
-	messages := []ffi.LogMessage{
+	messages := []string{
 		"textint1234 textequal=variable",
 		fmt.Sprintf("test=bigint %v", math.MaxInt32+1),
 	}
@@ -65,7 +59,7 @@ func TestLogMessagesDict(t *testing.T) {
 }
 
 func TestLogMessagesFloat(t *testing.T) {
-	messages := []ffi.LogMessage{
+	messages := []string{
 		"float 1.0 1.2 1.23 1.234",
 		"-float -1.0 -1.2 -1.23 -1.234",
 	}
@@ -73,7 +67,7 @@ func TestLogMessagesFloat(t *testing.T) {
 }
 
 func TestLogMessagesInt(t *testing.T) {
-	messages := []ffi.LogMessage{
+	messages := []string{
 		"int 1 12 123 1234",
 		"-int -1 -12 -123 -1234",
 	}
@@ -81,7 +75,7 @@ func TestLogMessagesInt(t *testing.T) {
 }
 
 func TestLogMessagesStatic(t *testing.T) {
-	messages := []ffi.LogMessage{
+	messages := []string{
 		"static text log zero.",
 		"static text log one.",
 	}
@@ -90,7 +84,7 @@ func TestLogMessagesStatic(t *testing.T) {
 
 func TestLogMessagesLongLogs(t *testing.T) {
 	const eightMB int = 8 * 1024 * 1024
-	messages := []ffi.LogMessage{
+	messages := []string{
 		strings.Repeat("x", eightMB),
 		strings.Repeat("x", eightMB-1),
 	}
@@ -102,7 +96,7 @@ func assertEndOfIr(
 	reader io.Reader,
 	irReader *Reader,
 ) {
-	_, err := irReader.Read()
+	_, err := irReader.ReadLogEvent()
 	if EndOfIr != err {
 		t.Fatalf("assertEndOfIr failed got: %v", err)
 	}
@@ -112,19 +106,24 @@ func assertIrLogEvent(
 	t *testing.T,
 	reader io.Reader,
 	irReader *Reader,
-	event ffi.LogEvent,
+	refEvent ffi.LogEvent,
 ) {
-	log, err := irReader.Read()
+	event, err := irReader.ReadLogEvent()
 	if nil != err {
-		t.Fatalf("Reader.Read failed: %v", err)
+		t.Fatalf("Reader.ReadLogEvent failed: %v", err)
 	}
-	if event.Timestamp != log.Timestamp {
-		t.Fatalf("Reader.Read wrong timestamp: '%v' != '%v'", log.Timestamp, event.Timestamp)
+	for _, key := range testKeys {
+		if refEvent[key] != event[key] {
+			t.Fatalf("Reader.ReadLogEvent wrong %v, wanted: '%v' (%T) got: '%v' (%T)",
+				key,
+				refEvent[key],
+				refEvent[key],
+				event[key],
+				event[key],
+			)
+		}
 	}
-	if event.LogMessage != log.LogMessageView {
-		t.Fatalf("Reader.Read wrong message: '%v' != '%v'", log.LogMessageView, event.LogMessage)
-	}
-	t.Logf("'%v' : '%.128v'\n", log.Timestamp, log.LogMessageView)
+	t.Logf("'%v'\n", event)
 }
 
 func generateTestArgs(t *testing.T, prefix string) []testArgs {
@@ -144,7 +143,7 @@ func generateTestArgs(t *testing.T, prefix string) []testArgs {
 	return tests
 }
 
-func testLogMessages(t *testing.T, messages []ffi.LogMessage) {
+func testLogMessages(t *testing.T, messages []string) {
 	for _, args := range generateTestArgs(t, t.Name()+"-SerDer") {
 		args := args // capture range variable for func literal
 		t.Run(

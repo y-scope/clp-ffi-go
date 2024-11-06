@@ -30,6 +30,10 @@
     "https://bcr.bazel.build/modules/gazelle/0.37.0/source.json": "b3adc10e2394e7f63ea88fb1d622d4894bfe9ec6961c493ae9a887723ab16831",
     "https://bcr.bazel.build/modules/googletest/1.11.0/MODULE.bazel": "3a83f095183f66345ca86aa13c58b59f9f94a2f81999c093d4eeaa2d262d12f4",
     "https://bcr.bazel.build/modules/googletest/1.11.0/source.json": "c73d9ef4268c91bd0c1cd88f1f9dfa08e814b1dbe89b5f594a9f08ba0244d206",
+    "https://bcr.bazel.build/modules/msgpack-c/6.1.0/MODULE.bazel": "2822ba864146468b3128216ad416f8b39b511395e88d896d472c9c6b30b1ceb2",
+    "https://bcr.bazel.build/modules/msgpack-c/6.1.0/source.json": "b412dd4c8290ea0cce122616076e62ffe1b0799cebd6422608c407608193c1c9",
+    "https://bcr.bazel.build/modules/nlohmann_json/3.11.3.bcr.1/MODULE.bazel": "83bbe365b1eb640ef903df2240f11e7df8f70563199bc17085816033bc36da89",
+    "https://bcr.bazel.build/modules/nlohmann_json/3.11.3.bcr.1/source.json": "7b0b57c1a789dd0b81b8e6f639f36f96a6f4534c2f2ed4430118af6769b00cdf",
     "https://bcr.bazel.build/modules/platforms/0.0.10/MODULE.bazel": "8cb8efaf200bdeb2150d93e162c40f388529a25852b332cec879373771e48ed5",
     "https://bcr.bazel.build/modules/platforms/0.0.10/source.json": "f22828ff4cf021a6b577f1bf6341cb9dcd7965092a439f64fc1bb3b7a5ae4bd5",
     "https://bcr.bazel.build/modules/platforms/0.0.4/MODULE.bazel": "9b328e31ee156f53f3c416a64f8491f7eb731742655a47c9eec4703a71644aee",
@@ -53,8 +57,8 @@
     "https://bcr.bazel.build/modules/rules_go/0.48.1/MODULE.bazel": "ad27296e268624d7d53043fe5ff88d5486e7a29596336f629b379b83c67e6d8b",
     "https://bcr.bazel.build/modules/rules_go/0.48.1/source.json": "83321289aa500090871d8f761d991f0534946414640cce5c18d2df44cff8e082",
     "https://bcr.bazel.build/modules/rules_java/4.0.0/MODULE.bazel": "5a78a7ae82cd1a33cef56dc578c7d2a46ed0dca12643ee45edbb8417899e6f74",
-    "https://bcr.bazel.build/modules/rules_java/7.6.1/MODULE.bazel": "2f14b7e8a1aa2f67ae92bc69d1ec0fa8d9f827c4e17ff5e5f02e91caa3b2d0fe",
-    "https://bcr.bazel.build/modules/rules_java/7.6.1/source.json": "8f3f3076554e1558e8e468b2232991c510ecbcbed9e6f8c06ac31c93bcf38362",
+    "https://bcr.bazel.build/modules/rules_java/7.6.5/MODULE.bazel": "481164be5e02e4cab6e77a36927683263be56b7e36fef918b458d7a8a1ebadb1",
+    "https://bcr.bazel.build/modules/rules_java/7.6.5/source.json": "a805b889531d1690e3c72a7a7e47a870d00323186a9904b36af83aa3d053ee8d",
     "https://bcr.bazel.build/modules/rules_jvm_external/4.4.2/MODULE.bazel": "a56b85e418c83eb1839819f0b515c431010160383306d13ec21959ac412d2fe7",
     "https://bcr.bazel.build/modules/rules_jvm_external/4.4.2/source.json": "a075731e1b46bc8425098512d038d416e966ab19684a10a34f4741295642fc35",
     "https://bcr.bazel.build/modules/rules_license/0.0.3/MODULE.bazel": "627e9ab0247f7d1e05736b59dbb1b6871373de5ad31c3011880b4133cafd4bd0",
@@ -76,43 +80,43 @@
     "https://bcr.bazel.build/modules/upb/0.0.0-20220923-a547704/source.json": "f1ef7d3f9e0e26d4b23d1c39b5f5de71f584dd7d1b4ef83d9bbba6ec7a6a6459",
     "https://bcr.bazel.build/modules/zlib/1.2.11/MODULE.bazel": "07b389abc85fdbca459b69e2ec656ae5622873af3f845e1c9d80fe179f3effa0",
     "https://bcr.bazel.build/modules/zlib/1.2.12/MODULE.bazel": "3b1a8834ada2a883674be8cbd36ede1b6ec481477ada359cd2d3ddc562340b27",
-    "https://bcr.bazel.build/modules/zlib/1.3/MODULE.bazel": "6a9c02f19a24dcedb05572b2381446e27c272cd383aed11d41d99da9e3167a72",
-    "https://bcr.bazel.build/modules/zlib/1.3/source.json": "b6b43d0737af846022636e6e255fd4a96fee0d34f08f3830e6e0bac51465c37c"
+    "https://bcr.bazel.build/modules/zlib/1.3.1.bcr.3/MODULE.bazel": "af322bc08976524477c79d1e45e241b6efbeb918c497e8840b8ab116802dda79",
+    "https://bcr.bazel.build/modules/zlib/1.3.1.bcr.3/source.json": "2be409ac3c7601245958cd4fcdff4288be79ed23bd690b4b951f500d54ee6e7d"
   },
   "selectedYankedVersions": {},
   "moduleExtensions": {
-    "//cpp:deps.bzl%clp_ffi_go_ext_deps": {
+    "//:bazel/deps.bzl%clp_ffi_go_ext_deps": {
       "general": {
-        "bzlTransitiveDigest": "B9oCb6w6eVxTzje85vfRMCZ78QDtBXi/nyYZj34KAMM=",
-        "usagesDigest": "D7z6fAnG/fRPs4uUPHy4GqCSlDUekEARjYSWg2XD2fc=",
+        "bzlTransitiveDigest": "uhvRjHIujSi6OMTa9C72jJ+wzp/9cfca2Dj5nmaEQt4=",
+        "usagesDigest": "usgVVfzo8JxL9xNLEMqGtFoGQLiBNEOtAErBV3dPAKc=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
         "generatedRepoSpecs": {
-          "clp_ext_com_github_nlohmann_json": {
+          "clp_ext_com_github_ned14_outcome": {
             "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
             "ruleClassName": "http_archive",
             "attributes": {
-              "sha256": "8cbda3504fd1624fbce641d3f6b884c76e5afead1fa6d6abfcbea4b734dc634b",
+              "sha256": "6505320e8d0e55913a9e3c6b33d03c61967429535fbb1fb8613c21527bb15110",
               "urls": [
-                "https://github.com/nlohmann/json/archive/fec56a1a16c6e1c1b1f4e116a20e79398282626c.zip"
+                "https://github.com/ned14/outcome/archive/v2.2.10.tar.gz"
               ],
-              "strip_prefix": "json-fec56a1a16c6e1c1b1f4e116a20e79398282626c",
-              "add_prefix": "json",
-              "build_file_content": "\ncc_library(\n    name = \"libjson\",\n    srcs = [\"json/single_include/nlohmann/json.hpp\"],\n    hdrs = [\"json/single_include/nlohmann/json.hpp\"],\n    includes = [\".\"],\n    visibility = [\"//visibility:public\"],\n)\n"
+              "strip_prefix": "outcome-2.2.10",
+              "add_prefix": "outcome",
+              "build_file_content": "\ncc_library(\n    name = \"outcome\",\n    hdrs = [\"outcome/single-header/outcome.hpp\"],\n    includes = [\".\"],\n    visibility = [\"//visibility:public\"],\n)\n"
             }
           },
           "com_github_y_scope_clp": {
             "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
             "ruleClassName": "http_archive",
             "attributes": {
-              "sha256": "1daaa432357ed470eb8a2b5e7c8b4064418fa0f5d89fd075c6f1b4aef1ac6319",
+              "sha256": "b7ab19af62fb0601d858047452e2f330489070caccd4aaf1e09709f6ca6324ab",
               "urls": [
-                "https://github.com/y-scope/clp/archive/3c1f0ad1c44b53d6c17fd7c1d578ec61616b5661.zip"
+                "https://github.com/y-scope/clp/archive/e21672b906641c4724a25ea74f13857afdebe0e8.tar.gz"
               ],
-              "strip_prefix": "clp-3c1f0ad1c44b53d6c17fd7c1d578ec61616b5661",
+              "strip_prefix": "clp-e21672b906641c4724a25ea74f13857afdebe0e8",
               "add_prefix": "clp",
-              "build_file_content": "\ncc_library(\n    name = \"libclp_ffi_core\",\n    srcs = [\n        \"clp/components/core/src/clp/BufferReader.cpp\",\n        \"clp/components/core/src/clp/ReaderInterface.cpp\",\n        \"clp/components/core/src/clp/ffi/encoding_methods.cpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/encoding_methods.cpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/decoding_methods.cpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/utils.cpp\",\n        \"clp/components/core/src/clp/ir/parsing.cpp\",\n        \"clp/components/core/src/clp/string_utils/string_utils.cpp\",\n    ],\n    hdrs = [\n        \"clp/components/core/src/clp/BufferReader.hpp\",\n        \"clp/components/core/src/clp/Defs.h\",\n        \"clp/components/core/src/clp/ErrorCode.hpp\",\n        \"clp/components/core/src/clp/ReaderInterface.hpp\",\n        \"clp/components/core/src/clp/ffi/encoding_methods.hpp\",\n        \"clp/components/core/src/clp/ffi/encoding_methods.inc\",\n        \"clp/components/core/src/clp/ffi/ir_stream/byteswap.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/encoding_methods.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/decoding_methods.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/decoding_methods.inc\",\n        \"clp/components/core/src/clp/ffi/ir_stream/protocol_constants.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/utils.hpp\",\n        \"clp/components/core/src/clp/ir/parsing.inc\",\n        \"clp/components/core/src/clp/ir/parsing.hpp\",\n        \"clp/components/core/src/clp/ir/types.hpp\",\n        \"clp/components/core/src/clp/string_utils/string_utils.hpp\",\n        \"clp/components/core/src/clp/TraceableException.hpp\",\n        \"clp/components/core/src/clp/time_types.hpp\",\n        \"clp/components/core/src/clp/type_utils.hpp\",\n    ],\n    includes = [\n        \"./clp/components/core/src\",\n        \"./clp/components/core/src/clp\",\n    ],\n    copts = [\n        \"-std=c++20\",\n    ] + select({\n        \"@platforms//os:osx\": [\n            \"-mmacosx-version-min=10.15\",\n        ],\n        \"//conditions:default\": [],\n    }),\n    deps = [\n        \"@clp_ext_com_github_nlohmann_json//:libjson\",\n    ],\n    visibility = [\"//visibility:public\"],\n)\n"
+              "build_file_content": "\ncc_library(\n    name = \"libclp_ffi_core\",\n    srcs = [\n        \"clp/components/core/src/clp/BufferReader.cpp\",\n        \"clp/components/core/src/clp/ffi/encoding_methods.cpp\",\n        \"clp/components/core/src/clp/ffi/KeyValuePairLogEvent.cpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/decoding_methods.cpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/encoding_methods.cpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/ir_unit_deserialization_methods.cpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/Serializer.cpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/utils.cpp\",\n        \"clp/components/core/src/clp/ffi/SchemaTree.cpp\",\n        \"clp/components/core/src/clp/ir/EncodedTextAst.cpp\",\n        \"clp/components/core/src/clp/ir/parsing.cpp\",\n        \"clp/components/core/src/clp/ReaderInterface.cpp\",\n        \"clp/components/core/src/clp/string_utils/string_utils.cpp\",\n    ],\n    hdrs = [\n        \"clp/components/core/src/clp/BufferReader.hpp\",\n        \"clp/components/core/src/clp/Defs.h\",\n        \"clp/components/core/src/clp/ErrorCode.hpp\",\n        \"clp/components/core/src/clp/ReaderInterface.hpp\",\n        \"clp/components/core/src/clp/ffi/encoding_methods.hpp\",\n        \"clp/components/core/src/clp/ffi/encoding_methods.inc\",\n        \"clp/components/core/src/clp/ffi/KeyValuePairLogEvent.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/byteswap.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/Deserializer.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/encoding_methods.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/decoding_methods.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/decoding_methods.inc\",\n        \"clp/components/core/src/clp/ffi/ir_stream/ir_unit_deserialization_methods.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/IrUnitHandlerInterface.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/IrUnitType.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/protocol_constants.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/Serializer.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/utils.hpp\",\n        \"clp/components/core/src/clp/ffi/SchemaTree.hpp\",\n        \"clp/components/core/src/clp/ffi/Value.hpp\",\n        \"clp/components/core/src/clp/ir/EncodedTextAst.hpp\",\n        \"clp/components/core/src/clp/ir/parsing.inc\",\n        \"clp/components/core/src/clp/ir/parsing.hpp\",\n        \"clp/components/core/src/clp/ir/types.hpp\",\n        \"clp/components/core/src/clp/string_utils/string_utils.hpp\",\n        \"clp/components/core/src/clp/TraceableException.hpp\",\n        \"clp/components/core/src/clp/time_types.hpp\",\n        \"clp/components/core/src/clp/type_utils.hpp\",\n    ],\n    includes = [\n        \"clp/components/core/src\",\n        \"clp/components/core/src/clp\",\n    ],\n    copts = [\n        \"-std=c++20\",\n    ] + select({\n        \"@platforms//os:osx\": [\n            \"-mmacosx-version-min=10.15\",\n        ],\n        \"//conditions:default\": [],\n    }),\n    deps = [\n        \"@clp_ext_com_github_ned14_outcome//:outcome\",\n        \"@nlohmann_json//:singleheader-json\",\n        \"@msgpack-c//:msgpack\",\n    ],\n    visibility = [\"//visibility:public\"],\n)\n"
             }
           }
         },
@@ -128,19 +132,19 @@
     "@@apple_support~//crosstool:setup.bzl%apple_cc_configure_extension": {
       "general": {
         "bzlTransitiveDigest": "PjIds3feoYE8SGbbIq2SFTZy3zmxeO2tQevJZNDo7iY=",
-        "usagesDigest": "aLmqbvowmHkkBPve05yyDNGN7oh7QE9kBADr3QIZTZs=",
+        "usagesDigest": "+hz7IHWN6A1oVJJWNDB6yZRG+RYhF76wAYItpAeIUIg=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
         "generatedRepoSpecs": {
-          "local_config_apple_cc": {
-            "bzlFile": "@@apple_support~//crosstool:setup.bzl",
-            "ruleClassName": "_apple_cc_autoconf",
-            "attributes": {}
-          },
           "local_config_apple_cc_toolchains": {
             "bzlFile": "@@apple_support~//crosstool:setup.bzl",
             "ruleClassName": "_apple_cc_autoconf_toolchains",
+            "attributes": {}
+          },
+          "local_config_apple_cc": {
+            "bzlFile": "@@apple_support~//crosstool:setup.bzl",
+            "ruleClassName": "_apple_cc_autoconf",
             "attributes": {}
           }
         },
@@ -156,7 +160,7 @@
     "@@platforms//host:extension.bzl%host_platform": {
       "general": {
         "bzlTransitiveDigest": "xelQcPZH8+tmuOHVjL9vDxMnnQNMlwj0SlvgoqBkm4U=",
-        "usagesDigest": "V1R2Y2oMxKNfx2WCWpSCaUV1WefW1o8HZGm3v1vHgY4=",
+        "usagesDigest": "hgylFkgWSg0ulUwWZzEM1aIftlUnbmw2ynWLdEfHnZc=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},

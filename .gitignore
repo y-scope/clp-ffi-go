@@ -1,13 +1,18 @@
-# Bazel-generated files
+# Bazel generated files
 bazel-bin
 bazel-ffi-go
 bazel-out
 bazel-testlogs
 
+# Task generated files
+.task/
+
+# Build directory
+build/
+
 # C++ build generated files
 cpp/.cache/
-cpp/build/
 **/compile_commands.json
 
 # Submodules
-cpp/clp
+tools/yscope-dev-utils

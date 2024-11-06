@@ -26,7 +26,7 @@ typedef struct {
  * A span of a byte array passed down through Cgo.
  */
 typedef struct {
-    void* m_data;
+    void const* m_data;
     size_t m_size;
 } ByteSpan;
 

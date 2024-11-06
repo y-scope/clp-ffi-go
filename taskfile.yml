@@ -1,0 +1,169 @@
+version: "3"
+
+includes:
+  lint: "task-lint.yml"
+  # utils: "tools/yscope-dev-utils/taskfiles/utils.yml"
+  utils: "task-utils.yml"
+
+vars:
+  G_BUILD_BASE_DIR: "{{.TASKFILE_DIR}}/build"
+  G_BUILD_TYPE: "Release"
+  G_BUILD_DIR: "{{.G_BUILD_BASE_DIR}}/{{.G_BUILD_TYPE}}"
+  G_DEPS_DIR: "{{.G_BUILD_BASE_DIR}}/deps"
+  G_INSTALL_PREFIX: "{{.TASKFILE_DIR}}"
+  G_INSTALL_INCLUDE_DIR: "{{.G_INSTALL_PREFIX}}/include/ffi_go"
+  G_INSTALL_LIB: '{{printf "%s/lib/libclp_ffi_%s_%s.a" .G_INSTALL_PREFIX OS ARCH}}'
+  G_INSTALL_CHECKSUM_FILE: "{{.G_BUILD_BASE_DIR}}/install.md5"
+
+tasks:
+  default:
+    cmds:
+      - task: "build"
+
+  build-cpp:
+    deps:
+      - "install-deps-cpp-clp"
+      - "install-deps-cpp-outcome"
+      - "install-deps-cpp-msgpack"
+    cmds:
+      - task: "utils:cmake-build"
+        vars:
+          BUILD_DIR: "{{.G_BUILD_DIR}}"
+          SOURCE_DIR: "{{.TASKFILE_DIR}}/cpp"
+          CMAKE_ARGS: >-
+            -DCMAKE_BUILD_TYPE="{{.G_BUILD_TYPE}}"
+            -DOS_SUFFIX="{{OS}}"
+            -DARCH_SUFFIX="{{ARCH}}"
+            -DDEPS_DIR="{{.G_DEPS_DIR}}"
+            -Dmsgpack-cxx_ROOT="{{.G_DEPS_DIR}}/msgpack-install"
+            -Doutcome_SOURCE_DIR="{{.G_DEPS_DIR}}/outcome-src"
+
+  build-go:
+    aliases: ["build"]
+    deps:
+      - "build-go-generate"
+      - "install-cpp"
+    sources:
+      - "{{.TASKFILE_DIR}}/go.mod"
+      - "{{.TASKFILE_DIR}}/ffi/**/*"
+      - "{{.TASKFILE_DIR}}/ir/**/*"
+    cmds:
+      - "go build {{.TASKFILE_DIR}}/..."
+
+  build-go-generate:
+    sources:
+      - "{{.TASKFILE_DIR}}/go.mod"
+      - "{{.TASKFILE_DIR}}/ffi/**/*"
+      - "{{.TASKFILE_DIR}}/ir/**/*"
+      - exclude: "{{.TASKFILE_DIR}}/ir/irerror_string.go"
+    generates: ["{{.TASKFILE_DIR}}/ir/irerror_string.go"]
+    cmds:
+      - |-
+        go install "golang.org/x/tools/cmd/stringer@latest"
+        go generate "{{.TASKFILE_DIR}}/..."
+
+  install-cpp:
+    deps: ["build-cpp"]
+    cmds:
+      - task: "utils:cmake-install"
+        vars:
+          BUILD_DIR: "{{.G_BUILD_DIR}}"
+          DATA_PATHS:
+            - "{{.G_INSTALL_INCLUDE_DIR}}"
+            - "{{.G_INSTALL_LIB}}"
+          INSTALL_PREFIX: "{{.G_INSTALL_PREFIX}}"
+          CHECKSUM_FILE: "{{.G_INSTALL_CHECKSUM_FILE}}"
+
+  install-deps-cpp-clp:
+    vars:
+      SOURCE_DIR: '{{default (printf "%s/clp-src/clp" .G_DEPS_DIR) .SOURCE_DIR}}'
+    deps: ["install-deps-cpp-clp-json"]
+    cmds:
+      - task: "utils:fetch-src"
+        vars:
+          OUTPUT_DIR: "{{.SOURCE_DIR}}"
+          URL: "https://github.com/y-scope/clp/archive/e21672b906641c4724a25ea74f13857afdebe0e8.tar.gz"
+          URL_SHA256: "b7ab19af62fb0601d858047452e2f330489070caccd4aaf1e09709f6ca6324ab"
+
+  install-deps-cpp-clp-json:
+    cmds:
+      - task: "utils:curl"
+        vars:
+          OUTPUT_FILE: "{{.G_DEPS_DIR}}/json-src/json/single_include/nlohmann/json.hpp"
+          URL: "https://github.com/nlohmann/json/releases/download/v3.11.3/json.hpp"
+          URL_SHA256: "9bea4c8066ef4a1c206b2be5a36302f8926f7fdc6087af5d20b417d0cf103ea6"
+
+  install-deps-cpp-msgpack:
+    vars:
+      BUILD_DIR: '{{default (printf "%s/msgpack-build" .G_DEPS_DIR) .BUILD_DIR}}'
+      SOURCE_DIR: '{{default (printf "%s/msgpack-src" .G_DEPS_DIR) .SOURCE_DIR}}'
+      INSTALL_PREFIX: '{{default (printf "%s/msgpack-install" .G_DEPS_DIR) .INSTALL_PREFIX}}'
+    cmds:
+      - task: "utils:fetch-src"
+        vars:
+          OUTPUT_DIR: "{{.SOURCE_DIR}}"
+          URL: "https://github.com/msgpack/msgpack-c/archive/cpp-6.1.0.tar.gz"
+          URL_SHA256: "5e63e4d9b12ab528fccf197f7e6908031039b1fc89cd8da0e97fbcbf5a6c6d3a"
+      - task: "utils:cmake-build"
+        vars:
+          BUILD_DIR: "{{.BUILD_DIR}}"
+          SOURCE_DIR: "{{.SOURCE_DIR}}"
+          CMAKE_ARGS: >-
+            -DMSGPACK_CXX20="ON"
+            -DMSGPACK_USE_BOOST="OFF"
+      - task: "utils:cmake-install"
+        vars:
+          BUILD_DIR: "{{.BUILD_DIR}}"
+          INSTALL_PREFIX: "{{.INSTALL_PREFIX}}"
+
+  install-deps-cpp-outcome:
+    vars:
+      SOURCE_DIR: '{{default (printf "%s/outcome-src/outcome/single-header" .G_DEPS_DIR) .SOURCE_DIR}}'
+    cmds:
+      - task: "utils:curl"
+        vars:
+          OUTPUT_FILE: "{{.SOURCE_DIR}}/outcome.hpp"
+          URL: "https://github.com/ned14/outcome/raw/v2.2.10/single-header/outcome.hpp"
+          URL_SHA256: "ad624622dcb1613027d39bd1aac93a13f11f46df197aa494a3980bef3c044dad"
+
+  clean:
+    cmds:
+      - |-
+        rm -fr "{{.G_INSTALL_INCLUDE_DIR}}"
+        rm -f "{{.G_INSTALL_LIB}}"
+        rm -fr "{{.G_BUILD_DIR}}"
+        rm -f "{{.G_BUILD_DIR}}.md5"
+        go clean -cache
+
+  clean-all:
+    deps:
+      - "clean-deps"
+      - "clean"
+    cmds:
+      - "rm -fr {{.G_BUILD_BASE_DIR}}"
+
+  clean-deps:
+    cmds:
+      - "rm -fr {{.G_DEPS_DIR}}"
+
+  test-all:
+    deps:
+      - "test"
+      - "test-bazel"
+
+  test:
+    deps: ["build-go"]
+    cmds:
+      - "go test ./..."
+
+  build-bazel:
+    cmds:
+      - "bazel build //..."
+
+  clean-bazel:
+    cmds:
+      - "bazel clean --expunge"
+
+  test-bazel:
+    cmds:
+      - "bazel test //ir:ir_test"

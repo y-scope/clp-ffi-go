@@ -1,14 +1,25 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-_build_clp_ext_com_github_nlohmann_json = """
+_build_clp_ext_com_github_ned14_outcome = """
 cc_library(
-    name = "libjson",
-    srcs = ["json/single_include/nlohmann/json.hpp"],
-    hdrs = ["json/single_include/nlohmann/json.hpp"],
+    name = "outcome",
+    hdrs = ["outcome/single-header/outcome.hpp"],
     includes = ["."],
     visibility = ["//visibility:public"],
 )
 """
+
+def clp_ext_com_github_ned14_outcome():
+    ref = "2.2.10"
+    ref_sha256 = "6505320e8d0e55913a9e3c6b33d03c61967429535fbb1fb8613c21527bb15110"
+    http_archive(
+        name = "clp_ext_com_github_ned14_outcome",
+        sha256 = ref_sha256,
+        urls = ["https://github.com/ned14/outcome/archive/v{}.tar.gz".format(ref)],
+        strip_prefix = "outcome-{}".format(ref),
+        add_prefix = "outcome",
+        build_file_content = _build_clp_ext_com_github_ned14_outcome,
+    )
 
 _build_com_github_y_scope_clp = """
 cc_library(
@@ -16,9 +27,14 @@ cc_library(
     srcs = [
         "clp/components/core/src/clp/BufferReader.cpp",
         "clp/components/core/src/clp/ffi/encoding_methods.cpp",
-        "clp/components/core/src/clp/ffi/ir_stream/encoding_methods.cpp",
+        "clp/components/core/src/clp/ffi/KeyValuePairLogEvent.cpp",
         "clp/components/core/src/clp/ffi/ir_stream/decoding_methods.cpp",
+        "clp/components/core/src/clp/ffi/ir_stream/encoding_methods.cpp",
+        "clp/components/core/src/clp/ffi/ir_stream/ir_unit_deserialization_methods.cpp",
+        "clp/components/core/src/clp/ffi/ir_stream/Serializer.cpp",
         "clp/components/core/src/clp/ffi/ir_stream/utils.cpp",
+        "clp/components/core/src/clp/ffi/SchemaTree.cpp",
+        "clp/components/core/src/clp/ir/EncodedTextAst.cpp",
         "clp/components/core/src/clp/ir/parsing.cpp",
         "clp/components/core/src/clp/ReaderInterface.cpp",
         "clp/components/core/src/clp/string_utils/string_utils.cpp",
@@ -30,12 +46,21 @@ cc_library(
         "clp/components/core/src/clp/ReaderInterface.hpp",
         "clp/components/core/src/clp/ffi/encoding_methods.hpp",
         "clp/components/core/src/clp/ffi/encoding_methods.inc",
+        "clp/components/core/src/clp/ffi/KeyValuePairLogEvent.hpp",
         "clp/components/core/src/clp/ffi/ir_stream/byteswap.hpp",
+        "clp/components/core/src/clp/ffi/ir_stream/Deserializer.hpp",
         "clp/components/core/src/clp/ffi/ir_stream/encoding_methods.hpp",
         "clp/components/core/src/clp/ffi/ir_stream/decoding_methods.hpp",
         "clp/components/core/src/clp/ffi/ir_stream/decoding_methods.inc",
+        "clp/components/core/src/clp/ffi/ir_stream/ir_unit_deserialization_methods.hpp",
+        "clp/components/core/src/clp/ffi/ir_stream/IrUnitHandlerInterface.hpp",
+        "clp/components/core/src/clp/ffi/ir_stream/IrUnitType.hpp",
         "clp/components/core/src/clp/ffi/ir_stream/protocol_constants.hpp",
+        "clp/components/core/src/clp/ffi/ir_stream/Serializer.hpp",
         "clp/components/core/src/clp/ffi/ir_stream/utils.hpp",
+        "clp/components/core/src/clp/ffi/SchemaTree.hpp",
+        "clp/components/core/src/clp/ffi/Value.hpp",
+        "clp/components/core/src/clp/ir/EncodedTextAst.hpp",
         "clp/components/core/src/clp/ir/parsing.inc",
         "clp/components/core/src/clp/ir/parsing.hpp",
         "clp/components/core/src/clp/ir/types.hpp",
@@ -45,8 +70,8 @@ cc_library(
         "clp/components/core/src/clp/type_utils.hpp",
     ],
     includes = [
-        "./clp/components/core/src",
-        "./clp/components/core/src/clp",
+        "clp/components/core/src",
+        "clp/components/core/src/clp",
     ],
     copts = [
         "-std=c++20",
@@ -57,39 +82,28 @@ cc_library(
         "//conditions:default": [],
     }),
     deps = [
-        "@clp_ext_com_github_nlohmann_json//:libjson",
+        "@clp_ext_com_github_ned14_outcome//:outcome",
+        "@nlohmann_json//:singleheader-json",
+        "@msgpack-c//:msgpack",
     ],
     visibility = ["//visibility:public"],
 )
 """
 
-def _clp_ext_com_github_nlohmann_json():
-    commit = "fec56a1a16c6e1c1b1f4e116a20e79398282626c"
-    commit_sha256 = "8cbda3504fd1624fbce641d3f6b884c76e5afead1fa6d6abfcbea4b734dc634b"
-    http_archive(
-        name = "clp_ext_com_github_nlohmann_json",
-        sha256 = commit_sha256,
-        urls = ["https://github.com/nlohmann/json/archive/{}.zip".format(commit)],
-        strip_prefix = "json-{}".format(commit),
-        add_prefix = "json",
-        build_file_content = _build_clp_ext_com_github_nlohmann_json,
-    )
-
 def com_github_y_scope_clp():
-    _clp_ext_com_github_nlohmann_json()
-
-    commit = "3c1f0ad1c44b53d6c17fd7c1d578ec61616b5661"
-    commit_sha256 = "1daaa432357ed470eb8a2b5e7c8b4064418fa0f5d89fd075c6f1b4aef1ac6319"
+    ref = "e21672b906641c4724a25ea74f13857afdebe0e8"
+    ref_sha256 = "b7ab19af62fb0601d858047452e2f330489070caccd4aaf1e09709f6ca6324ab"
     http_archive(
         name = "com_github_y_scope_clp",
-        sha256 = commit_sha256,
-        urls = ["https://github.com/y-scope/clp/archive/{}.zip".format(commit)],
-        strip_prefix = "clp-{}".format(commit),
+        sha256 = ref_sha256,
+        urls = ["https://github.com/y-scope/clp/archive/{}.tar.gz".format(ref)],
+        strip_prefix = "clp-{}".format(ref),
         add_prefix = "clp",
         build_file_content = _build_com_github_y_scope_clp,
     )
 
 def _clp_ffi_go_ext_deps_impl(_):
+    clp_ext_com_github_ned14_outcome()
     com_github_y_scope_clp()
 
 clp_ffi_go_ext_deps = module_extension(

@@ -1,18 +1,16 @@
 package ir
 
 import (
-	"math"
 	"os"
+	"strings"
 	"testing"
-	"time"
 
 	"github.com/klauspost/compress/zstd"
 
 	"github.com/y-scope/clp-ffi-go/ffi"
-	"github.com/y-scope/clp-ffi-go/search"
 )
 
-func TestIrReader(t *testing.T) {
+func TestIrReaderOnFile(t *testing.T) {
 	var fpath string = os.Getenv("go_test_ir")
 	if fpath == "" {
 		t.Skip("Set an input ir stream using the env variable: go_test_ir")
@@ -33,24 +31,16 @@ func TestIrReader(t *testing.T) {
 	}
 	defer irr.Close()
 
-	interval := search.TimestampInterval{Lower: 0, Upper: math.MaxInt64}
-	queries := []search.WildcardQuery{
-		search.NewWildcardQuery("*ERROR*", true),
-		search.NewWildcardQuery("*WARN*", true),
-	}
 	for {
-		var log *ffi.LogEventView
-		// log, err = irr.Read()
-		// log, err = irr.ReadToContains("ERROR")
-		// var _ search.WildcardQuery
-		log, _, err = irr.ReadToWildcardMatchWithTimeInterval(
-			queries,
-			interval,
-		)
+		var event ffi.LogEvent
+		// event, err = irr.Read()
+		event, err = irr.ReadToFunc(func(event ffi.LogEvent) bool {
+			return strings.Contains(event["message"].(string), "ERROR")
+		})
 		if nil != err {
 			break
 		}
-		t.Logf("msg: %v | %v", time.UnixMilli(int64(log.Timestamp)), log.LogMessageView)
+		t.Logf("msg: %v", event["message"])
 	}
 	if EndOfIr != err {
 		t.Fatalf("Reader.Read failed: %v", err)

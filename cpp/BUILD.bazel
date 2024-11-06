@@ -1,12 +1,14 @@
 cc_library(
     name = "libclp_ffi_go",
-    srcs = glob(["src/ffi_go/**"]),
+    srcs = glob(["src/**/*"]),
     hdrs = glob(["src/ffi_go/**/*.h"]),
     includes = [
         "src",
     ],
     deps = [
+        "@clp_ext_com_github_ned14_outcome//:outcome",
         "@com_github_y_scope_clp//:libclp_ffi_core",
+        "@msgpack-c//:msgpack",
     ],
     copts = [
         "-std=c++20",

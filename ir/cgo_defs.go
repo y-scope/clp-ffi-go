@@ -2,14 +2,11 @@ package ir
 
 /*
 #include <ffi_go/defs.h>
-#include <ffi_go/search/wildcard_query.h>
 */
 import "C"
 
 import (
 	"unsafe"
-
-	"github.com/y-scope/clp-ffi-go/search"
 )
 
 // The follow functions are helpers to cleanup Cgo related code. The underlying
@@ -44,20 +41,6 @@ func newCStringView(s string) C.StringView {
 	return C.StringView{
 		(*C.char)(unsafe.Pointer(unsafe.StringData(s))),
 		C.size_t(len(s)),
-	}
-}
-
-func newMergedWildcardQueryView(mergedQuery search.MergedWildcardQuery) C.MergedWildcardQueryView {
-	return C.MergedWildcardQueryView{
-		newCStringView(mergedQuery.Queries()),
-		C.SizetSpan{
-			(*C.size_t)(unsafe.Pointer(unsafe.SliceData(mergedQuery.EndOffsets()))),
-			C.size_t(len(mergedQuery.EndOffsets())),
-		},
-		C.BoolSpan{
-			(*C.bool)(unsafe.Pointer(unsafe.SliceData(mergedQuery.CaseSensitivity()))),
-			C.size_t(len(mergedQuery.CaseSensitivity())),
-		},
 	}
 }
 

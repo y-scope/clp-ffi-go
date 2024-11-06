@@ -1,3 +1,12 @@
+FormatStyle: "file"
+WarningsAsErrors: "*"
+
+# Disabled checks:
+# - `bugprone-easily-swappable-parameters` because it's difficult to mitigate.
+# - `readability-identifier-length` because it's case-dependent.
+# - `readability-named-parameter` because we don't want to enforce that all parameters have a name.
+# - `readability-simplify-boolean-expr` because changing `false == x` to `!x` violates our style
+#   guide.
 Checks: >-
   bugprone-*,
   -bugprone-easily-swappable-parameters,
@@ -15,108 +24,119 @@ Checks: >-
   -readability-named-parameter,
   -readability-simplify-boolean-expr,
 
-WarningsAsErrors: "*"
-FormatStyle: "file"
 CheckOptions:
+  # These checks are intended to catch potentially bug-prone conversions from `signed char` to
+  # larger integer types, but are only relevant when `signed char` is used to store character data.
+  # If a type like `int8_t` is used to represent signed integers, these checks can be safely
+  # skipped.
+  #
+  # NOTE: The misspelling of "Typdef" is in clang's code.
+  bugprone-signed-char-misuse.CharTypdefsToIgnore: "int8_t"
+  cert-str34-c.CharTypdefsToIgnore: "int8_t"
+
+  # This is necessary to allow simple classes (with all members being public) that have a
+  # constructor
   misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: true
 
+  # NOTE: In the naming rules below, a rule may imply another (e.g., `ClassCase` seems to imply
+  # `AbstractClassCase`), so ideally we'd only specify the parent rule if we didn't need to
+  # customize the child rules. However, these relationships aren't documented, so we can't rely on
+  # them. Instead, we explicitly specify all rules (except those that should have reasonable
+  # defaults, e.g., `""` for `ClassPrefix`).
+
+  # Macro naming rules
   readability-identifier-naming.MacroDefinitionCase: "UPPER_CASE"
 
-  # NAMESPACES
-  # NamespaceCase implies:
-  # readability-identifier-naming.InlineNamespaceCase
+  # Namespace naming rules
   readability-identifier-naming.NamespaceCase: "lower_case"
+  readability-identifier-naming.InlineNamespaceCase: "lower_case"
 
-  # CLASSES
-  # ClassCase implies:
-  # AbstractClassCase
-  # StructCase
-  readability-identifier-naming.ClassCase: "CamelCase"
-
-  readability-identifier-naming.UnionCase: "CamelCase"
-
-  # CONSTANTS
-  readability-identifier-naming.ConstexprVariableCase: "CamelCase"
-  readability-identifier-naming.ConstexprVariablePrefix: "c"
-  # ConstantCase implies:
-  # ClassConstantCase
-  # ConstantMemberCase
-  # ConstantParameterCase
-  # ConstantPointerParameterCase
-  # GlobalConstantCase
-  # GlobalConstantPointerCase
-  # LocalConstantCase
-  # LocalConstantPointerCase
-  # StaticConstantCase
-  readability-identifier-naming.ConstantCase: "CamelCase"
-  # ConstantPrefix implies:
-  # ClassConstantPrefix
-  # ConstantMemberPrefix
-  # ConstantParameterPrefix
-  # ConstantPointerParameterPrefix
-  # GlobalConstantPrefix
-  # GlobalConstantPointerPrefix
-  # LocalConstantPrefix
-  # LocalConstantPointerPrefix
-  # StaticConstantPrefix
-  readability-identifier-naming.ConstantPrefix: "c"
-  # Below are constants which can be determined at runtime, so we use the variable naming convention
-  readability-identifier-naming.ConstantMemberCase: "lower_case"
-  # ConstantParameterCase implies:
-  # ConstantPointerParameterCase
-  readability-identifier-naming.ConstantParameterCase: "lower_case"
-  # LocalConstantCase implies:
-  # LocalConstantPointerCase
-  readability-identifier-naming.LocalConstantCase: "lower_case"
-
-  # VARIABLES
-  # VariableCase implies:
-  # GlobalPointerCase
-  # GlobalVariableCase
-  # LocalPointerCase
-  # LocalVariableCase
-  # StaticVariableCase
-  readability-identifier-naming.VariableCase: "lower_case"
-
-  # CLASS MEMBERS
-  readability-identifier-naming.ClassMemberCase: "lower_case"
-  readability-identifier-naming.ClassMemberPrefix: "m_"
-  # MemberCase implies:
-  # PrivateMemberCase
-  # ProtectedMemberCase
-  # PublicMemberCase
-  readability-identifier-naming.MemberCase: "lower_case"
-  readability-identifier-naming.MemberPrefix: "m_"
-  readability-identifier-naming.PublicMemberPrefix: ""
-
-  # PARAMETERS
-  # ParameterCase implies:
-  # PointerParameterCase
-  readability-identifier-naming.ParameterCase: "lower_case"
-  readability-identifier-naming.TemplateParameterCase: "lower_case"
-
-  # FUNCTIONS
-  # FunctionCase implies:
-  # ClassMethodCase
-  # ConstexprFunctionCase
-  # ConstexprMethodCase
-  # GlobalFunctionCase
-  # MethodCase
-  # PublicMethodCase
-  # ProtectedMethodCase
-  # PrivateMethodCase
-  # VirtualMethodCase
-  readability-identifier-naming.FunctionCase: "lower_case"
-
-  readability-identifier-naming.EnumCase: "CamelCase"
-  # EnumConstantCase implies:
-  # ScopedEnumConstantCase
-  readability-identifier-naming.EnumConstantCase: "CamelCase"
-
-  # TYPE NAMES
+  # Type naming rules
   readability-identifier-naming.TypeAliasCase: "CamelCase"
   readability-identifier-naming.TypeAliasIgnoredRegexp: "[0-9a-z_]+_t"
   readability-identifier-naming.TypedefCase: "CamelCase"
   readability-identifier-naming.TypedefIgnoredRegexp: "[0-9a-z_]+_t"
   readability-identifier-naming.TypeTemplateParameterCase: "CamelCase"
   readability-identifier-naming.TypeTemplateParameterIgnoredRegexp: "[0-9a-z_]+_t"
+
+  # Concept naming rules
+  readability-identifier-naming.ConceptCase: "CamelCase"
+
+  # Union naming rules
+  readability-identifier-naming.UnionCase: "CamelCase"
+
+  # Enum naming rules
+  readability-identifier-naming.EnumCase: "CamelCase"
+  readability-identifier-naming.EnumConstantCase: "CamelCase"
+  readability-identifier-naming.ScopedEnumConstantCase: "CamelCase"
+
+  # Class naming rules
+  readability-identifier-naming.AbstractClassCase: "CamelCase"
+  readability-identifier-naming.ClassCase: "CamelCase"
+  readability-identifier-naming.StructCase: "CamelCase"
+
+  # Function naming rules
+  readability-identifier-naming.ClassMethodCase: "lower_case"
+  readability-identifier-naming.ConstexprFunctionCase: "lower_case"
+  readability-identifier-naming.ConstexprMethodCase: "lower_case"
+  readability-identifier-naming.FunctionCase: "lower_case"
+  readability-identifier-naming.GlobalFunctionCase: "lower_case"
+  readability-identifier-naming.MethodCase: "lower_case"
+  readability-identifier-naming.PrivateMethodCase: "lower_case"
+  readability-identifier-naming.ProtectedMethodCase: "lower_case"
+  readability-identifier-naming.PublicMethodCase: "lower_case"
+  readability-identifier-naming.VirtualMethodCase: "lower_case"
+
+  # Parameter naming rules
+  readability-identifier-naming.ParameterCase: "lower_case"
+  readability-identifier-naming.ParameterPackCase: "lower_case"
+  readability-identifier-naming.PointerParameterCase: "lower_case"
+  readability-identifier-naming.TemplateParameterCase: "lower_case"
+  readability-identifier-naming.TemplateTemplateParameterCase: "lower_case"
+  readability-identifier-naming.ValueTemplateParameterCase: "lower_case"
+
+  # Constexpr naming rules
+  readability-identifier-naming.ConstexprVariableCase: "CamelCase"
+  readability-identifier-naming.ConstexprVariablePrefix: "c"
+
+  # Constant naming rules
+  readability-identifier-naming.ClassConstantCase: "CamelCase"
+  readability-identifier-naming.ClassConstantPrefix: "c"
+  readability-identifier-naming.ConstantCase: "CamelCase"
+  readability-identifier-naming.ConstantPrefix: "c"
+  readability-identifier-naming.GlobalConstantCase: "CamelCase"
+  readability-identifier-naming.GlobalConstantPrefix: "c"
+  readability-identifier-naming.GlobalConstantPointerCase: "CamelCase"
+  readability-identifier-naming.GlobalConstantPointerPrefix: "c"
+  readability-identifier-naming.StaticConstantCase: "CamelCase"
+  readability-identifier-naming.StaticConstantPrefix: "c"
+
+  # Naming rules for constants that can be determined at runtime
+  readability-identifier-naming.ConstantMemberCase: "lower_case"
+  # NOTE: We set this to ensure it doesn't default to `MemberPrefix`
+  readability-identifier-naming.ConstantMemberPrefix: ""
+  readability-identifier-naming.ConstantParameterCase: "lower_case"
+  readability-identifier-naming.ConstantPointerParameterCase: "lower_case"
+  readability-identifier-naming.LocalConstantCase: "lower_case"
+  readability-identifier-naming.LocalConstantPointerCase: "lower_case"
+
+  # Class member naming rules
+  readability-identifier-naming.ClassMemberCase: "lower_case"
+  # NOTE: We set this in case it doesn't default to `MemberPrefix`
+  readability-identifier-naming.ClassMemberPrefix: "m_"
+  readability-identifier-naming.MemberCase: "lower_case"
+  readability-identifier-naming.MemberPrefix: "m_"
+  readability-identifier-naming.PrivateMemberCase: "lower_case"
+  readability-identifier-naming.PrivateMemberPrefix: "m_"
+  readability-identifier-naming.ProtectedMemberCase: "lower_case"
+  readability-identifier-naming.ProtectedMemberPrefix: "m_"
+  readability-identifier-naming.PublicMemberCase: "lower_case"
+  readability-identifier-naming.PublicMemberPrefix: ""
+
+  # Variable naming rules
+  readability-identifier-naming.GlobalPointerCase: "lower_case"
+  readability-identifier-naming.GlobalVariableCase: "lower_case"
+  readability-identifier-naming.LocalPointerCase: "lower_case"
+  readability-identifier-naming.LocalVariableCase: "lower_case"
+  readability-identifier-naming.StaticVariableCase: "lower_case"
+  readability-identifier-naming.VariableCase: "lower_case"

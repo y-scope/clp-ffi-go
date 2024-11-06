@@ -21,14 +21,6 @@ type (
 	FourByteEncoding  = int32
 )
 
-// TimestampInfo contains general information applying to all timestamps in
-// contiguous IR. This information comes from the metadata in the IR preamble.
-type TimestampInfo struct {
-	Pattern       string
-	PatternSyntax string
-	TimeZoneId    string
-}
-
 // ir.BufView represents a slice of CLP IR, utilizing memory allocated by C++
 // instead of the Go heap. A BufView, denoted as x, is valid upon being returned
 // and maintains its validity until the same object (e.g., an [ir.Serializer])
@@ -51,3 +43,5 @@ type LogMessage[T EightByteEncoding | FourByteEncoding] struct {
 type LogMessageView[T EightByteEncoding | FourByteEncoding] struct {
 	LogMessage[T]
 }
+
+const FfiSuccess = 0

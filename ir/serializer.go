@@ -7,46 +7,37 @@ package ir
 import "C"
 
 import (
+	"syscall"
 	"unsafe"
+
+	"github.com/vmihailenco/msgpack/v5"
 
 	"github.com/y-scope/clp-ffi-go/ffi"
 )
 
-// A Serializer exports functions to serialize log events into a CLP IR byte
-// stream. Serialization functions only return views (slices) of IR bytes,
-// leaving their use to the user. Each Serializer owns its own unique underlying
-// memory for the views it produces/returns. This memory is reused for each
-// view, so to persist the contents the memory must be copied into another
-// object. Close must be called to free the underlying memory and failure to do
-// so will result in a memory leak.
+// Exports functions to serialize log events into a CLP IR byte stream.
+// Serialization functions only return views (slices) of IR bytes, leaving their use to the user.
+// Each Serializer is backed by a C++ object that owns the memory for the views it produces/returns.
+// This memory is reused for each view, so to persist the contents the memory must be copied into
+// another object. Close must be called to free the underlying memory and failure to do so will
+// result in a memory leak.
 type Serializer interface {
-	SerializeLogEvent(event ffi.LogEvent) (BufView, error)
-	TimestampInfo() TimestampInfo
+	SerializeLogEvent(logEvent ffi.LogEvent) (BufView, error)
+	SerializeMsgPackBytes(msgPackBytes []byte) (BufView, error)
 	Close() error
 }
 
-// EightByteSerializer creates and returns a new Serializer that writes eight
-// byte encoded CLP IR and serializes a IR preamble into a BufView using it. On
-// error returns:
-//   - nil Serializer
-//   - nil BufView
-//   - [IrError] error: CLP failed to successfully serialize
-func EightByteSerializer(
-	tsPattern string,
-	tsPatternSyntax string,
-	timeZoneId string,
-) (Serializer, BufView, error) {
+// Creates and returns a new `Serializer` capable of writing eight byte encoded CLP IR along with an
+// IR preamble.
+// @return a new Serializer, BufView containing a preamble, nil
+// @return Forward's `ir_serializer_eight_byte_create` return values as [syscall.Errno].
+func EightByteSerializer() (Serializer, BufView, error) {
 	var irView C.ByteSpan
-	irs := eightByteSerializer{
-		commonSerializer{TimestampInfo{tsPattern, tsPatternSyntax, timeZoneId}, nil},
-	}
-	if err := IrError(C.ir_serializer_new_eight_byte_serializer_with_preamble(
-		newCStringView(tsPattern),
-		newCStringView(tsPatternSyntax),
-		newCStringView(timeZoneId),
+	irs := eightByteSerializer{commonSerializer{nil}}
+	if err := syscall.Errno(C.ir_serializer_eight_byte_create(
 		&irs.cptr,
 		&irView,
-	)); Success != err {
+	)); FfiSuccess != err {
 		return nil, nil, err
 	}
 	return &irs, unsafe.Slice((*byte)(irView.m_data), irView.m_size), nil
@@ -58,76 +49,77 @@ func EightByteSerializer(
 //   - nil Serializer
 //   - nil BufView
 //   - [IrError] error: CLP failed to successfully serialize
-func FourByteSerializer(
-	tsPattern string,
-	tsPatternSyntax string,
-	timeZoneId string,
-	referenceTs ffi.EpochTimeMs,
-) (Serializer, BufView, error) {
+func FourByteSerializer() (Serializer, BufView, error) {
 	var irView C.ByteSpan
-	irs := fourByteSerializer{
-		commonSerializer{TimestampInfo{tsPattern, tsPatternSyntax, timeZoneId}, nil},
-		referenceTs,
-	}
-	if err := IrError(C.ir_serializer_new_four_byte_serializer_with_preamble(
-		newCStringView(tsPattern),
-		newCStringView(tsPatternSyntax),
-		newCStringView(timeZoneId),
-		C.int64_t(referenceTs),
+	irs := fourByteSerializer{commonSerializer{nil}}
+	if err := syscall.Errno(C.ir_serializer_four_byte_create(
 		&irs.cptr,
 		&irView,
-	)); Success != err {
+	)); FfiSuccess != err {
 		return nil, nil, err
 	}
 	return &irs, unsafe.Slice((*byte)(irView.m_data), irView.m_size), nil
 }
 
-// commonSerializer contains fields common to all types of CLP IR encoding.
-// TimestampInfo stores information common to all timestamps found in the IR.
+// commonSerializer contains fields common to all types of CLP IR serializers.
 // cptr holds a reference to the underlying C++ objected used as backing storage
 // for the Views returned by the serializer. Close must be called to free this
 // underlying memory and failure to do so will result in a memory leak.
 type commonSerializer struct {
-	tsInfo TimestampInfo
-	cptr   unsafe.Pointer
+	cptr unsafe.Pointer
+}
+
+// Create a distinct type so we know the type of the underlying serializer, but allows the use of
+// the same methods.
+type eightByteSerializer struct {
+	commonSerializer
 }
 
 // Closes the serializer by releasing the underlying C++ allocated memory.
 // Failure to call Close will result in a memory leak.
-func (serializer *commonSerializer) Close() error {
+func (serializer *eightByteSerializer) Close() error {
 	if nil != serializer.cptr {
-		C.ir_serializer_close(serializer.cptr)
+		C.ir_serializer_eight_byte_close(serializer.cptr)
 		serializer.cptr = nil
 	}
 	return nil
 }
 
-// Returns the TimestampInfo of the Serializer.
-func (serializer commonSerializer) TimestampInfo() TimestampInfo {
-	return serializer.tsInfo
-}
-
-type eightByteSerializer struct {
-	commonSerializer
-}
-
-// SerializeLogEvent attempts to serialize the log event, event, into an eight
-// byte encoded CLP IR byte stream. On error returns:
+// SerializeLogEvent attempts to serialize the log event, into an eight byte encoded CLP IR byte
+// stream.
+// On error returns:
 //   - a nil BufView
 //   - [IrError] based on the failure of the Cgo call
 func (serializer *eightByteSerializer) SerializeLogEvent(
-	event ffi.LogEvent,
+	logEvent ffi.LogEvent,
 ) (BufView, error) {
-	return serializeLogEvent(serializer, event)
+	return serializeLogEvent(serializer, logEvent)
 }
 
-// fourByteSerializer contains both a common CLP IR serializer and stores the
-// previously seen log event's timestamp. The previous timestamp is necessary to
-// calculate the current timestamp as four byte encoding only encodes the
-// timestamp delta between the current log event and the previous.
+// SerializeMsgPackBytes attempts to serialize the log event, event, into a eight
+// byte encoded CLP IR byte stream. On error returns:
+//   - nil BufView
+//   - [IrError] based on the failure of the Cgo call
+func (serializer *eightByteSerializer) SerializeMsgPackBytes(
+	msgPackBytes []byte,
+) (BufView, error) {
+	return serializeMsgPackBytes(serializer, msgPackBytes)
+}
+
+// Create a distinct type so we know the type of the underlying serializer, but allows the use of
+// the same methods.
 type fourByteSerializer struct {
 	commonSerializer
-	prevTimestamp ffi.EpochTimeMs
+}
+
+// Closes the serializer by releasing the underlying C++ allocated memory.
+// Failure to call Close will result in a memory leak.
+func (serializer *fourByteSerializer) Close() error {
+	if nil != serializer.cptr {
+		C.ir_serializer_four_byte_close(serializer.cptr)
+		serializer.cptr = nil
+	}
+	return nil
 }
 
 // SerializeLogEvent attempts to serialize the log event, event, into a four
@@ -135,37 +127,54 @@ type fourByteSerializer struct {
 //   - nil BufView
 //   - [IrError] based on the failure of the Cgo call
 func (serializer *fourByteSerializer) SerializeLogEvent(
-	event ffi.LogEvent,
+	logEvent ffi.LogEvent,
 ) (BufView, error) {
-	return serializeLogEvent(serializer, event)
+	return serializeLogEvent(serializer, logEvent)
+}
+
+// SerializeMsgPackBytes attempts to serialize the log event, event, into a four
+// byte encoded CLP IR byte stream. On error returns:
+//   - nil BufView
+//   - [IrError] based on the failure of the Cgo call
+func (serializer *fourByteSerializer) SerializeMsgPackBytes(
+	msgPackBytes []byte,
+) (BufView, error) {
+	return serializeMsgPackBytes(serializer, msgPackBytes)
 }
 
 func serializeLogEvent(
 	serializer Serializer,
-	event ffi.LogEvent,
+	logEvent ffi.LogEvent,
+) (BufView, error) {
+	msgPackBytes, err := msgpack.Marshal(&logEvent)
+	if err != nil {
+		return nil, err
+	}
+	return serializeMsgPackBytes(serializer, msgPackBytes)
+}
+
+func serializeMsgPackBytes(
+	serializer Serializer,
+	msgPackBytes []byte,
 ) (BufView, error) {
 	var irView C.ByteSpan
-	var err error
+	var err syscall.Errno
+
 	switch irs := serializer.(type) {
 	case *eightByteSerializer:
-		err = IrError(C.ir_serializer_serialize_eight_byte_log_event(
-			newCStringView(event.LogMessage),
-			C.int64_t(event.Timestamp),
+		err = syscall.Errno(C.ir_serializer_eight_byte_serialize_log_event(
 			irs.cptr,
+			newCByteSpan(msgPackBytes),
 			&irView,
 		))
 	case *fourByteSerializer:
-		err = IrError(C.ir_serializer_serialize_four_byte_log_event(
-			newCStringView(event.LogMessage),
-			C.int64_t(event.Timestamp-irs.prevTimestamp),
+		err = syscall.Errno(C.ir_serializer_four_byte_serialize_log_event(
 			irs.cptr,
+			newCByteSpan(msgPackBytes),
 			&irView,
 		))
-		if Success == err {
-			irs.prevTimestamp = event.Timestamp
-		}
 	}
-	if Success != err {
+	if FfiSuccess != err {
 		return nil, err
 	}
 	return unsafe.Slice((*byte)(irView.m_data), irView.m_size), nil

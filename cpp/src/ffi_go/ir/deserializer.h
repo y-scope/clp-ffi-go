@@ -9,13 +9,21 @@
 
 #include "ffi_go/api_decoration.h"
 #include "ffi_go/defs.h"
-#include "ffi_go/search/wildcard_query.h"
 
 /**
- * Clean up the underlying ir::Deserializer of a Go ir.Deserializer.
- * @param[in] ir_deserializer The address of a ir::Deserializer created and
- *     returned by ir_deserializer_new_deserializer_with_preamble
+ * Clean up the underlying `ffi_go::ir::Serializer` of a Go `ir.Serializer`.
+ * @param[in] ir_deserializer The address of a `ffi_go::ir::Serializer` created and returned by
+ *     `ir_deserializer_eight_byte_create
  */
+/* CLP_FFI_GO_METHOD void ir_deserializer_eight_byte_close(void* ir_deserializer); */
+
+/**
+ * Clean up the underlying `ffi_go::ir::Serializer` of a Go `ir.Serializer`.
+ * @param[in] ir_deserializer The address of a `ffi_go::ir::Serializer` created and returned by
+ *     `ir_deserializer_eight_byte_create
+ */
+/* CLP_FFI_GO_METHOD void ir_deserializer_four_byte_close(void* ir_deserializer); */
+
 CLP_FFI_GO_METHOD void ir_deserializer_close(void* ir_deserializer);
 
 /**
@@ -37,15 +45,10 @@ CLP_FFI_GO_METHOD void ir_deserializer_close(void* ir_deserializer);
  * @return ffi::ir_stream::IRErrorCode forwarded from either
  *     ffi::ir_stream::get_encoding_type or ffi::ir_stream::decode_preamble
  */
-CLP_FFI_GO_METHOD int ir_deserializer_new_deserializer_with_preamble(
+CLP_FFI_GO_METHOD int ir_deserializer_create(
         ByteSpan ir_view,
         size_t* ir_pos,
-        int8_t* ir_encoding,
-        int8_t* metadata_type,
-        size_t* metadata_pos,
-        uint16_t* metadata_size,
-        void** ir_deserializer_ptr,
-        void** timestamp_ptr
+        void** ir_deserializer_ptr
 );
 
 /**
@@ -61,12 +64,12 @@ CLP_FFI_GO_METHOD int ir_deserializer_new_deserializer_with_preamble(
  * @return ffi::ir_stream::IRErrorCode forwarded from
  *     ffi::ir_stream::eight_byte_encoding::decode_next_message
  */
-CLP_FFI_GO_METHOD int ir_deserializer_deserialize_eight_byte_log_event(
-        ByteSpan ir_view,
-        void* ir_deserializer,
-        size_t* ir_pos,
-        LogEventView* log_event
-);
+/* CLP_FFI_GO_METHOD int ir_deserializer_deserialize_eight_byte_log_event( */
+/*         ByteSpan ir_view, */
+/*         void* ir_deserializer, */
+/*         size_t* ir_pos, */
+/*         LogEventView* log_event */
+/* ); */
 
 /**
  * Given a CLP IR buffer with four byte encoding, deserialize the next log
@@ -81,76 +84,18 @@ CLP_FFI_GO_METHOD int ir_deserializer_deserialize_eight_byte_log_event(
  * @return ffi::ir_stream::IRErrorCode forwarded from
  *     ffi::ir_stream::four_byte_encoding::decode_next_message
  */
-CLP_FFI_GO_METHOD int ir_deserializer_deserialize_four_byte_log_event(
-        ByteSpan ir_view,
-        void* ir_deserializer,
-        size_t* ir_pos,
-        LogEventView* log_event
-);
+/* CLP_FFI_GO_METHOD int ir_deserializer_deserialize_four_byte_log_event( */
+/*         ByteSpan ir_view, */
+/*         void* ir_deserializer, */
+/*         size_t* ir_pos, */
+/*         LogEventView* log_event */
+/* ); */
 
-/**
- * Given a CLP IR buffer with eight byte encoding, deserialize the next log
- * event until finding an event that is both within the time interval and
- * matches any query. If queries is empty, the first log event within the time
- * interval is treated as a match. Returns the components of the found log event
- * and the buffer position it ends at. All pointer parameters must be non-null
- * (non-nil Cgo C.<type> pointer or unsafe.Pointer from Go).
- * @param[in] ir_view Byte buffer/slice containing CLP IR
- * @param[in] ir_deserializer ir::Deserializer to be used as storage for a found
- *     log event
- * @param[in] time_interval Timestamp interval: [lower, upper)
- * @param[in] merged_query A concatenation of all queries to filter for; if
- *     empty any log event as a match
- * @param[out] ir_pos Position in ir_view read to
- * @param[out] log_event Log event stored in ir_deserializer
- * @param[out] matching_query Index into queries of the first matching query or
- *     0 if queries is empty
- * @return ffi::ir_stream::IRErrorCode forwarded from
- *     ffi::ir_stream::four_byte_encoding::decode_next_message
- * @return ffi::ir_stream::IRErrorCode_Unsupported_Version + 1 if no query is
- *     found before time_interval.m_upper (TODO this should be replaced/fix in
- *     clp core)
- */
-CLP_FFI_GO_METHOD int ir_deserializer_deserialize_eight_byte_wildcard_match(
+CLP_FFI_GO_METHOD int ir_deserializer_deserialize_log_event(
         ByteSpan ir_view,
         void* ir_deserializer,
-        TimestampInterval time_interval,
-        MergedWildcardQueryView merged_query,
         size_t* ir_pos,
-        LogEventView* log_event,
-        size_t* matching_query
-);
-
-/**
- * Given a CLP IR buffer with four byte encoding, deserialize the next log event
- * until finding an event that is both within the time interval and matches any
- * query. If queries is empty, the first log event within the time interval is
- * treated as a match. Returns the components of the found log event and the
- * buffer position it ends at. All pointer parameters must be non-null (non-nil
- * Cgo C.<type> pointer or unsafe.Pointer from Go).
- * @param[in] ir_view Byte buffer/slice containing CLP IR
- * @param[in] ir_deserializer ir::Deserializer to be used as storage for a found
- *     log event
- * @param[in] time_interval Timestamp interval: [lower, upper)
- * @param[in] merged_query A concatenation of all queries to filter for; if
- *     empty any log event as a match
- * @param[out] ir_pos Position in ir_view read to
- * @param[out] log_event Log event stored in ir_deserializer
- * @param[out] matching_query Index into queries of the matching query
- * @return ffi::ir_stream::IRErrorCode forwarded from
- *     ffi::ir_stream::four_byte_encoding::decode_next_message
- * @return ffi::ir_stream::IRErrorCode_Unsupported_Version + 1 if no query is
- *     found before time_interval.m_upper (TODO this should be replaced/fix in
- *     clp core)
- */
-CLP_FFI_GO_METHOD int ir_deserializer_deserialize_four_byte_wildcard_match(
-        ByteSpan ir_view,
-        void* ir_deserializer,
-        TimestampInterval time_interval,
-        MergedWildcardQueryView merged_query,
-        size_t* ir_pos,
-        LogEventView* log_event,
-        size_t* matching_query
+        ByteSpan* msgpack_log_event_view
 );
 
 // NOLINTEND(modernize-use-trailing-return-type)
