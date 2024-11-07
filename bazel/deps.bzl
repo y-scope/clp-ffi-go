@@ -91,8 +91,8 @@ cc_library(
 """
 
 def com_github_y_scope_clp():
-    ref = "e21672b906641c4724a25ea74f13857afdebe0e8"
-    ref_sha256 = "b7ab19af62fb0601d858047452e2f330489070caccd4aaf1e09709f6ca6324ab"
+    ref = "426cc3d657c67e9fdffe6681e670cba617f4154f"
+    ref_sha256 = "1b81027c6745347bb25f6cce6d1571ccdc54e3295f0ce3179a3647e82671214d"
     http_archive(
         name = "com_github_y_scope_clp",
         sha256 = ref_sha256,

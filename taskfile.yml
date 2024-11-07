@@ -82,8 +82,8 @@ tasks:
       - task: "utils:fetch-src"
         vars:
           OUTPUT_DIR: "{{.SOURCE_DIR}}"
-          URL: "https://github.com/y-scope/clp/archive/e21672b906641c4724a25ea74f13857afdebe0e8.tar.gz"
-          URL_SHA256: "b7ab19af62fb0601d858047452e2f330489070caccd4aaf1e09709f6ca6324ab"
+          URL: "https://github.com/y-scope/clp/archive/426cc3d657c67e9fdffe6681e670cba617f4154f.tar.gz"
+          URL_SHA256: "1b81027c6745347bb25f6cce6d1571ccdc54e3295f0ce3179a3647e82671214d"
 
   install-deps-cpp-clp-json:
     cmds:

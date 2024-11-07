@@ -87,7 +87,7 @@
   "moduleExtensions": {
     "//:bazel/deps.bzl%clp_ffi_go_ext_deps": {
       "general": {
-        "bzlTransitiveDigest": "uhvRjHIujSi6OMTa9C72jJ+wzp/9cfca2Dj5nmaEQt4=",
+        "bzlTransitiveDigest": "G2FQIS04segAu9cNrQsxflx6EX2o0QSvxvT1Rn1HOAg=",
         "usagesDigest": "usgVVfzo8JxL9xNLEMqGtFoGQLiBNEOtAErBV3dPAKc=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
@@ -110,11 +110,11 @@
             "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
             "ruleClassName": "http_archive",
             "attributes": {
-              "sha256": "b7ab19af62fb0601d858047452e2f330489070caccd4aaf1e09709f6ca6324ab",
+              "sha256": "1b81027c6745347bb25f6cce6d1571ccdc54e3295f0ce3179a3647e82671214d",
               "urls": [
-                "https://github.com/y-scope/clp/archive/e21672b906641c4724a25ea74f13857afdebe0e8.tar.gz"
+                "https://github.com/y-scope/clp/archive/426cc3d657c67e9fdffe6681e670cba617f4154f.tar.gz"
               ],
-              "strip_prefix": "clp-e21672b906641c4724a25ea74f13857afdebe0e8",
+              "strip_prefix": "clp-426cc3d657c67e9fdffe6681e670cba617f4154f",
               "add_prefix": "clp",
               "build_file_content": "\ncc_library(\n    name = \"libclp_ffi_core\",\n    srcs = [\n        \"clp/components/core/src/clp/BufferReader.cpp\",\n        \"clp/components/core/src/clp/ffi/encoding_methods.cpp\",\n        \"clp/components/core/src/clp/ffi/KeyValuePairLogEvent.cpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/decoding_methods.cpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/encoding_methods.cpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/ir_unit_deserialization_methods.cpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/Serializer.cpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/utils.cpp\",\n        \"clp/components/core/src/clp/ffi/SchemaTree.cpp\",\n        \"clp/components/core/src/clp/ir/EncodedTextAst.cpp\",\n        \"clp/components/core/src/clp/ir/parsing.cpp\",\n        \"clp/components/core/src/clp/ReaderInterface.cpp\",\n        \"clp/components/core/src/clp/string_utils/string_utils.cpp\",\n    ],\n    hdrs = [\n        \"clp/components/core/src/clp/BufferReader.hpp\",\n        \"clp/components/core/src/clp/Defs.h\",\n        \"clp/components/core/src/clp/ErrorCode.hpp\",\n        \"clp/components/core/src/clp/ReaderInterface.hpp\",\n        \"clp/components/core/src/clp/ffi/encoding_methods.hpp\",\n        \"clp/components/core/src/clp/ffi/encoding_methods.inc\",\n        \"clp/components/core/src/clp/ffi/KeyValuePairLogEvent.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/byteswap.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/Deserializer.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/encoding_methods.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/decoding_methods.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/decoding_methods.inc\",\n        \"clp/components/core/src/clp/ffi/ir_stream/ir_unit_deserialization_methods.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/IrUnitHandlerInterface.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/IrUnitType.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/protocol_constants.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/Serializer.hpp\",\n        \"clp/components/core/src/clp/ffi/ir_stream/utils.hpp\",\n        \"clp/components/core/src/clp/ffi/SchemaTree.hpp\",\n        \"clp/components/core/src/clp/ffi/Value.hpp\",\n        \"clp/components/core/src/clp/ir/EncodedTextAst.hpp\",\n        \"clp/components/core/src/clp/ir/parsing.inc\",\n        \"clp/components/core/src/clp/ir/parsing.hpp\",\n        \"clp/components/core/src/clp/ir/types.hpp\",\n        \"clp/components/core/src/clp/string_utils/string_utils.hpp\",\n        \"clp/components/core/src/clp/TraceableException.hpp\",\n        \"clp/components/core/src/clp/time_types.hpp\",\n        \"clp/components/core/src/clp/type_utils.hpp\",\n    ],\n    includes = [\n        \"clp/components/core/src\",\n        \"clp/components/core/src/clp\",\n    ],\n    copts = [\n        \"-std=c++20\",\n    ] + select({\n        \"@platforms//os:osx\": [\n            \"-mmacosx-version-min=10.15\",\n        ],\n        \"//conditions:default\": [],\n    }),\n    deps = [\n        \"@clp_ext_com_github_ned14_outcome//:outcome\",\n        \"@nlohmann_json//:singleheader-json\",\n        \"@msgpack-c//:msgpack\",\n    ],\n    visibility = [\"//visibility:public\"],\n)\n"
             }
