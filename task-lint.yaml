@@ -8,7 +8,7 @@ tasks:
     deps:
       - "lint-cpp"
       - "lint-go"
-      - "lint-yml"
+      - "lint-yaml"
 
   lint-cpp:
     deps: ["lint-venv-cpp"]
@@ -23,15 +23,15 @@ tasks:
       - |-
         golangci-lint run
 
-  lint-yml:
+  lint-yaml:
     # deps: ["venv"]
     cmds:
       - |-
         # . "{{.G_LINT_VENV_DIR}}/bin/activate"
         yamllint --strict \
           .github \
-          .golangci.yml \
-          .yamllint.yml \
+          .golangci.yaml \
+          .yamllint.yaml \
           cpp/.clang-format \
           cpp/.clang-tidy \
-          taskfile.yml
+          taskfile.yaml

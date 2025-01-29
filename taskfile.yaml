@@ -1,19 +1,22 @@
 version: "3"
 
+set: ["u", "pipefail"]
+shopt: ["globstar"]
+
 includes:
-  lint: "task-lint.yml"
-  # utils: "tools/yscope-dev-utils/taskfiles/utils.yml"
-  utils: "task-utils.yml"
+  lint: "task-lint.yaml"
+  utils: "tools/yscope-dev-utils/taskfiles/utils.yaml"
 
 vars:
   G_BUILD_BASE_DIR: "{{.TASKFILE_DIR}}/build"
   G_BUILD_TYPE: "Release"
   G_BUILD_DIR: "{{.G_BUILD_BASE_DIR}}/{{.G_BUILD_TYPE}}"
   G_DEPS_DIR: "{{.G_BUILD_BASE_DIR}}/deps"
+  G_INSTALL_CHECKSUM_FILE: "{{.G_BUILD_BASE_DIR}}/install.md5"
   G_INSTALL_PREFIX: "{{.TASKFILE_DIR}}"
   G_INSTALL_INCLUDE_DIR: "{{.G_INSTALL_PREFIX}}/include/ffi_go"
-  G_INSTALL_LIB: '{{printf "%s/lib/libclp_ffi_%s_%s.a" .G_INSTALL_PREFIX OS ARCH}}'
-  G_INSTALL_CHECKSUM_FILE: "{{.G_BUILD_BASE_DIR}}/install.md5"
+  G_INSTALL_LIB: >-
+    {{printf "%s/lib/libclp_ffi_%s_%s.a" .G_INSTALL_PREFIX OS ARCH}}
 
 tasks:
   default:
@@ -23,13 +26,12 @@ tasks:
   build-cpp:
     deps:
       - "install-deps-cpp-clp"
-      - "install-deps-cpp-outcome"
       - "install-deps-cpp-msgpack"
+      - "install-deps-cpp-outcome"
     cmds:
-      - task: "utils:cmake-build"
+      - task: "utils:cmake-config-and-build"
         vars:
           BUILD_DIR: "{{.G_BUILD_DIR}}"
-          SOURCE_DIR: "{{.TASKFILE_DIR}}/cpp"
           CMAKE_ARGS: >-
             -DCMAKE_BUILD_TYPE="{{.G_BUILD_TYPE}}"
             -DOS_SUFFIX="{{OS}}"
@@ -37,6 +39,7 @@ tasks:
             -DDEPS_DIR="{{.G_DEPS_DIR}}"
             -Dmsgpack-cxx_ROOT="{{.G_DEPS_DIR}}/msgpack-install"
             -Doutcome_SOURCE_DIR="{{.G_DEPS_DIR}}/outcome-src"
+          SOURCE_DIR: "{{.TASKFILE_DIR}}/cpp"
 
   build-go:
     aliases: ["build"]
@@ -68,49 +71,50 @@ tasks:
       - task: "utils:cmake-install"
         vars:
           BUILD_DIR: "{{.G_BUILD_DIR}}"
-          DATA_PATHS:
-            - "{{.G_INSTALL_INCLUDE_DIR}}"
-            - "{{.G_INSTALL_LIB}}"
           INSTALL_PREFIX: "{{.G_INSTALL_PREFIX}}"
-          CHECKSUM_FILE: "{{.G_INSTALL_CHECKSUM_FILE}}"
 
   install-deps-cpp-clp:
     vars:
-      SOURCE_DIR: '{{default (printf "%s/clp-src/clp" .G_DEPS_DIR) .SOURCE_DIR}}'
+      SOURCE_DIR: >-
+        {{default (printf "%s/clp-src/clp" .G_DEPS_DIR) .SOURCE_DIR}}
     deps: ["install-deps-cpp-clp-json"]
     cmds:
-      - task: "utils:fetch-src"
+      - task: "utils:download-and-extract-tar"
         vars:
+          FILE_SHA256: "1b81027c6745347bb25f6cce6d1571ccdc54e3295f0ce3179a3647e82671214d"
           OUTPUT_DIR: "{{.SOURCE_DIR}}"
-          URL: "https://github.com/y-scope/clp/archive/426cc3d657c67e9fdffe6681e670cba617f4154f.tar.gz"
-          URL_SHA256: "1b81027c6745347bb25f6cce6d1571ccdc54e3295f0ce3179a3647e82671214d"
+          URL: >-
+            https://github.com/y-scope/clp/archive/426cc3d657c67e9fdffe6681e670cba617f4154f.tar.gz
 
   install-deps-cpp-clp-json:
     cmds:
       - task: "utils:curl"
         vars:
+          FILE_SHA256: "9bea4c8066ef4a1c206b2be5a36302f8926f7fdc6087af5d20b417d0cf103ea6"
           OUTPUT_FILE: "{{.G_DEPS_DIR}}/json-src/json/single_include/nlohmann/json.hpp"
           URL: "https://github.com/nlohmann/json/releases/download/v3.11.3/json.hpp"
-          URL_SHA256: "9bea4c8066ef4a1c206b2be5a36302f8926f7fdc6087af5d20b417d0cf103ea6"
 
   install-deps-cpp-msgpack:
     vars:
-      BUILD_DIR: '{{default (printf "%s/msgpack-build" .G_DEPS_DIR) .BUILD_DIR}}'
-      SOURCE_DIR: '{{default (printf "%s/msgpack-src" .G_DEPS_DIR) .SOURCE_DIR}}'
-      INSTALL_PREFIX: '{{default (printf "%s/msgpack-install" .G_DEPS_DIR) .INSTALL_PREFIX}}'
+      BUILD_DIR: >-
+        {{default (printf "%s/msgpack-build" .G_DEPS_DIR) .BUILD_DIR}}
+      INSTALL_PREFIX: >-
+        {{default (printf "%s/msgpack-install" .G_DEPS_DIR) .INSTALL_PREFIX}}
+      SOURCE_DIR: >-
+        {{default (printf "%s/msgpack-src" .G_DEPS_DIR) .SOURCE_DIR}}
     cmds:
-      - task: "utils:fetch-src"
+      - task: "utils:download-and-extract-tar"
         vars:
+          FILE_SHA256: "d7b119f292365d41403b41b40c2fefd82ebd81241e3c658fafe0e638fa54604a"
           OUTPUT_DIR: "{{.SOURCE_DIR}}"
-          URL: "https://github.com/msgpack/msgpack-c/archive/cpp-6.1.0.tar.gz"
-          URL_SHA256: "5e63e4d9b12ab528fccf197f7e6908031039b1fc89cd8da0e97fbcbf5a6c6d3a"
-      - task: "utils:cmake-build"
+          URL: "https://github.com/msgpack/msgpack-c/archive/refs/tags/cpp-6.1.1.tar.gz"
+      - task: "utils:cmake-config-and-build"
         vars:
           BUILD_DIR: "{{.BUILD_DIR}}"
-          SOURCE_DIR: "{{.SOURCE_DIR}}"
           CMAKE_ARGS: >-
             -DMSGPACK_CXX20="ON"
             -DMSGPACK_USE_BOOST="OFF"
+          SOURCE_DIR: "{{.SOURCE_DIR}}"
       - task: "utils:cmake-install"
         vars:
           BUILD_DIR: "{{.BUILD_DIR}}"
@@ -118,13 +122,14 @@ tasks:
 
   install-deps-cpp-outcome:
     vars:
-      SOURCE_DIR: '{{default (printf "%s/outcome-src/outcome/single-header" .G_DEPS_DIR) .SOURCE_DIR}}'
+      SOURCE_DIR: >-
+        {{default (printf "%s/outcome-src/outcome/single-header" .G_DEPS_DIR) .SOURCE_DIR}}
     cmds:
       - task: "utils:curl"
         vars:
+          FILE_SHA256: "ad624622dcb1613027d39bd1aac93a13f11f46df197aa494a3980bef3c044dad"
           OUTPUT_FILE: "{{.SOURCE_DIR}}/outcome.hpp"
           URL: "https://github.com/ned14/outcome/raw/v2.2.10/single-header/outcome.hpp"
-          URL_SHA256: "ad624622dcb1613027d39bd1aac93a13f11f46df197aa494a3980bef3c044dad"
 
   clean:
     cmds:
