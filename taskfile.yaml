@@ -5,7 +5,7 @@ shopt: ["globstar"]
 
 includes:
   lint: "task-lint.yaml"
-  utils: "tools/yscope-dev-utils/taskfiles/utils.yaml"
+  utils: "tools/yscope-dev-utils/taskfiles/utils.yml"
 
 vars:
   G_BUILD_BASE_DIR: "{{.TASKFILE_DIR}}/build"
@@ -32,7 +32,7 @@ tasks:
       - task: "utils:cmake-config-and-build"
         vars:
           BUILD_DIR: "{{.G_BUILD_DIR}}"
-          CMAKE_ARGS: >-
+          CONF_ARGS: >-
             -DCMAKE_BUILD_TYPE="{{.G_BUILD_TYPE}}"
             -DOS_SUFFIX="{{OS}}"
             -DARCH_SUFFIX="{{ARCH}}"
@@ -111,7 +111,7 @@ tasks:
       - task: "utils:cmake-config-and-build"
         vars:
           BUILD_DIR: "{{.BUILD_DIR}}"
-          CMAKE_ARGS: >-
+          CONF_ARGS: >-
             -DMSGPACK_CXX20="ON"
             -DMSGPACK_USE_BOOST="OFF"
           SOURCE_DIR: "{{.SOURCE_DIR}}"
