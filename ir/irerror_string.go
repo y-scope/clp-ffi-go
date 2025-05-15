@@ -9,18 +9,22 @@ func _() {
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
 	_ = x[Success-0]
-	_ = x[DecodeError-1]
-	_ = x[EndOfIr-2]
-	_ = x[CorruptedIr-3]
-	_ = x[IncompleteIr-4]
-	_ = x[QueryNotFound-5]
-	_ = x[EncodeError-6]
-	_ = x[UnsupportedVersion-7]
+	_ = x[InvalidArg-1]
+	_ = x[IrBufferError-2]
+	_ = x[IrCorrupt-3]
+	_ = x[IrDecodeError-4]
+	_ = x[IrEndOfStream-5]
+	_ = x[IrIncomplete-6]
+	_ = x[IrProtoBackwardCompatible-7]
+	_ = x[IrProtoSupported-8]
+	_ = x[IrProtoUnsupported-9]
+	_ = x[IrSerializeError-10]
+	_ = x[NotSupported-11]
 }
 
-const _IrError_name = "SuccessDecodeErrorEndOfIrCorruptedIrIncompleteIrQueryNotFoundEncodeErrorUnsupportedVersion"
+const _IrError_name = "SuccessInvalidArgIrBufferErrorIrCorruptIrDecodeErrorIrEndOfStreamIrIncompleteIrProtoBackwardCompatibleIrProtoSupportedIrProtoUnsupportedIrSerializeErrorNotSupported"
 
-var _IrError_index = [...]uint8{0, 7, 18, 25, 36, 48, 61, 72, 90}
+var _IrError_index = [...]uint8{0, 7, 17, 30, 39, 52, 65, 77, 102, 118, 136, 152, 164}
 
 func (i IrError) String() string {
 	if i < 0 || i >= IrError(len(_IrError_index)-1) {

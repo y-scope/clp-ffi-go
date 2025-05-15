@@ -89,8 +89,8 @@ func (writer *Writer) WriteLogEvent(logEvent ffi.LogEvent) (int, error) {
 //   - success: number of bytes written, nil
 //   - error: number of bytes written (can be 0), error propagated from
 //     [SerializeLogEvent] or [bytes.Buffer.Write]
-func (writer *Writer) WriteMsgPackBytes(msgPackBytes []byte) (int, error) {
-	irView, err := writer.SerializeMsgPackBytes(msgPackBytes)
+func (writer *Writer) WriteMsgPackLogEvent(msgPackLogEvent ffi.MsgPackLogEvent) (int, error) {
+	irView, err := writer.SerializeMsgPackLogEvent(msgPackLogEvent)
 	if nil != err {
 		return 0, err
 	}

@@ -11,7 +11,7 @@
 package ir
 
 /*
-#include <ffi_go/defs.h>
+#include <clp_ffi_go/defs.h>
 */
 import "C"
 
@@ -43,5 +43,3 @@ type LogMessage[T EightByteEncoding | FourByteEncoding] struct {
 type LogMessageView[T EightByteEncoding | FourByteEncoding] struct {
 	LogMessage[T]
 }
-
-const FfiSuccess = 0

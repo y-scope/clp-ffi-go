@@ -1,13 +1,12 @@
 package ir
 
 /*
-#include <ffi_go/defs.h>
-#include <ffi_go/ir/serializer.h>
+#include <clp_ffi_go/defs.h>
+#include <clp_ffi_go/ir/serializer.h>
 */
 import "C"
 
 import (
-	"syscall"
 	"unsafe"
 
 	"github.com/vmihailenco/msgpack/v5"
@@ -23,24 +22,24 @@ import (
 // result in a memory leak.
 type Serializer interface {
 	SerializeLogEvent(logEvent ffi.LogEvent) (BufView, error)
-	SerializeMsgPackBytes(msgPackBytes []byte) (BufView, error)
+	SerializeMsgPackLogEvent(logEvent ffi.MsgPackLogEvent) (BufView, error)
 	Close() error
 }
 
 // Creates and returns a new `Serializer` capable of writing eight byte encoded CLP IR along with an
 // IR preamble.
 // @return a new Serializer, BufView containing a preamble, nil
-// @return Forward's `ir_serializer_eight_byte_create` return values as [syscall.Errno].
+// @return Forward's `ir_serializer_eight_byte_create` return values as [IrError].
 func EightByteSerializer() (Serializer, BufView, error) {
-	var irView C.ByteSpan
+	var irSpan C.ByteSpan
 	irs := eightByteSerializer{commonSerializer{nil}}
-	if err := syscall.Errno(C.ir_serializer_eight_byte_create(
+	if err := IrError(C.ir_serializer_eight_byte_create(
 		&irs.cptr,
-		&irView,
-	)); FfiSuccess != err {
+		&irSpan,
+	)); Success != err {
 		return nil, nil, err
 	}
-	return &irs, unsafe.Slice((*byte)(irView.m_data), irView.m_size), nil
+	return &irs, unsafe.Slice((*byte)(irSpan.m_data), irSpan.m_size), nil
 }
 
 // FourByteSerializer creates and returns a new Serializer that writes four byte
@@ -50,15 +49,15 @@ func EightByteSerializer() (Serializer, BufView, error) {
 //   - nil BufView
 //   - [IrError] error: CLP failed to successfully serialize
 func FourByteSerializer() (Serializer, BufView, error) {
-	var irView C.ByteSpan
+	var irSpan C.ByteSpan
 	irs := fourByteSerializer{commonSerializer{nil}}
-	if err := syscall.Errno(C.ir_serializer_four_byte_create(
+	if err := IrError(C.ir_serializer_four_byte_create(
 		&irs.cptr,
-		&irView,
-	)); FfiSuccess != err {
+		&irSpan,
+	)); Success != err {
 		return nil, nil, err
 	}
-	return &irs, unsafe.Slice((*byte)(irView.m_data), irView.m_size), nil
+	return &irs, unsafe.Slice((*byte)(irSpan.m_data), irSpan.m_size), nil
 }
 
 // commonSerializer contains fields common to all types of CLP IR serializers.
@@ -96,14 +95,14 @@ func (serializer *eightByteSerializer) SerializeLogEvent(
 	return serializeLogEvent(serializer, logEvent)
 }
 
-// SerializeMsgPackBytes attempts to serialize the log event, event, into a eight
+// SerializeMsgPackLogEvent attempts to serialize the log event, event, into a eight
 // byte encoded CLP IR byte stream. On error returns:
 //   - nil BufView
 //   - [IrError] based on the failure of the Cgo call
-func (serializer *eightByteSerializer) SerializeMsgPackBytes(
-	msgPackBytes []byte,
+func (serializer *eightByteSerializer) SerializeMsgPackLogEvent(
+	logEvent ffi.MsgPackLogEvent,
 ) (BufView, error) {
-	return serializeMsgPackBytes(serializer, msgPackBytes)
+	return serializeMsgPackLogEvent(serializer, logEvent)
 }
 
 // Create a distinct type so we know the type of the underlying serializer, but allows the use of
@@ -132,50 +131,58 @@ func (serializer *fourByteSerializer) SerializeLogEvent(
 	return serializeLogEvent(serializer, logEvent)
 }
 
-// SerializeMsgPackBytes attempts to serialize the log event, event, into a four
+// SerializeMsgPackLogEvent attempts to serialize the log event, event, into a four
 // byte encoded CLP IR byte stream. On error returns:
 //   - nil BufView
 //   - [IrError] based on the failure of the Cgo call
-func (serializer *fourByteSerializer) SerializeMsgPackBytes(
-	msgPackBytes []byte,
+func (serializer *fourByteSerializer) SerializeMsgPackLogEvent(
+	logEvent ffi.MsgPackLogEvent,
 ) (BufView, error) {
-	return serializeMsgPackBytes(serializer, msgPackBytes)
+	return serializeMsgPackLogEvent(serializer, logEvent)
 }
 
 func serializeLogEvent(
 	serializer Serializer,
 	logEvent ffi.LogEvent,
 ) (BufView, error) {
-	msgPackBytes, err := msgpack.Marshal(&logEvent)
+	var msgPackLogEvent ffi.MsgPackLogEvent
+	var err error
+	msgPackLogEvent.AutoKvPairs, err = msgpack.Marshal(&logEvent.AutoKvPairs)
 	if err != nil {
 		return nil, err
 	}
-	return serializeMsgPackBytes(serializer, msgPackBytes)
+	msgPackLogEvent.UserKvPairs, err = msgpack.Marshal(&logEvent.UserKvPairs)
+	if err != nil {
+		return nil, err
+	}
+	return serializeMsgPackLogEvent(serializer, msgPackLogEvent)
 }
 
-func serializeMsgPackBytes(
+func serializeMsgPackLogEvent(
 	serializer Serializer,
-	msgPackBytes []byte,
+	logEvent ffi.MsgPackLogEvent,
 ) (BufView, error) {
-	var irView C.ByteSpan
-	var err syscall.Errno
+	var irSpan C.ByteSpan
+	var err IrError
 
 	switch irs := serializer.(type) {
 	case *eightByteSerializer:
-		err = syscall.Errno(C.ir_serializer_eight_byte_serialize_log_event(
+		err = IrError(C.ir_serializer_eight_byte_serialize_log_event(
 			irs.cptr,
-			newCByteSpan(msgPackBytes),
-			&irView,
+			newCByteSpan(logEvent.AutoKvPairs),
+			newCByteSpan(logEvent.UserKvPairs),
+			&irSpan,
 		))
 	case *fourByteSerializer:
-		err = syscall.Errno(C.ir_serializer_four_byte_serialize_log_event(
+		err = IrError(C.ir_serializer_four_byte_serialize_log_event(
 			irs.cptr,
-			newCByteSpan(msgPackBytes),
-			&irView,
+			newCByteSpan(logEvent.AutoKvPairs),
+			newCByteSpan(logEvent.UserKvPairs),
+			&irSpan,
 		))
 	}
-	if FfiSuccess != err {
+	if Success != err {
 		return nil, err
 	}
-	return unsafe.Slice((*byte)(irView.m_data), irView.m_size), nil
+	return unsafe.Slice((*byte)(irSpan.m_data), irSpan.m_size), nil
 }

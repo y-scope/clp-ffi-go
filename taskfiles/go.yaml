@@ -1,0 +1,67 @@
+version: "3"
+
+includes:
+  cpp:
+    internal: true
+    taskfile: "cpp.yaml"
+
+tasks:
+  build-debug:
+    cmds:
+      - task: "build"
+        vars:
+          BUILD_TYPE: "debug"
+
+  build-release:
+    cmds:
+      - task: "build"
+        vars:
+          BUILD_TYPE: "release"
+
+  generate:
+    sources:
+      - "{{.ROOT_DIR}}/go.mod"
+      - "{{.ROOT_DIR}}/ffi/**/*"
+      - "{{.ROOT_DIR}}/ir/**/*"
+      - exclude: "{{.ROOT_DIR}}/ir/irerror_string.go"
+    generates:
+      - "{{.ROOT_DIR}}/ir/irerror_string.go"
+    cmd: |-
+      go install "golang.org/x/tools/cmd/stringer@latest"
+      go generate "{{.ROOT_DIR}}/..."
+
+  clean:
+    cmd: "go clean -cache"
+
+  test:
+    deps:
+      - "build-debug"
+    cmd: "go test ./..."
+
+  build:
+    internal: true
+    requires:
+      vars: ["BUILD_TYPE"]
+    deps:
+      - "generate"
+      - task: "install-cpp-local"
+        vars:
+          BUILD_TYPE: "{{.BUILD_TYPE}}"
+    sources:
+      - "{{.ROOT_DIR}}/go.mod"
+      - "{{.ROOT_DIR}}/ffi/**/*"
+      - "{{.ROOT_DIR}}/ir/**/*"
+    cmds:
+      - "go build {{.ROOT_DIR}}/..."
+
+  install-cpp-local:
+    internal: true
+    requires:
+      vars: ["BUILD_TYPE"]
+    cmds:
+      - |-
+        rm -fr "{{.G_INSTALL_INCLUDE_DIR}}"
+        rm -f "{{.G_INSTALL_LIB}}"
+      - task: "cpp:install-{{.BUILD_TYPE}}"
+        vars:
+          INSTALL_PREFIX: "{{.G_INSTALL_PREFIX}}"

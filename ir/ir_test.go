@@ -37,10 +37,10 @@ type testArgs struct {
 	filePath    string
 }
 
-var testKeys = []string{
-	"LogMessage",
-	"Timestamp",
-}
+const (
+	cTestUserMessageKey   = "message"
+	cTestAutoTimestampKey = "timestamp"
+)
 
 func TestLogMessagesCombo(t *testing.T) {
 	messages := []string{
@@ -91,14 +91,14 @@ func TestLogMessagesLongLogs(t *testing.T) {
 	testLogMessages(t, messages)
 }
 
-func assertEndOfIr(
+func assertIrEndOfStream(
 	t *testing.T,
 	reader io.Reader,
 	irReader *Reader,
 ) {
 	_, err := irReader.ReadLogEvent()
-	if EndOfIr != err {
-		t.Fatalf("assertEndOfIr failed got: %v", err)
+	if IrEndOfStream != err {
+		t.Fatalf("assertIrEndOfStream failed got: %v", err)
 	}
 }
 
@@ -112,14 +112,25 @@ func assertIrLogEvent(
 	if nil != err {
 		t.Fatalf("Reader.ReadLogEvent failed: %v", err)
 	}
-	for _, key := range testKeys {
-		if refEvent[key] != event[key] {
-			t.Fatalf("Reader.ReadLogEvent wrong %v, wanted: '%v' (%T) got: '%v' (%T)",
+	for key, value := range refEvent.AutoKvPairs {
+		if value != event.AutoKvPairs[key] {
+			t.Fatalf("Reader.ReadLogEvent wrong auto generated key: %v, wanted: '%v' (%T) got: '%v' (%T)",
 				key,
-				refEvent[key],
-				refEvent[key],
-				event[key],
-				event[key],
+				refEvent.AutoKvPairs[key],
+				refEvent.AutoKvPairs[key],
+				event.AutoKvPairs[key],
+				event.AutoKvPairs[key],
+			)
+		}
+	}
+	for key, value := range refEvent.UserKvPairs {
+		if value != event.UserKvPairs[key] {
+			t.Fatalf("Reader.ReadLogEvent wrong user generated key: %v, wanted: '%v' (%T) got: '%v' (%T)",
+				key,
+				refEvent.UserKvPairs[key],
+				refEvent.UserKvPairs[key],
+				event.UserKvPairs[key],
+				event.UserKvPairs[key],
 			)
 		}
 	}

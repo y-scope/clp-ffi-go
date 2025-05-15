@@ -1,0 +1,121 @@
+version: "3"
+
+includes:
+  deps: "deps.yaml"
+  utils: "../tools/yscope-dev-utils/exports/taskfiles/utils/utils.yaml"
+
+vars:
+  G_LINT_ENV_DIR: "{{.G_BUILD_DIR}}/lint-env"
+
+tasks:
+  check:
+    deps:
+      - "check-cmake"
+      - "check-cpp"
+      - "check-go"
+      - "check-yaml"
+
+  check-cmake:
+    cmds:
+      - task: "gersemi"
+        vars:
+          FLAGS: "--diff --color"
+      - task: "gersemi"
+        vars:
+          FLAGS: "--check"
+
+  check-cpp:
+    aliases: ["fix-cpp"]
+    deps: ["setup-env"]
+    cmds:
+      - echo "sad"
+
+  # NOTE: golangci-lint does its own caching, so we can omit `sources`.
+  check-go:
+    aliases: ["fix-go"]
+    deps: ["setup-env"]
+    cmd: |-
+      . "{{.G_LINT_ENV_DIR}}/bin/activate"
+      golangci-lint run
+
+  check-yaml:
+    aliases: ["fix-yaml"]
+    deps: ["setup-env"]
+    cmd: |-
+      . "{{.G_LINT_ENV_DIR}}/bin/activate"
+      find . \
+        \( -path '**/build' -o -path '**/tools' \) -prune -o \
+        \( -iname "*.yaml" -o -iname "*.yml" \) \
+        -print0 | \
+          xargs -0 yamllint \
+            --config-file "{{.ROOT_DIR}}/tools/yscope-dev-utils/lint-configs/.yamllint.yml" \
+            --strict
+  fix:
+    deps:
+      - "fix-cmake"
+      - "fix-cpp"
+      - "fix-go"
+      - "fix-yaml"
+
+  fix-cmake:
+    cmds:
+      - task: "gersemi"
+        vars:
+          FLAGS: "--in-place"
+
+  gersemi:
+    internal: true
+    requires:
+      vars: ["FLAGS"]
+    dir: "{{.ROOT_DIR}}"
+    deps:
+      - "deps:install-all"
+      - "setup-env"
+    cmd: |-
+      . "{{.G_LINT_ENV_DIR}}/bin/activate"
+      find . \
+        \( -path '**/build' -o -path '**/submodules' -o -path '**/tools' \) -prune -o \
+        \( -iname "CMakeLists.txt" -o -iname "*.cmake" -o -iname "*.cmake.in" \) \
+        -print0 | \
+          xargs -0 gersemi {{.FLAGS}}
+
+  setup-env:
+    internal: true
+    vars:
+      CHECKSUM_FILE: "{{.G_BUILD_DIR}}/{{.TASK | replace \":\" \"#\"}}.md5"
+      OUTPUT_DIR: "{{.G_LINT_ENV_DIR}}"
+    sources:
+      - "{{.ROOT_DIR}}/taskfile.yaml"
+      - "{{.TASKFILE}}"
+      - "lint-requirements.txt"
+    generates: ["{{.CHECKSUM_FILE}}"]
+    run: "once"
+    deps:
+      - ":init"
+      - task: "utils:checksum:validate"
+        vars:
+          CHECKSUM_FILE: "{{.CHECKSUM_FILE}}"
+          INCLUDE_PATTERNS: ["{{.OUTPUT_DIR}}"]
+    cmds:
+      - task: "utils:misc:create-venv"
+        vars:
+          LABEL: "lint"
+          OUTPUT_DIR: "{{.OUTPUT_DIR}}"
+          REQUIREMENTS_FILE: "{{.ROOT_DIR}}/lint-requirements.txt"
+      - task: "setup-env-go"
+        vars:
+          ENV_BIN_DIR: "{{.OUTPUT_DIR}}/bin"
+      # This command must be last
+      - task: "utils:checksum:compute"
+        vars:
+          CHECKSUM_FILE: "{{.CHECKSUM_FILE}}"
+          INCLUDE_PATTERNS: ["{{.OUTPUT_DIR}}"]
+
+  setup-env-go:
+    internal: true
+    requires:
+      vars: ["ENV_BIN_DIR"]
+    cmd: |-
+      curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
+        | sh -s -- -b "{{.ENV_BIN_DIR}}" v2.1.5
+      go install golang.org/x/tools/gopls@latest

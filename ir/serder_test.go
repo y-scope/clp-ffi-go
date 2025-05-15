@@ -36,11 +36,10 @@ func testSerDerLogMessages(
 
 	var events []ffi.LogEvent
 	for _, msg := range logMessages {
-		event := ffi.LogEvent{
-			"LogMessage": msg,
-			"Timestamp":  uint64(time.Now().UnixMilli()),
-		}
-		irView, err := irSerializer.SerializeLogEvent(event)
+		var event *ffi.LogEvent = ffi.NewLogEvent()
+		event.AutoKvPairs[cTestAutoTimestampKey] = uint64(time.Now().UnixMilli())
+		event.UserKvPairs[cTestUserMessageKey] = msg
+		irView, err := irSerializer.SerializeLogEvent(*event)
 		if nil != err {
 			t.Fatalf("SerializeLogEvent failed: %v", err)
 		}
@@ -48,7 +47,7 @@ func testSerDerLogMessages(
 		if nil != err {
 			t.Fatalf("io.Writer.Write message: %v", err)
 		}
-		events = append(events, event)
+		events = append(events, *event)
 	}
 	irSerializer.Close()
 	_, err := ioWriter.Write([]byte{0x0})
@@ -65,7 +64,7 @@ func testSerDerLogMessages(
 	for _, event := range events {
 		assertIrLogEvent(t, ioReader, irReader, event)
 	}
-	assertEndOfIr(t, ioReader, irReader)
+	assertIrEndOfStream(t, ioReader, irReader)
 }
 
 func serializeIrPreamble(

@@ -1,14 +1,13 @@
 package ir
 
 /*
-#include <ffi_go/defs.h>
-#include <ffi_go/ir/deserializer.h>
+#include <clp_ffi_go/defs.h>
+#include <clp_ffi_go/ir/deserializer.h>
 */
 import "C"
 
 import (
 	"fmt"
-	"syscall"
 	"unsafe"
 
 	"github.com/vmihailenco/msgpack/v5"
@@ -39,7 +38,7 @@ type Deserializer struct {
 //   - [encoding/json] error: unmarshalling the metadata failed
 func DeserializePreamble(irBuf []byte) (*Deserializer, int, error) {
 	if 0 >= len(irBuf) {
-		return nil, 0, IncompleteIr
+		return nil, 0, IrIncomplete
 	}
 
 	// TODO: Add version validation in this method or ir_deserializer_new_deserializer_with_preamble
@@ -47,11 +46,11 @@ func DeserializePreamble(irBuf []byte) (*Deserializer, int, error) {
 
 	var pos C.size_t
 	var deserializerCptr unsafe.Pointer
-	if err := syscall.Errno(C.ir_deserializer_create(
+	if err := IrError(C.ir_deserializer_create(
 		newCByteSpan(irBuf),
 		&pos,
 		&deserializerCptr,
-	)); FfiSuccess != err {
+	)); Success != err {
 		fmt.Printf("%v\n", err)
 		return nil, int(pos), err
 	}
@@ -79,37 +78,41 @@ func (deserializer *Deserializer) Close() error {
 func (deserializer *Deserializer) DeserializeLogEvent(
 	irBuf []byte,
 ) (ffi.LogEvent, int, error) {
-	return deserializeLogEvent(deserializer, irBuf)
-}
-
-func deserializeLogEvent(
-	deserializer *Deserializer,
-	irBuf []byte,
-) (ffi.LogEvent, int, error) {
+	var event ffi.LogEvent
 	if 0 >= len(irBuf) {
-		return nil, 0, IncompleteIr
+		return event, 0, IrIncomplete
 	}
 
 	var pos C.size_t = 0
-	var msgpackLogEvent C.ByteSpan
+	var autoKvPairsSpan C.ByteSpan
+	var userKvPairsSpan C.ByteSpan
 	var err error = IrError(C.ir_deserializer_deserialize_log_event(
 		newCByteSpan(irBuf),
 		deserializer.cptr,
 		&pos,
-		&msgpackLogEvent,
+		&autoKvPairsSpan,
+		&userKvPairsSpan,
 	))
 	if Success != err {
 		fmt.Println(err)
-		return nil, int(pos), err
+		return event, int(pos), err
 	}
 
-	var event ffi.LogEvent
+	event = *ffi.NewLogEvent()
 	err = msgpack.Unmarshal(
-		[]byte(unsafe.Slice((*byte)(msgpackLogEvent.m_data), msgpackLogEvent.m_size)),
-		&event,
+		[]byte(unsafe.Slice((*byte)(autoKvPairsSpan.m_data), autoKvPairsSpan.m_size)),
+		&event.AutoKvPairs,
 	)
 	if nil != err {
-		return nil, int(pos), err
+		return event, int(pos), err
 	}
+	err = msgpack.Unmarshal(
+		[]byte(unsafe.Slice((*byte)(userKvPairsSpan.m_data), userKvPairsSpan.m_size)),
+		&event.UserKvPairs,
+	)
+	if nil != err {
+		return event, int(pos), err
+	}
+
 	return event, int(pos), nil
 }

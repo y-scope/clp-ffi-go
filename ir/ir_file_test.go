@@ -35,14 +35,14 @@ func TestIrReaderOnFile(t *testing.T) {
 		var event ffi.LogEvent
 		// event, err = irr.Read()
 		event, err = irr.ReadToFunc(func(event ffi.LogEvent) bool {
-			return strings.Contains(event["message"].(string), "ERROR")
+			return strings.Contains(event.UserKvPairs["message"].(string), "ERROR")
 		})
 		if nil != err {
 			break
 		}
-		t.Logf("msg: %v", event["message"])
+		t.Logf("msg: %v", event.UserKvPairs["message"])
 	}
-	if EndOfIr != err {
+	if IrEndOfStream != err {
 		t.Fatalf("Reader.Read failed: %v", err)
 	}
 }

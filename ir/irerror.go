@@ -1,20 +1,24 @@
 package ir
 
-// IrError mirrors cpp type IRErrorCode defined in:
-// clp/components/core/src/ffi/ir_stream/decoding_methods.hpp
+// Mirrors the c++ type clp_ffi_go::ir::ErrorCode (cpp/src/clp_ffi_go/ir/ErrorCode.hpp) and is used
+// when receiving an error code from cgo. The values of these types must match.
 //
 //go:generate stringer -type=IrError
 type IrError int
 
 const (
 	Success IrError = iota
-	DecodeError
-	EndOfIr
-	CorruptedIr
-	IncompleteIr
-	QueryNotFound      // must be IncompleteIr + 1
-	EncodeError        // not from clp
-	UnsupportedVersion // not from clp
+	InvalidArg
+	IrBufferError
+	IrCorrupt
+	IrDecodeError
+	IrEndOfStream
+	IrIncomplete
+	IrProtoBackwardCompatible
+	IrProtoSupported
+	IrProtoUnsupported
+	IrSerializeError
+	NotSupported
 )
 
 func (err IrError) Error() string {

@@ -4,7 +4,7 @@
 package ir
 
 /*
-#cgo CPPFLAGS: -I${SRCDIR}/../include/
+#cgo CPPFLAGS: -I${SRCDIR}/../pre-built/include/
 #cgo external LDFLAGS:
 */
 import "C"

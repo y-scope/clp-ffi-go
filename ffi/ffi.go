@@ -4,4 +4,19 @@ package ffi
 
 // LogEvent provides programmatic access to the various components of a log
 // event.
-type LogEvent = map[string]interface{}
+type LogEvent struct {
+	AutoKvPairs map[string]any
+	UserKvPairs map[string]any
+}
+
+type MsgPackLogEvent struct {
+	AutoKvPairs []byte
+	UserKvPairs []byte
+}
+
+func NewLogEvent() *LogEvent {
+	return &LogEvent {
+		AutoKvPairs: make(map[string]any),
+		UserKvPairs: make(map[string]any),
+	}
+}

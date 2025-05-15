@@ -41,7 +41,7 @@ func NewReaderSize(r io.Reader, size int) (*Reader, error) {
 	}
 	for {
 		irr.Deserializer, irr.start, err = DeserializePreamble(irr.buf[irr.start:irr.end])
-		if IncompleteIr != err {
+		if IrIncomplete != err {
 			break
 		}
 		if _, err = irr.fillBuf(); nil != err {
@@ -71,7 +71,7 @@ func (reader *Reader) ReadLogEvent() (ffi.LogEvent, error) {
 	for {
 		event, pos, err = reader.DeserializeLogEvent(reader.buf[reader.start:reader.end])
 		reader.start += pos
-		if IncompleteIr != err {
+		if IrIncomplete != err {
 			break
 		}
 		if _, err = reader.fillBuf(); nil != err {
@@ -79,7 +79,7 @@ func (reader *Reader) ReadLogEvent() (ffi.LogEvent, error) {
 		}
 	}
 	if nil != err {
-		return nil, err
+		return event, err
 	}
 	return event, nil
 }

@@ -1,0 +1,121 @@
+version: "3"
+
+includes:
+  utils: "../tools/yscope-dev-utils/exports/taskfiles/utils/utils.yaml"
+
+vars:
+  G_DEPS_DIR: "{{.G_BUILD_DIR}}/deps"
+
+  # This path must be kept in-sync with its usage in CMakeLists.txt and examples/CMakeLists.txt.
+  G_DEPS_CMAKE_SETTINGS_DIR: "{{.G_DEPS_DIR}}/cmake-settings"
+
+tasks:
+  all:
+    run: "once"
+    cmds:
+      - task: "utils:cmake:install-deps-and-generate-settings"
+        vars:
+          CMAKE_SETTINGS_DIR: "{{.G_DEPS_CMAKE_SETTINGS_DIR}}"
+          DEP_TASK: "all-parallel"
+
+  all-parallel:
+    internal: true
+    run: "once"
+    deps:
+      - "clp"
+      - "msgpack-cxx"
+      - "ystdlib"
+
+  clp:
+    internal: true
+    run: "once"
+    deps:
+      - "msgpack-cxx"
+      - "nlohmann_json"
+      - "outcome"
+    cmds:
+      - task: "utils:remote:download-and-extract-tar"
+        vars:
+          FILE_SHA256: "ec2ffa4bd3285f815f27b6f0f2c96570bd312bcdb51ddfc4fa91becdb2d38837"
+          INCLUDE_PATTERNS:
+            - "clp-*/components/core/src/clp"
+          OUTPUT_DIR: "{{.G_DEPS_DIR}}/clp-src"
+          URL: >-
+            https://github.com/y-scope/clp/archive/7d885301a9506ee872f033efa93d0f23cfbbb48e.tar.gz
+      - >-
+        echo "set(
+        CLP_SOURCE_DIR \"{{.G_DEPS_DIR}}/clp-src/components/core/src\"
+        )" > "{{.G_DEPS_DIR}}/cmake-settings/clp.cmake"
+
+  msgpack-cxx:
+    internal: true
+    run: "once"
+    cmds:
+      - task: "utils:cmake:install-remote-tar"
+        vars:
+          CMAKE_GEN_ARGS:
+            - "-DMSGPACK_CXX20=ON"
+            - "-DMSGPACK_USE_BOOST=OFF"
+          CMAKE_PACKAGE_NAME: "msgpack-cxx"
+          CMAKE_SETTINGS_DIR: "{{.G_DEPS_CMAKE_SETTINGS_DIR}}"
+          TAR_SHA256: "070881ebea9208cf7e731fd5a46a11404025b2f260ab9527e32dfcb7c689fbfc"
+          TAR_URL: "https://github.com/msgpack/msgpack-c/archive/refs/tags/cpp-7.0.0.tar.gz"
+          WORK_DIR: "{{.G_DEPS_DIR}}"
+
+  nlohmann_json:
+    internal: true
+    run: "once"
+    cmds:
+      - task: "utils:cmake:install-remote-tar"
+        vars:
+          CMAKE_GEN_ARGS:
+            - "-DCMAKE_BUILD_TYPE=Release"
+            - "-DCMAKE_INSTALL_MESSAGE=LAZY"
+            - "-DJSON_BuildTests=OFF"
+          CMAKE_PACKAGE_NAME: "nlohmann_json"
+          CMAKE_SETTINGS_DIR: "{{.G_DEPS_CMAKE_SETTINGS_DIR}}"
+          TAR_SHA256: "d6c65aca6b1ed68e7a182f4757257b107ae403032760ed6ef121c9d55e81757d"
+          TAR_URL: "https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz"
+          WORK_DIR: "{{.G_DEPS_DIR}}"
+
+  outcome:
+    internal: true
+    vars:
+      INSTALL_INCLUDE_DIR: "{{.G_DEPS_DIR}}/outcome-install/include"
+      INSTALL_SYMLINK: "{{.INSTALL_INCLUDE_DIR}}/outcome"
+      SRC_DIR: "{{.G_DEPS_DIR}}/outcome-src"
+    run: "once"
+    cmds:
+      - task: "utils:remote:download-and-extract-tar"
+        vars:
+          FILE_SHA256: "2840e403b1d7a0d3a75ecc4df574ab0674284bb21d76ac5f817695f2b56905f2"
+          INCLUDE_PATTERNS:
+            - "*/single-header"
+          OUTPUT_DIR: "{{.SRC_DIR}}"
+
+          # NOTE: We use the GitHub-generated source tarball for this version rather than the
+          # release tarball, since the latter is served from githubusercontent.com which is blocked
+          # by some developers' firewalls. The source files we use are identical between the two
+          # tarballs.
+          URL: "https://github.com/ned14/outcome/archive/refs/tags/v2.2.9.tar.gz"
+      - "mkdir -p '{{.INSTALL_INCLUDE_DIR}}'"
+      - "rm -f '{{.INSTALL_SYMLINK}}'"
+      - "ln -s '{{.SRC_DIR}}/single-header' '{{.INSTALL_SYMLINK}}'"
+      - >-
+        echo "set(
+        OUTCOME_INCLUDE_DIR \"{{.INSTALL_INCLUDE_DIR}}\"
+        )" > "{{.G_DEPS_DIR}}/cmake-settings/outcome.cmake"
+
+  ystdlib:
+    internal: true
+    run: "once"
+    cmds:
+      - task: "utils:remote:download-and-extract-tar"
+        vars:
+          FILE_SHA256: "d47c703c0d1c5e755c1bfb984b68c85967683a09dadbe23772d9eb69f822d040"
+          OUTPUT_DIR: "{{.G_DEPS_DIR}}/ystdlib-src"
+          URL: "https://github.com/y-scope/ystdlib-cpp/archive/2ac1757.tar.gz"
+      - >-
+        echo "set(
+        YSTDLIB_SOURCE_DIR \"{{.G_DEPS_DIR}}/ystdlib-src\"
+        )" > "{{.G_DEPS_DIR}}/cmake-settings/ystdlib.cmake"

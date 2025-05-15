@@ -18,15 +18,14 @@ func testWriteReadLogMessages(
 
 	var events []ffi.LogEvent
 	for _, msg := range messages {
-		event := ffi.LogEvent{
-			"LogMessage": msg,
-			"Timestamp":  uint64(time.Now().UnixMilli()),
-		}
-		_, err := irWriter.WriteLogEvent(event)
+		var event *ffi.LogEvent = ffi.NewLogEvent()
+		event.AutoKvPairs[cTestAutoTimestampKey] = uint64(time.Now().UnixMilli())
+		event.UserKvPairs[cTestUserMessageKey] = msg
+		_, err := irWriter.WriteLogEvent(*event)
 		if nil != err {
 			t.Fatalf("ir.Writer.WriteLogEvent failed: %v", err)
 		}
-		events = append(events, event)
+		events = append(events, *event)
 	}
 	err := irWriter.Close()
 	if nil != err {
@@ -45,7 +44,7 @@ func testWriteReadLogMessages(
 	for _, event := range events {
 		assertIrLogEvent(t, ioReader, irReader, event)
 	}
-	assertEndOfIr(t, ioReader, irReader)
+	assertIrEndOfStream(t, ioReader, irReader)
 }
 
 func openIrWriter(

@@ -1,54 +1,69 @@
-output:
-  sort-results: true
-
+version: "2"
+linters:
+  default: none
+  enable:
+    - gocritic
+    - govet
+    - ineffassign
+    - nakedret
+    - revive
+    - staticcheck
+    - unused
+  settings:
+    gocritic:
+      disabled-checks:
+        # Appears to cause a false positive for Cgo calls
+        - dupSubExpr
+    nakedret:
+      # Completely disallow naked returns
+      max-func-lines: 0
+    revive:
+      rules:
+        - name: line-length-limit
+          arguments:
+            - 100
+          severity: warning
+          disabled: false
+    staticcheck:
+      checks:
+        - all
+        # Documentation guidelines that we don't follow (non-default)
+        - -ST1020
+        - -ST1021
+        - -ST1022
+        # Redundant variable declaration (non-default)
+        - -ST1023
+      initialisms:
+        - ""
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - revive
+        source: '^\s*// (?:\[.+\]: )?https?://.+'
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-  exclude-rules:
-    - linters:
-        - revive
-      source: "^\\s*// (?:\\[.+\\]: )?https?://.+"
-
-linters:
-  disable-all: true
+formatters:
   enable:
-    - "gocritic"
-    - "goimports"
-    - "govet"
-    - "ineffassign"
-    - "nakedret"
-    - "revive"
-    - "staticcheck"
-    - "stylecheck"
-    - "unused"
-
-linters-settings:
-  gocritic:
-    disabled-checks:
-      # Appears to cause a false positive for Cgo calls
-      - "dupSubExpr"
-  goimports:
-    # Put imports beginning with prefix after 3rd-party packages.
-    local-prefixes: "github.com/y-scope/clp-ffi-go"
-  nakedret:
-    # Completely disallow naked returns
-    max-func-lines: 0
-  revive:
-    rules:
-      - name: "line-length-limit"
-        severity: "warning"
-        disabled: false
-        arguments: [100]
-  staticcheck:
-    checks:
-      - "all"
-  stylecheck:
-    checks:
-      - "all"
-      # Documentation guidelines that we don't follow (non-default)
-      - "-ST1020"
-      - "-ST1021"
-      - "-ST1022"
-      # Redundant variable declaration (non-default)
-      - "-ST1023"
-    initialisms: [""]
+    - goimports
+  settings:
+    goimports:
+      # Put imports beginning with prefix after 3rd-party packages.
+      local-prefixes:
+        - github.com/y-scope/clp-ffi-go
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
