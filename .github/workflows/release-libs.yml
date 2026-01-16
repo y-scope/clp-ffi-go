@@ -62,3 +62,5 @@ jobs:
           tag_name: "${{ steps.commit.outputs.hash }}"
           name: "Build ${{ steps.commit.outputs.hash }}"
           files: "artifacts/**/*.a"
+          draft: false
+          make_latest: false
