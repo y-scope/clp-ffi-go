@@ -1,0 +1,65 @@
+name: "release-libs"
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    strategy:
+      matrix:
+        arch: ["amd64", "arm64"]
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v4"
+        with:
+          submodules: "recursive"
+
+      - name: "Set up QEMU"
+        if: "${{ matrix.arch == 'arm64' }}"
+        uses: "docker/setup-qemu-action@v3"
+
+      - name: "Set up Docker Buildx"
+        uses: "docker/setup-buildx-action@v3"
+
+      - name: "Build library"
+        run: |
+          DOCKER_ENV="-e HOST_UID=$(id -u) -e HOST_GID=$(id -g)"
+          if [ "${{ matrix.arch }}" = "amd64" ]; then
+            docker build -t clp-ffi-go-builder .
+            docker run --rm $DOCKER_ENV -v ${{ github.workspace }}/pre-built:/output clp-ffi-go-builder
+          else
+            docker buildx build --platform linux/${{ matrix.arch }} -t clp-ffi-go-builder:${{ matrix.arch }} --load .
+            docker run --rm $DOCKER_ENV -v ${{ github.workspace }}/pre-built:/output clp-ffi-go-builder:${{ matrix.arch }}
+          fi
+
+      - name: "Upload artifact"
+        uses: "actions/upload-artifact@v4"
+        with:
+          name: "libclp-ffi-go_linux_${{ matrix.arch }}"
+          path: "pre-built/lib/libclp-ffi-go_linux_${{ matrix.arch }}.a"
+
+  release:
+    needs: "build-linux"
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: write
+    steps:
+      - uses: "actions/checkout@v4"
+
+      - name: "Download all artifacts"
+        uses: "actions/download-artifact@v4"
+        with:
+          path: "artifacts"
+
+      - name: "Get short commit hash"
+        id: "commit"
+        run: echo "hash=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: "Create hash-tagged release"
+        uses: "softprops/action-gh-release@v2"
+        with:
+          tag_name: "${{ steps.commit.outputs.hash }}"
+          name: "Build ${{ steps.commit.outputs.hash }}"
+          files: "artifacts/**/*.a"

@@ -16,3 +16,6 @@ cpp/.cache/
 
 # Submodules
 tools/yscope-dev-utils
+
+# Pre-built libraries (downloaded from releases or built locally)
+pre-built/

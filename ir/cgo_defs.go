@@ -1,3 +1,5 @@
+//go:generate ../scripts/download-libs.sh
+
 package ir
 
 /*
