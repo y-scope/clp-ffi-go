@@ -49,10 +49,10 @@ jobs:
         run: echo "hash=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: "Create hash-tagged release"
-        uses: "softprops/action-gh-release@v2"
-        with:
-          tag_name: "${{ steps.commit.outputs.hash }}"
-          name: "Build ${{ steps.commit.outputs.hash }}"
-          files: "artifacts/**/*.a"
-          draft: false
-          make_latest: false
+        env:
+          GH_TOKEN: "${{ github.token }}"
+        run: |
+          gh release create "${{ steps.commit.outputs.hash }}" \
+            --title "Build ${{ steps.commit.outputs.hash }}" \
+            --notes "Pre-built native libraries for commit ${{ steps.commit.outputs.hash }}" \
+            artifacts/**/*.a
