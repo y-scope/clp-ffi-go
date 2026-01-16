@@ -65,8 +65,8 @@ download_release() {
 downloaded=false
 
 # Try 1: Download by git hash (if in a git repo)
-if command -v git &>/dev/null && git rev-parse --git-dir &>/dev/null; then
-    GIT_HASH=$(git rev-parse --short HEAD)
+if command -v git &>/dev/null && git -C "$ROOT_DIR" rev-parse --git-dir &>/dev/null; then
+    GIT_HASH=$(git -C "$ROOT_DIR" rev-parse --short HEAD)
     echo "Attempting download for commit: ${GIT_HASH}"
     if download_release "$GIT_HASH"; then
         downloaded=true
