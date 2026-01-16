@@ -8,30 +8,22 @@ jobs:
   build-linux:
     strategy:
       matrix:
-        arch: ["amd64", "arm64"]
-    runs-on: "ubuntu-latest"
+        include:
+          - arch: "amd64"
+            runner: "ubuntu-24.04"
+          - arch: "arm64"
+            runner: "ubuntu-24.04-arm"
+    runs-on: "${{ matrix.runner }}"
     steps:
       - uses: "actions/checkout@v4"
         with:
           submodules: "recursive"
 
-      - name: "Set up QEMU"
-        if: "${{ matrix.arch == 'arm64' }}"
-        uses: "docker/setup-qemu-action@v3"
-
-      - name: "Set up Docker Buildx"
-        uses: "docker/setup-buildx-action@v3"
-
       - name: "Build library"
         run: |
           DOCKER_ENV="-e HOST_UID=$(id -u) -e HOST_GID=$(id -g)"
-          if [ "${{ matrix.arch }}" = "amd64" ]; then
-            docker build -t clp-ffi-go-builder .
-            docker run --rm $DOCKER_ENV -v ${{ github.workspace }}/pre-built:/output clp-ffi-go-builder
-          else
-            docker buildx build --platform linux/${{ matrix.arch }} -t clp-ffi-go-builder:${{ matrix.arch }} --load .
-            docker run --rm $DOCKER_ENV -v ${{ github.workspace }}/pre-built:/output clp-ffi-go-builder:${{ matrix.arch }}
-          fi
+          docker build -t clp-ffi-go-builder .
+          docker run --rm $DOCKER_ENV -v ${{ github.workspace }}/pre-built:/output clp-ffi-go-builder
 
       - name: "Upload artifact"
         uses: "actions/upload-artifact@v4"
@@ -41,7 +33,7 @@ jobs:
 
   release:
     needs: "build-linux"
-    runs-on: "ubuntu-latest"
+    runs-on: "ubuntu-24.04"
     permissions:
       contents: write
     steps:
