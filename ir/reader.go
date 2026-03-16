@@ -15,6 +15,7 @@ import (
 // failure to do so will result in a memory leak.
 type Reader struct {
 	*Deserializer
+	fieldTracker
 	ioReader io.Reader
 	buf      []byte
 	start    int
@@ -34,7 +35,11 @@ func NewReader(r io.Reader) (*Reader, error) {
 //   - error: nil [*Reader], error propagated from [DeserializePreamble] or
 //     [io.Reader.Read]
 func NewReaderSize(r io.Reader, size int) (*Reader, error) {
-	irr := &Reader{nil, r, make([]byte, size), 0, 0}
+	irr := &Reader{
+		Deserializer: nil,
+		ioReader:     r,
+		buf:          make([]byte, size),
+	}
 	var err error
 	if _, err = irr.read(); nil != err {
 		return nil, err
@@ -55,9 +60,14 @@ func NewReaderSize(r io.Reader, size int) (*Reader, error) {
 }
 
 // Close will delete the underlying C++ allocated memory used by the
-// deserializer. Failure to call Close will result in a memory leak.
+// deserializer and close all registered [FieldCollector]s that implement
+// [io.Closer]. Failure to call Close will result in a memory leak.
 func (reader *Reader) Close() error {
-	return reader.Deserializer.Close()
+	err := reader.Deserializer.Close()
+	if closeErr := reader.closeAll(); nil == err {
+		err = closeErr
+	}
+	return err
 }
 
 // Read uses [Deserializer].DeserializeLogEvent to read from the CLP IR byte stream. The
@@ -81,6 +91,7 @@ func (reader *Reader) ReadLogEvent() (ffi.LogEvent, error) {
 	if nil != err {
 		return event, err
 	}
+	reader.observeAll(event)
 	return event, nil
 }
 

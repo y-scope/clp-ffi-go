@@ -15,6 +15,7 @@ import (
 // buffer in ioWriter if necessary
 type Writer struct {
 	Serializer
+	fieldTracker
 	ioWriter io.Writer
 }
 
@@ -51,15 +52,19 @@ func NewWriter[T EightByteEncoding | FourByteEncoding](
 	return &irw, nil
 }
 
-// Close will write a null byte denoting the end of the IR stream and delete the
-// underlying C++ allocated memory used by the serializer. Failure to call Close
-// will result in a memory leak.
+// Close will write a null byte denoting the end of the IR stream, delete the
+// underlying C++ allocated memory used by the serializer, and close all
+// registered [FieldCollector]s that implement [io.Closer]. Failure to call
+// Close will result in a memory leak.
 func (writer *Writer) Close() error {
 	_, err := writer.ioWriter.Write([]byte{0x0})
-	if nil != err {
-		return err
+	if closeErr := writer.Serializer.Close(); nil == err {
+		err = closeErr
 	}
-	return writer.Serializer.Close()
+	if closeErr := writer.closeAll(); nil == err {
+		err = closeErr
+	}
+	return err
 }
 
 // Write uses [SerializeLogEvent] to serialize the provided log event to CLP IR
@@ -72,6 +77,7 @@ func (writer *Writer) WriteLogEvent(logEvent ffi.LogEvent) (int, error) {
 	if nil != err {
 		return 0, err
 	}
+	writer.observeAll(logEvent)
 	// bytes.Buffer.Write will always return nil for err (https://pkg.go.dev/bytes#Buffer.Write)
 	// However, err is still propagated to correctly alert the user in case this ever changes. If
 	// Write can fail in the future, we should either:
@@ -84,8 +90,10 @@ func (writer *Writer) WriteLogEvent(logEvent ffi.LogEvent) (int, error) {
 	return n, nil
 }
 
-// Write uses [SerializeLogEvent] to serialize the provided log event to CLP IR
-// and then stores it in the internal buffer. Returns:
+// WriteMsgPackLogEvent serializes the provided msgpack log event to CLP IR. Note
+// that registered [FieldCollector]s are not invoked for msgpack events as the
+// key-value pairs are pre-encoded and not available for field extraction.
+// Returns:
 //   - success: number of bytes written, nil
 //   - error: number of bytes written (can be 0), error propagated from
 //     [SerializeLogEvent] or [bytes.Buffer.Write]

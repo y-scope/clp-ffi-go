@@ -6,21 +6,23 @@ This module provides Go packages to interface with [CLP's core features][clp-cor
 (foreign function interface). For complete technical documentation, see the Go docs:
 https://pkg.go.dev/github.com/y-scope/clp-ffi-go
 
+For contributing and development instructions, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 [clp-core]: https://github.com/y-scope/clp/tree/main/components/core
 
 ## Getting started
 
 To add the module to your project run: `go get github.com/y-scope/clp-ffi-go`
 
-Here's an example showing how to decode each log event containing "ERROR" from a CLP IR byte stream.
+### Reading log events
+
+Read all log events from a zstd-compressed CLP IR stream:
 
 ```go
 import (
-  "fmt"
-  "time"
+  "os"
 
   "github.com/klauspost/compress/zstd"
-  "github.com/y-scope/clp-ffi-go/ffi"
   "github.com/y-scope/clp-ffi-go/ir"
 )
 
@@ -31,100 +33,95 @@ defer zstdReader.Close()
 irReader, _ := ir.NewReader(zstdReader)
 defer irReader.Close()
 
-var err error
 for {
-  var log *ffi.LogEventView
-  // To read every log event replace ReadToContains with Read()
-  log, err = irReader.ReadToContains("ERROR")
-  if nil != err {
+  event, err := irReader.ReadLogEvent()
+  if ir.IrEndOfStream == err {
     break
   }
-  fmt.Printf("%v %v", time.UnixMilli(int64(log.Timestamp)), log.LogMessageView)
+  if nil != err {
+    log.Fatalf("ReadLogEvent failed: %v", err)
+  }
+  fmt.Println(event.UserKvPairs)
 }
-if ir.EndOfIr != err {
-  fmt.Printf("Reader.Read failed: %v", err)
+```
+
+### Writing log events
+
+Write log events to a CLP IR stream:
+
+```go
+import (
+  "os"
+
+  "github.com/y-scope/clp-ffi-go/ffi"
+  "github.com/y-scope/clp-ffi-go/ir"
+)
+
+file, _ := os.Create("output.clp")
+defer file.Close()
+irWriter, _ := ir.NewWriter[ir.EightByteEncoding](file)
+defer irWriter.Close()
+
+event := ffi.LogEvent{
+  AutoKvPairs: map[string]any{"timestamp": 1234567890},
+  UserKvPairs: map[string]any{"level": "INFO", "message": "startup complete"},
 }
+irWriter.WriteLogEvent(event)
 ```
 
-## Building from source
+### Tracking field statistics
 
-Run `go generate ./...` to build the native libraries and generate Go code. The generate step will
-automatically try to:
+Register collectors on a Reader or Writer to automatically compute statistics as events flow
+through. Collectors observe a named field from each log event and can be queried at any time.
 
-1. Download pre-built libraries from GitHub releases (matching your commit)
-2. Build with Docker if no release is available
-3. Build with task/cmake as a last resort
+```go
+import (
+  "fmt"
+  "log"
 
-**Requirements** (only needed if Docker is unavailable):
-- C++20 compiler
-- CMake 3.23+
-- [Task](https://taskfile.dev/installation/)
-- [Stringer](https://pkg.go.dev/golang.org/x/tools/cmd/stringer): `go install golang.org/x/tools/cmd/stringer@latest`
+  "github.com/y-scope/clp-ffi-go/ir"
+)
 
-## Development
+irReader, _ := ir.NewReader(zstdReader)
+defer irReader.Close()
 
-### Testing
+// Track the "level" field (defaults to UserKvPairs).
+irReader.Track("level", ir.NewUniqueCounts())
 
-```bash
-go_test_ir="/path/to/my-ir.clp.zst" go test ./...
+// Track a field from AutoKvPairs.
+irReader.Track("host", ir.NewUniqueCounts(), ir.AutoField)
+
+// Read events as normal — collectors update automatically.
+for {
+  _, err := irReader.ReadLogEvent()
+  if ir.IrEndOfStream == err {
+    break
+  }
+  if nil != err {
+    log.Fatalf("ReadLogEvent failed: %v", err)
+  }
+}
+
+// Query statistics at any point.
+levelStats := irReader.Collector("level").(*ir.UniqueCounts)
+fmt.Println("Unique levels:", levelStats.UniqueCount())
+fmt.Println("Counts:", levelStats.ValueCounts())
+// e.g. Unique levels: 3
+//      Counts: map[ERROR:42 INFO:1503 WARN:87]
 ```
 
-Some tests in the `ir` package require an existing CLP IR file compressed with zstd. The path is
-provided via the `go_test_ir` environment variable (absolute or relative to the `ir` directory).
+### Filtering with ReadToFunc
 
-### Linting
+Use `ReadToFunc` to read until a predicate matches:
 
-```bash
-# Install golangci-lint
-curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
-  sh -s -- -b $(go env GOPATH)/bin v1.59.0
-
-# Run linter
-golangci-lint run
+```go
+// Find the first ERROR event.
+event, err := irReader.ReadToFunc(func(e ffi.LogEvent) bool {
+  return e.UserKvPairs["level"] == "ERROR"
+})
 ```
 
-### Building native libraries
-
-The download script builds for your current architecture by default. Go's cgo build constraints
-ensure only the matching library is linked.
-
-```bash
-# Build for current architecture
-./scripts/download-libs.sh
-
-# Build for specific architecture
-./scripts/download-libs.sh amd64
-./scripts/download-libs.sh arm64
-```
-
-To cross-compile Go for a different architecture:
-
-```bash
-# On arm64, build for x86_64
-./scripts/download-libs.sh amd64
-GOARCH=amd64 go build ./...
-
-# On x86_64, build for arm64
-./scripts/download-libs.sh arm64
-GOARCH=arm64 go build ./...
-```
-
-For manual Docker builds:
-
-```bash
-# Build for x86_64
-docker build -t clp-ffi-go-builder .
-docker run --rm -v $(pwd)/pre-built:/output clp-ffi-go-builder
-
-# Build for arm64 (uses QEMU emulation on x86_64 hosts)
-docker run --privileged --rm tonistiigi/binfmt --install arm64
-docker buildx build --platform linux/arm64 -t clp-ffi-go-builder:arm64 --load .
-docker run --rm -v $(pwd)/pre-built:/output clp-ffi-go-builder:arm64
-```
-
-## Advanced
-
-### Bazel support
+## Bazel support
 
 We provide a Bazel module and build files for each Go package. The following example shows how to
 add the `ir` package as a dependency.
@@ -150,9 +147,10 @@ archive_override(
 #     path = "/home/user/clp-ffi-go",
 # )
 clp_ffi_go_ext_deps = use_extension(
-    "@com_github_y_scope_clp_ffi_go//cpp:deps.bzl", "clp_ffi_go_ext_deps"
+    "@com_github_y_scope_clp_ffi_go//:bazel/deps.bzl", "clp_ffi_go_ext_deps"
 )
 use_repo(clp_ffi_go_ext_deps, "com_github_y_scope_clp")
+use_repo(clp_ffi_go_ext_deps, "clp_ext_com_github_ned14_outcome")
 ```
 
 ```bazel
@@ -165,19 +163,3 @@ go_binary(
     deps = ["@com_github_y_scope_clp_ffi_go//ir"],
 )
 ```
-
-### Using an external C++ library
-
-Use the `external` build tag to link with a different CLP FFI library. This disables the default
-library linking; you must set `CGO_LDFLAGS` (and optionally `CGO_CFLAGS`) to point to your library.
-
-```bash
-CGO_LDFLAGS="-L/path/to/external_libs -lclp_ffi_linux_amd64 -Wl,-rpath=/path/to/external_libs" \
-  go_test_ir="/path/to/my-ir.clp.zst" \
-  go test -tags external ./...
-```
-
-### Why CMake instead of cgo?
-
-We build with CMake rather than directly with cgo to maximize reuse of CLP's existing code without
-modifications. If your platform is not supported by the pre-built libraries, please open an issue.
